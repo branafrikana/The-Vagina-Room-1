@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow reads and writes for site configurations (accessed solely via the server-side API proxy)
+    match /configs/{configId} {
+      allow read, write: if true;
+    }
+
+    // Allow reads and writes for admin management table
+    match /admins/{uid} {
+      allow read, write: if true;
+    }
+
+    // Allow reads and writes for form submissions
+    match /submissions/{subId} {
+      allow read, write: if true;
+    }
+
+    // Allow reads and writes for orders
+    match /orders/{orderId} {
+      allow read, write: if true;
+    }
+  }
+}
+
