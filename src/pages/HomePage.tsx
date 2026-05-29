@@ -19,9 +19,16 @@ import SocialGrid from '../components/SocialGrid';
 import FeaturedProducts from '../components/FeaturedProducts';
 import Footer from '../components/Footer';
 import { useContent } from '../context/ContentContext';
+import { safeJsonParse } from '../lib/json';
 
 export default function HomePage() {
   const { content } = useContent();
+  const generalSettings = safeJsonParse(content.generalSettingsJson, {} as any);
+  const seoSettings = safeJsonParse(content.seoSettingsJson, {} as any);
+  
+  const siteName = generalSettings.siteName || "The Vagina Room";
+  const slogan = seoSettings.slogan || generalSettings.slogan || "Empowering Wellness & Intimacy";
+  const metaDescription = seoSettings.metaDescription || "Welcome to The Vagina Room, the premier space for connection, safety, and empowerment.";
 
   const renderSection = (id: string) => {
     switch (id) {
@@ -98,8 +105,8 @@ export default function HomePage() {
   return (
     <>
       <Helmet>
-        <title>Home - The Room</title>
-        <meta name="description" content="Welcome to The Room, the premier space for connection, safety, and empowerment. Learn more about our community and focus areas." />
+        <title>{siteName} — {slogan}</title>
+        <meta name="description" content={metaDescription} />
       </Helmet>
       <div className="flex flex-col min-h-screen">
         <Navigation />

@@ -213,7 +213,7 @@ export default function AboutPage() {
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-sans">
+              <EditableText field="whoWeServeAudienceList" multiline className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-sans block" as="div">
                 {whoWeServe.map((item, i) => (
                   <motion.div
                     key={i}
@@ -229,7 +229,7 @@ export default function AboutPage() {
                     </p>
                   </motion.div>
                 ))}
-              </div>
+              </EditableText>
             </div>
           </section>
          );
@@ -329,10 +329,10 @@ export default function AboutPage() {
                   ))}
                 </div>
 
-                <a href="https://join.thevaginaroom.com" target="_blank" rel="noopener noreferrer" className="bg-brand-black text-white px-20 py-8 rounded-none text-xs font-black tracking-[0.5em] uppercase hover:bg-white hover:text-brand-black transition-all duration-500 shadow-2xl inline-flex items-center group">
+                <Link to="/join-community" className="bg-brand-black text-white px-20 py-8 rounded-none text-xs font-black tracking-[0.5em] uppercase hover:bg-white hover:text-brand-black transition-all duration-500 shadow-2xl inline-flex items-center group">
                   Join the Community
                   <ArrowRight className="ml-4 group-hover:translate-x-2 transition-transform" size={20} />
-                </a>
+                </Link>
               </motion.div>
             </div>
           </section>

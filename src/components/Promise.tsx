@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { Heart, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useContent } from '../context/ContentContext';
 import EditableText from './EditableText';
 
@@ -66,23 +67,32 @@ export default function Promise() {
 
           {/* Right Column: Promises Grid */}
           <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {promises.map((text, index) => (
-              <motion.div
-                key={text}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white/5 backdrop-blur-sm p-10 border border-white/5 hover:border-brand-red/30 transition-all group"
-              >
-                <div className="flex items-start space-x-4">
-                  <div className="mt-2 w-1.5 h-1.5 rounded-full bg-brand-red flex-shrink-0 group-hover:scale-150 transition-transform" />
-                  <p className="text-lg text-white/90 font-light italic leading-relaxed tracking-tight group-hover:text-white transition-colors">
-                    {text}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+            {[...Array(6)].map((_, index) => {
+              const titleField = `promiseCard${index + 1}Title`;
+              const descField = `promiseCard${index + 1}Desc`;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white/5 backdrop-blur-sm p-10 border border-white/5 hover:border-brand-red/30 transition-all group"
+                >
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex items-start space-x-4">
+                      <div className="mt-2 w-1.5 h-1.5 rounded-full bg-brand-red flex-shrink-0 group-hover:scale-150 transition-transform" />
+                      <p className="text-lg text-white/90 font-light italic leading-relaxed tracking-tight group-hover:text-white transition-colors">
+                        <EditableText field={titleField} multiline />
+                      </p>
+                    </div>
+                    <p className="text-xs text-white/40 italic font-light leading-relaxed pl-6">
+                      <EditableText field={descField} multiline />
+                    </p>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
 
@@ -107,15 +117,13 @@ export default function Promise() {
               </p>
             </div>
             
-            <a 
-              href={content.promiseBannerBtnUrl || "https://join.thevaginaroom.com"} 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <Link 
+              to="/join-community" 
               className="bg-brand-black text-white px-12 py-6 rounded-none text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-brand-black hover:scale-105 active:scale-95 transition-all duration-500 shadow-2xl flex items-center justify-center whitespace-nowrap"
             >
               <EditableText field="promiseBannerBtnText" />
               <ArrowRight className="ml-4" size={18} />
-            </a>
+            </Link>
           </div>
           
           {/* Decorative geometric element */}

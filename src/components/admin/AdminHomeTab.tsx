@@ -937,47 +937,78 @@ export default function AdminHomeTab() {
               </div>
             </div>
 
-            {/* CURATED SOCIAL GRID */}
+            {/* SOCIAL CONNECTIONS GRID */}
             <div className="bg-white/[0.01] border border-white/5 p-8 rounded-lg space-y-8">
-              <SectionHeader icon={Instagram} title="13. Curated Instagram Aesthetic Grid" id="social_grid" />
+              <SectionHeader icon={Instagram} title="13. Homepage Social Connections Grid" id="social_grid" />
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 <InputGroup label="Grid Prefix Decor">
-                    <input 
-                      type="text" 
-                      value={content.socialGridSub || ""}
-                      onChange={(e) => updateContentField("socialGridSub", e.target.value)}
-                      className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs focus:border-brand-gold outline-none" 
-                    />
-                 </InputGroup>
-                 <InputGroup label="Grid Main Headline">
-                    <input 
-                      type="text" 
-                      value={content.socialGridTitle || ""}
-                      onChange={(e) => updateContentField("socialGridTitle", e.target.value)}
-                      className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs focus:border-brand-gold outline-none" 
-                    />
-                 </InputGroup>
-                 <InputGroup label="Instagram Profile Handle (@...)">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputGroup label="Grid Section Title">
+                  <input 
+                    type="text" 
+                    value={content.socialSectionTitle || ""}
+                    onChange={(e) => updateContentField("socialSectionTitle", e.target.value)}
+                    className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs focus:border-brand-gold outline-none" 
+                    placeholder="e.g. JOIN THE SANCTUARY"
+                  />
+                </InputGroup>
+                <InputGroup label="Stay In Touch / Subtitle Text">
+                  <input 
+                    type="text" 
+                    value={content.socialSubTitle || ""}
+                    onChange={(e) => updateContentField("socialSubTitle", e.target.value)}
+                    className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs focus:border-brand-gold outline-none" 
+                    placeholder="e.g. STAY IN TOUCH WITH ME"
+                  />
+                </InputGroup>
+              </div>
+
+              <div className="pt-6 border-t border-white/5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-brand-gold mb-6">Direct Social Outlet Links</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <InputGroup label="X (Twitter)">
+                    <input type="text" value={content.socialLinkX || ""} onChange={(e) => updateContentField("socialLinkX", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white text-[10px] font-mono focus:border-brand-gold outline-none" />
+                  </InputGroup>
+                  <InputGroup label="Instagram">
+                    <input type="text" value={content.socialLinkInstagram || ""} onChange={(e) => updateContentField("socialLinkInstagram", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white text-[10px] font-mono focus:border-brand-gold outline-none" />
+                  </InputGroup>
+                  <InputGroup label="TikTok">
+                    <input type="text" value={content.socialLinkTiktok || ""} onChange={(e) => updateContentField("socialLinkTiktok", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white text-[10px] font-mono focus:border-brand-gold outline-none" />
+                  </InputGroup>
+                  <InputGroup label="Facebook">
+                    <input type="text" value={content.socialLinkFacebook || ""} onChange={(e) => updateContentField("socialLinkFacebook", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white text-[10px] font-mono focus:border-brand-gold outline-none" />
+                  </InputGroup>
+                  <InputGroup label="YouTube">
+                    <input type="text" value={content.socialLinkYoutube || ""} onChange={(e) => updateContentField("socialLinkYoutube", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white text-[10px] font-mono focus:border-brand-gold outline-none" />
+                  </InputGroup>
+                  <InputGroup label="LinkedIn">
+                    <input type="text" value={content.socialLinkLinkedin || ""} onChange={(e) => updateContentField("socialLinkLinkedin", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white text-[10px] font-mono focus:border-brand-gold outline-none" />
+                  </InputGroup>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-white/5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-brand-gold mb-6">Aesthetic Curator (Optional Feed)</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <InputGroup label="Instagram Handle (@...)">
                     <input 
                       type="text" 
                       value={content.instagramHandle || ""}
                       onChange={(e) => updateContentField("instagramHandle", e.target.value)}
                       className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs focus:border-brand-gold outline-none" 
                     />
-                 </InputGroup>
-              </div>
-
-              <div className="pt-6 border-t border-white/5">
-                <ArrayJSONEditor
-                  label="Curated Feed Media"
-                  fieldKey="socialFeedJson"
-                  value={content.socialFeedJson || ""}
-                  onChange={updateContentField}
-                  defaultStructure={{ url: "", type: "image", link: "" }}
-                  itemType="Feed Item"
-                  fallbackData={[]}
-                />
+                  </InputGroup>
+                </div>
+                <div className="mt-6">
+                  <ArrayJSONEditor
+                    label="Curated Feed Media Assets"
+                    fieldKey="socialFeedJson"
+                    value={content.socialFeedJson || ""}
+                    onChange={updateContentField}
+                    defaultStructure={{ url: "", type: "image", link: "" }}
+                    itemType="Feed Item"
+                    fallbackData={[]}
+                  />
+                </div>
               </div>
             </div>
 

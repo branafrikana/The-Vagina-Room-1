@@ -97,7 +97,10 @@
   "galleryImagesListJson": "[]",
   "galleryCategoriesJson": "[\"Workshops\", \"Outreach\", \"Community\", \"Clinic\"]",
   "projectsTitle": "Our Projects",
-  "projectsDesc": "Initiatives driving positive change.",
+  "projectsHeading": "Our Projects.",
+  "projectsDesc": "Discover our ongoing and upcoming projects dedicated to making a difference.",
+  "projectsCtaHeading": "Partner With Us.",
+  "projectsCtaDesc": "Our projects are fueled by a shared vision. Join us in making intimate wellness accessible to every woman.",
   "projectsListJson": "[]",
   "projectsCategoriesJson": "[\"Education\", \"Support\", \"Advocacy\", \"Digital\"]",
   "eventsTitle": "Upcoming Events",
@@ -183,7 +186,7 @@
   "supportImpactStatsJson": "[\n  { \"label\": \"Community Outreach\", \"desc\": \"Reaching underserved rural areas with health education.\" },\n  { \"label\": \"Clinic Support\", \"desc\": \"Subsidizing restorative care for women in need.\" },\n  { \"label\": \"Education Mastery\", \"desc\": \"Funding masterclasses and digital health resources.\" },\n  { \"label\": \"Safe Space Expansion\", \"desc\": \"Growing our local and digital support communities.\" }\n]",
   "generalSettingsJson": "{\n  \"siteName\": \"The Vagina Room\",\n  \"metaTitle\": \"The Vagina Room - Holistic Wellness & Intimate Reproductive Education\",\n  \"supportEmail\": \"info@thevaginaroom.com\",\n  \"supportPhone\": \"+234 813 546 4432\",\n  \"timezone\": \"UTC+1 (Lagos)\"\n}",
   "smtpSettingsJson": "{\n  \"host\": \"\",\n  \"port\": \"587\",\n  \"user\": \"\",\n  \"pass\": \"\",\n  \"from\": \"\"\n}",
-  "brandingSettingsJson": "{\n  \"primaryMode\": \"flat\",\n  \"primaryColor\": \"#e23411\",\n  \"primaryGradStart\": \"#C41E3A\",\n  \"primaryGradEnd\": \"#8B0000\",\n  \"primaryGradAngle\": 135,\n  \"secondaryMode\": \"flat\",\n  \"secondaryColor\": \"#e2a427\",\n  \"secondaryGradStart\": \"#D4AF37\",\n  \"secondaryGradEnd\": \"#B8860B\",\n  \"secondaryGradAngle\": 45,\n  \"fontFamily\": \"Inter\",\n  \"buttonRoundness\": \"md\",\n  \"logoUrlAlt\": \"\",\n  \"headerLogoType\": \"text\",\n  \"headerLogoUrl\": \"\",\n  \"footerLogo1Type\": \"text\",\n  \"footerLogo1Url\": \"\",\n  \"footerLogo2Type\": \"text\",\n  \"footerLogo2Url\": \"\"\n}",
+  "brandingSettingsJson": "{\n  \"primaryMode\": \"flat\",\n  \"primaryColor\": \"#e23411\",\n  \"primaryGradStart\": \"#C41E3A\",\n  \"primaryGradEnd\": \"#8B0000\",\n  \"primaryGradAngle\": 135,\n  \"secondaryMode\": \"flat\",\n  \"secondaryColor\": \"#e2a427\",\n  \"secondaryGradStart\": \"#D4AF37\",\n  \"secondaryGradEnd\": \"#B8860B\",\n  \"secondaryGradAngle\": 45,\n  \"fontFamily\": \"Inter\",\n  \"buttonRoundness\": \"md\",\n  \"logoUrlAlt\": \"\",\n  \"headerLogoType\": \"image\",\n  \"headerLogoUrl\": \"/uploads/1779862196161_the_vagina_room_logo.png\",\n  \"footerLogo1Type\": \"text\",\n  \"footerLogo1Url\": \"\",\n  \"footerLogo2Type\": \"text\",\n  \"footerLogo2Url\": \"\"\n}",
   "fontSizeOverridesJson": "{\"whyWeExistQuote\":65,\"focusAreasTitle\":90,\"kyvHeading\":70,\"promiseBannerHeading\":90,\"footerCoreValuesList\":85,\"aboutUsTitle\":80,\"partnersHeading\":85,\"footerDisclaimerDesc\":95,\"aboutUsBoxText\":145,\"homeAboutUsBoxText\":85}",
   "logoUrlAlt": "",
   "faviconUrl": "",
@@ -219,5 +222,7 @@
   "homeAboutUsVisionTitle": "Our Vision",
   "homeAboutUsVisionDesc": "To become a globally trusted women’s wellness ecosystem where every woman feels informed, supported, confident, safe, and empowered in her intimate health journey.",
   "productsHomeSub": "FEATURED PRODUCTS",
+  "productsHomeHeading": "Featured Preparations",
+  "productsHomeLinkText": "View Full Catalog \u2192",
   "featuredProductIdsJson": "[]"
 }

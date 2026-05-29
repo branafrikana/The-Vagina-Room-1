@@ -59,10 +59,11 @@ export default function TrustSafety() {
                 We prioritize:
               </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {prioritiesList.map((text, index) => {
-                  const normalized = text.toLowerCase();
-                  const IconComponent = iconMap[normalized] || ShieldCheck;
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-12 gap-x-8">
+                {[...Array(6)].map((_, index) => {
+                  const titleField = `tsPillar${index + 1}Title`;
+                  const descField = `tsPillar${index + 1}Desc`;
+                  const IconComponent = [Lock, Heart, ShieldCheck, MessageSquare, Heart, Sparkles][index] || ShieldCheck;
 
                   return (
                     <motion.div 
@@ -71,12 +72,19 @@ export default function TrustSafety() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: index * 0.1 }}
-                      className="flex items-center space-x-6 group"
+                      className="flex flex-col group"
                     >
-                      <div className="w-12 h-12 flex items-center justify-center border border-white/10 group-hover:border-brand-gold transition-colors">
-                        <IconComponent size={20} className="text-brand-gold" />
+                      <div className="flex items-center space-x-6 mb-4">
+                        <div className="w-12 h-12 flex items-center justify-center border border-white/10 group-hover:border-brand-gold transition-colors">
+                          <IconComponent size={20} className="text-brand-gold" />
+                        </div>
+                        <span className="text-xl font-bold tracking-tight uppercase group-hover:text-brand-gold transition-colors">
+                           <EditableText field={titleField} />
+                        </span>
                       </div>
-                      <span className="text-xl font-bold tracking-tight uppercase group-hover:text-brand-gold transition-colors">{text}</span>
+                      <p className="text-xs text-white/40 italic font-light leading-relaxed pl-[4.5rem]">
+                        <EditableText field={descField} multiline />
+                      </p>
                     </motion.div>
                   );
                 })}

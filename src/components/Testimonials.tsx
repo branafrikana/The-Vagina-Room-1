@@ -205,7 +205,7 @@ export default function Testimonials() {
           </motion.div>
 
           {/* Cards Active Cycling Column */}
-          <div className="lg:col-span-7">
+          <EditableText field="testimonialsJson" multiline className="lg:col-span-7 block" as="div">
             {filteredTestimonials.length > 0 ? (
               <motion.div 
                 className="bg-white/5 p-10 md:p-14 border border-white/10 relative min-h-[440px] flex flex-col justify-between touch-pan-y cursor-grab active:cursor-grabbing"
@@ -322,7 +322,7 @@ export default function Testimonials() {
                 <p className="text-white/20 font-mono text-xs uppercase tracking-widest">No testimonials found in this category.</p>
               </div>
             )}
-          </div>
+          </EditableText>
 
         </div>
       </div>

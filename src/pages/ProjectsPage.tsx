@@ -104,7 +104,7 @@ export default function ProjectsPage() {
             >
               <p className="text-brand-gold font-black tracking-[0.5em] uppercase text-[10px] mb-8"><EditableText field="projectsTitle" className="inline-block" /></p>
               <h1 className="font-sans text-4xl sm:text-6xl md:text-9xl font-black mb-12 tracking-tighter uppercase leading-none">
-                Our <br /><span className="text-brand-red italic font-light lowercase">Projects.</span>
+                <EditableText field="projectsHeading" />
               </h1>
               <p className="text-xl text-white/40 max-w-2xl mx-auto italic font-light leading-relaxed">
                 <EditableText field="projectsDesc" multiline />
@@ -195,10 +195,10 @@ export default function ProjectsPage() {
            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
               <div className="md:w-1/2 text-center md:text-left">
                 <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-none mb-8">
-                  Partner <br />With <span className="text-brand-red italic font-light lowercase">Us.</span>
+                  <EditableText field="projectsCtaHeading" />
                 </h2>
                 <p className="text-xl font-light italic leading-relaxed opacity-80 max-w-sm">
-                  Our projects are fueled by a shared vision. Join us in making intimate wellness accessible to every woman.
+                  <EditableText field="projectsCtaDesc" multiline />
                 </p>
               </div>
               <div className="md:w-1/2 flex flex-col items-center md:items-end space-y-8">

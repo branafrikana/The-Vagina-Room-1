@@ -44,25 +44,31 @@ export default function Values() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/10 border border-white/5">
-            {coreValues.map((value, index) => (
-              <motion.div
-                key={value.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="group p-16 bg-brand-black hover:bg-white/5 transition-all duration-700 relative border-white/5 border"
-              >
-                <div className="absolute top-0 left-0 w-full h-1 bg-brand-gold opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="inline-flex w-16 h-16 bg-white/5 border border-white/10 text-brand-red items-center justify-center mb-12 group-hover:bg-brand-red group-hover:text-white transition-all transform group-hover:rotate-[360deg] duration-700">
-                  {"icon" in value && value.icon ? <value.icon size={28} strokeWidth={1} /> : <span className="text-xl font-serif italic">+</span>}
-                </div>
-                <h3 className="font-sans text-3xl font-black mb-6 text-brand-cream uppercase tracking-tight">{value.name}</h3>
-                <p className="text-white/40 text-lg leading-relaxed font-light italic">
-                  {value.description}
-                </p>
-              </motion.div>
-            ))}
+            {[...Array(6)].map((_, index) => {
+              const titleField = `value${index + 1}Title`;
+              const descField = `value${index + 1}Desc`;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="group p-16 bg-brand-black hover:bg-white/5 transition-all duration-700 relative border-white/5 border"
+                >
+                  <div className="absolute top-0 left-0 w-full h-1 bg-brand-gold opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="inline-flex w-16 h-16 bg-white/5 border border-white/10 text-brand-red items-center justify-center mb-12 group-hover:bg-brand-red group-hover:text-white transition-all transform group-hover:rotate-[360deg] duration-700">
+                    <span className="text-xl font-serif italic">+</span>
+                  </div>
+                  <h3 className="font-sans text-3xl font-black mb-6 text-brand-cream uppercase tracking-tight">
+                    <EditableText field={titleField} />
+                  </h3>
+                  <p className="text-white/40 text-lg leading-relaxed font-light italic">
+                    <EditableText field={descField} multiline />
+                  </p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
 
@@ -86,24 +92,30 @@ export default function Values() {
             </div>
 
             <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-8">
-              {differentiators.map((diff, index) => (
-                <motion.div
-                  key={diff.title}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white/5 backdrop-blur-sm p-10 border border-white/10 hover:border-brand-black/30 transition-all group"
-                >
-                  <div className="mb-8 text-brand-black group-hover:scale-110 transition-transform origin-left">
-                    {"icon" in diff && diff.icon ? <diff.icon size={32} strokeWidth={1.5} /> : <span className="text-3xl font-serif italic">+</span>}
-                  </div>
-                  <h3 className="font-sans text-xl font-black mb-4 text-white uppercase tracking-tight">{diff.title}</h3>
-                  <p className="text-white/70 text-sm leading-relaxed font-light italic">
-                    {diff.description}
-                  </p>
-                </motion.div>
-              ))}
+              {[...Array(4)].map((_, index) => {
+                const titleField = `diff${index + 1}Title`;
+                const descField = `diff${index + 1}Desc`;
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-white/5 backdrop-blur-sm p-10 border border-white/10 hover:border-brand-black/30 transition-all group"
+                  >
+                    <div className="mb-8 text-brand-black group-hover:scale-110 transition-transform origin-left">
+                      <span className="text-3xl font-serif italic">+</span>
+                    </div>
+                    <h3 className="font-sans text-xl font-black mb-4 text-white uppercase tracking-tight">
+                      <EditableText field={titleField} />
+                    </h3>
+                    <p className="text-white/70 text-sm leading-relaxed font-light italic">
+                      <EditableText field={descField} multiline />
+                    </p>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         </div>

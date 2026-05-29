@@ -9,6 +9,7 @@ export function ImageLoader({ src, fallbackSrc, alt, ...props }: React.Component
   return (
     <img
       {...props}
+      loading="lazy"
       src={error ? (fallbackSrc || defaultFallback) : src}
       alt={alt}
       onError={() => {

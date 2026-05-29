@@ -2,7 +2,7 @@ import { motion } from 'motion/react';
 import { 
   Instagram, 
   Linkedin, 
-  Twitter, 
+  X, 
   Youtube, 
   MessageCircle, 
   Facebook,
@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 
 import { useContent } from '../context/ContentContext';
+import EditableText from './EditableText';
 
 export default function SocialGrid() {
   const { content } = useContent();
@@ -20,7 +21,8 @@ export default function SocialGrid() {
     { icon: Instagram, color: 'bg-[#E1306C]', name: 'Instagram', link: content.socialLinkInstagram || '#' },
     { icon: TikTokIcon, color: 'bg-[#000000]', name: 'TikTok', link: content.socialLinkTiktok || '#' },
     { icon: Facebook, color: 'bg-[#1877F2]', name: 'Facebook', link: content.socialLinkFacebook || '#' },
-    { icon: Youtube, color: 'bg-[#FF0000]', name: 'YouTube', link: content.socialLinkYoutube || '#' }
+    { icon: Youtube, color: 'bg-[#FF0000]', name: 'YouTube', link: content.socialLinkYoutube || '#' },
+    { icon: X, color: 'bg-[#000000]', name: 'X', link: content.socialLinkX || '#' }
   ];
 
   const renderLogo = () => {
@@ -36,8 +38,10 @@ export default function SocialGrid() {
       );
     }
     return (
-      <div className="font-sans text-4xl md:text-6xl font-black tracking-tighter text-white uppercase group cursor-default">
-        The <span className="text-brand-gold italic font-light lowercase inline-block">Vagina</span> Room
+      <div className="flex flex-col items-center">
+        <div className="font-sans text-4xl md:text-6xl font-black tracking-tighter text-white uppercase group cursor-default">
+          The <span className="text-brand-gold italic font-light lowercase inline-block">Vagina</span> Room
+        </div>
       </div>
     );
   };
@@ -60,10 +64,10 @@ export default function SocialGrid() {
           viewport={{ once: true }}
           className="font-black text-2xl md:text-4xl tracking-[0.2em] mb-20 uppercase"
         >
-          Stay In Touch With Me
+          <EditableText field="socialSectionTitle" />
         </motion.h2>
         
-        <div className="grid grid-cols-2 md:grid-cols-5 h-[200px] md:h-[300px]">
+        <div className="grid grid-cols-2 md:grid-cols-6 h-[200px] md:h-[300px]">
           {socials.map((social, index) => (
             <motion.a
               key={index}
@@ -86,6 +90,15 @@ export default function SocialGrid() {
             </motion.a>
           ))}
         </div>
+
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-white font-sans mt-16 text-xl font-bold tracking-widest uppercase"
+        >
+          <EditableText field="socialSubTitle" />
+        </motion.p>
       </div>
     </section>
   );

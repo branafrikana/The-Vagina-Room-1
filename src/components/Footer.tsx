@@ -47,23 +47,23 @@ export default function Footer() {
               
               <div className="flex items-start space-x-4 group">
                 <MapPin size={18} className="text-brand-gold mt-1 shrink-0" />
-                <p className="text-white/60 text-sm font-light italic leading-relaxed">
+                <EditableText field="contactAddress" multiline className="text-white/60 text-sm font-light italic leading-relaxed block overflow-hidden">
                   {content.contactAddress || "84 Okpanam Rd, opp. Legislative Quarters, GRA Phase I, Asaba, Delta State, Nigeria."}
-                </p>
+                </EditableText>
               </div>
 
               <div className="flex items-center space-x-4 group">
                 <Mail size={18} className="text-brand-gold shrink-0" />
-                <a href={`mailto:${content.contactEmail || "info@thevaginaroom.com"}`} className="text-white/60 text-sm font-light italic hover:text-brand-gold transition-colors">
+                <EditableText field="contactEmail" className="text-white/60 text-sm font-light italic hover:text-brand-gold transition-colors block">
                   {content.contactEmail || "info@thevaginaroom.com"}
-                </a>
+                </EditableText>
               </div>
 
               <div className="flex items-center space-x-4 group">
                 <Phone size={18} className="text-brand-gold shrink-0" />
-                <a href={`tel:${content.contactPhone || "+2348027294320"}`} className="text-white/60 text-sm font-light italic hover:text-brand-gold transition-colors">
+                <EditableText field="contactPhone" className="text-white/60 text-sm font-light italic hover:text-brand-gold transition-colors block">
                   {content.contactPhone || "+234 802 729 4320"}
-                </a>
+                </EditableText>
               </div>
             </div>
           </div>
@@ -72,16 +72,20 @@ export default function Footer() {
           <div className="lg:col-span-4 flex flex-col justify-center">
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-10 h-full flex flex-col justify-between">
               <div>
-                <h4 className="font-black mb-6 uppercase text-[10px] tracking-[0.5em] text-brand-red">Support Our Mission</h4>
-                <p className="text-white/60 text-sm mb-10 leading-relaxed italic font-light">
-                  Help us reach more women with trusted education, emotional care, and holistic wellness guidance.
-                </p>
+                <h4 className="font-black mb-6 uppercase text-[10px] tracking-[0.5em] text-brand-red decoration-brand-gold">
+                  <EditableText field="footerSupportTitle" className="block">Support Our Mission</EditableText>
+                </h4>
+                <div className="text-white/60 text-sm mb-10 leading-relaxed italic font-light block">
+                  <EditableText field="footerSupportDesc" multiline>
+                    Help us reach more women with trusted education, emotional care, and holistic wellness guidance.
+                  </EditableText>
+                </div>
               </div>
               <Link 
                 to="/support"
                 className="w-full bg-brand-red text-white py-5 rounded-none text-[10px] font-black tracking-[0.5em] uppercase hover:bg-white hover:text-brand-black transition-all duration-500 flex items-center justify-center group"
               >
-                👉 SUPPORT NOW
+                <EditableText field="footerSupportBtnText">👉 SUPPORT NOW</EditableText>
               </Link>
             </div>
           </div>
@@ -90,16 +94,20 @@ export default function Footer() {
           <div className="lg:col-span-4 flex flex-col justify-center">
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-10 h-full flex flex-col justify-between">
               <div>
-                <h4 className="font-black mb-6 uppercase text-[10px] tracking-[0.5em] text-brand-red">Partner With Us</h4>
-                <p className="text-white/60 text-sm mb-10 leading-relaxed italic font-light">
-                  Collaborate with us to expand our impact, build safer communities, and champion women's health.
-                </p>
+                <h4 className="font-black mb-6 uppercase text-[10px] tracking-[0.5em] text-brand-red">
+                  <EditableText field="footerPartnerTitle" className="block">Partner With Us</EditableText>
+                </h4>
+                <div className="text-white/60 text-sm mb-10 leading-relaxed italic font-light block">
+                  <EditableText field="footerPartnerDesc" multiline>
+                    Collaborate with us to expand our impact, build safer communities, and champion women's health.
+                  </EditableText>
+                </div>
               </div>
               <Link 
                 to="/partner"
                 className="w-full border border-brand-gold text-brand-gold py-5 rounded-none text-[10px] font-black tracking-[0.5em] uppercase hover:bg-brand-gold hover:text-brand-black transition-all duration-500 flex items-center justify-center group"
               >
-                👉 PARTNER NOW
+                <EditableText field="footerPartnerBtnText">👉 PARTNER NOW</EditableText>
               </Link>
             </div>
           </div>

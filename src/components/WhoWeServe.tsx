@@ -3,32 +3,6 @@ import { useContent } from '../context/ContentContext';
 import EditableText from './EditableText';
 
 export default function WhoWeServe() {
-  const { content } = useContent();
-
-  const fallbackAudience = [
-    { title: "Teen girls", description: "Foundation for a lifelong journey of self-discovery." },
-    { title: "Young women", description: "Clear guidance for the years of transition." },
-    { title: "Married women", description: "Restoring intimacy and relational harmony." },
-    { title: "Expectant mothers", description: "Nurturing wholeness through the miracle of life." },
-    { title: "Postpartum mothers", description: "Support through the transformation of motherhood." },
-    { title: "Women with fertility challenges", description: "Compassionate guidance through seasons of waiting." },
-    { title: "Women navigating hormone changes", description: "Balance and grace for the seasons of shift." },
-    { title: "Couples seeking intimacy support", description: "Rebuilding bridges of connection and intimacy." },
-    { title: "Women seeking healing from trauma", description: "Safe passage toward reclamation and peace." }
-  ];
-
-  let audiences = fallbackAudience;
-  if (content.whoWeServeJson) {
-    try {
-      audiences = JSON.parse(content.whoWeServeJson);
-      if (!Array.isArray(audiences) || audiences.length === 0) {
-        audiences = fallbackAudience;
-      }
-    } catch {
-      audiences = fallbackAudience;
-    }
-  }
-
   return (
     <section id="who-we-serve" className="py-40 bg-brand-black text-white relative border-y border-brand-gold/10">
       <div className="absolute inset-0 bg-brand-gold/[0.02] pointer-events-none" />
@@ -58,7 +32,9 @@ export default function WhoWeServe() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {audiences.map((group, index) => {
+          {[...Array(9)].map((_, index) => {
+            const titleField = `whoWeServePhase${index + 1}Title`;
+            const descField = `whoWeServePhase${index + 1}Desc`;
             return (
               <motion.div
                 key={index}
@@ -76,14 +52,14 @@ export default function WhoWeServe() {
                 <div className="relative z-10">
                   <span className="text-[10px] font-black tracking-[0.5em] uppercase text-brand-red mb-6 block">Phase 0{index + 1}</span>
                   <h3 className="font-sans text-3xl font-black mb-6 text-white uppercase tracking-tighter leading-tight group-hover:text-brand-gold transition-colors">
-                    {group.title}
+                    <EditableText field={titleField} />
                   </h3>
                 </div>
 
                 <div className="relative z-10">
                   <div className="w-8 h-px bg-brand-gold/50 mb-6 group-hover:w-16 transition-all duration-700" />
                   <p className="text-base text-white/40 leading-relaxed font-light italic group-hover:text-white/80 transition-colors">
-                    {group.description || "A community for every woman."}
+                    <EditableText field={descField} multiline />
                   </p>
                 </div>
               </motion.div>

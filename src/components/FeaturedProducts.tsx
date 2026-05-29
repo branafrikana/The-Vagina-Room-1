@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { Award, ShoppingBag, ExternalLink, ShoppingCart, MessageCircle } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 import { useCart } from '../context/CartContext';
+import EditableText from './EditableText';
 
 interface ProductItem {
   id: string;
@@ -70,14 +71,14 @@ export default function FeaturedProducts() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
               <h2 className="text-3xl font-sans font-black tracking-tighter text-white uppercase">
-                {content.productsHomeHeading || "Featured Preparations"}
+                <EditableText field="productsHomeHeading" />
               </h2>
               <p className="text-sm font-serif text-white/60 mt-2">
-                {content.productsHomeSub || "Scientifically-backed natural formulations by Dr. FID."}
+                <EditableText field="productsHomeSub" multiline />
               </p>
             </div>
             <a href="/products" className="text-[10px] uppercase font-black tracking-widest text-brand-gold hover:text-white transition-colors">
-                View Full Catalog &rarr;
+              <EditableText field="productsHomeLinkText" />
             </a>
         </div>
 

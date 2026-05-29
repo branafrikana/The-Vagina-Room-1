@@ -5,10 +5,11 @@ import { useContent, ContentData, FALLBACK_DEFAULTS } from "../context/ContentCo
 interface EditableTextProps {
   field: keyof ContentData | string;
   className?: string;
-  as?: "h1" | "h2" | "h3" | "h4" | "p" | "span" | "div";
+  as?: "h1" | "h2" | "h3" | "h4" | "p" | "span" | "div" | "ul";
   multiline?: boolean;
   fancyMode?: "break" | "inline" | "darkBreak";
   fancyColor?: string;
+  children?: React.ReactNode;
 }
 
 function formatFancyText(text: string, mode: "break" | "inline" | "darkBreak", colorClass = "text-brand-red") {
@@ -38,6 +39,7 @@ export default function EditableText({
   multiline = false,
   fancyMode,
   fancyColor,
+  children,
 }: EditableTextProps) {
   const { content, isAdmin, isEditMode, updateContentField } = useContent();
   const [isEditing, setIsEditing] = useState(false);
@@ -83,15 +85,8 @@ export default function EditableText({
 
   const textStyle = currentSize ? { fontSize: `${currentSize}%`, lineHeight: '1.2' } : {};
 
-  if (!isAdmin || !isEditMode) {
-    return (
-      <Component className={className} style={textStyle}>
-        {fancyMode ? formatFancyText(rawText, fancyMode, fancyColor) : rawText}
-      </Component>
-    );
-  }
-
   const handleStartEdit = (e: React.MouseEvent) => {
+    if (!isAdmin || !isEditMode) return;
     e.stopPropagation();
     e.preventDefault();
     setIsEditing(true);
@@ -115,7 +110,7 @@ export default function EditableText({
     }
   };
 
-  if (isEditing) {
+  if (isEditing && isAdmin && isEditMode) {
     return (
       <div className="inline-block relative w-full z-40 text-left" onClick={(e) => e.stopPropagation()}>
         {multiline ? (
@@ -177,17 +172,25 @@ export default function EditableText({
     );
   }
 
+  const isEditable = isAdmin && isEditMode;
+
   return (
-    <span
+    <Component
       onClick={handleStartEdit}
       style={textStyle}
-      className={`group relative inline-block cursor-edit border-b border-dashed border-brand-gold/30 hover:border-brand-gold transition-colors duration-200 ${className}`}
-      title="Click to edit inline and adjust size"
+      className={`group relative transition-all duration-200 ${
+        isEditable 
+          ? "cursor-edit border-b border-dashed border-brand-gold/30 hover:border-brand-gold" 
+          : ""
+      } ${className}`}
+      title={isEditable ? "Click to edit inline and adjust size" : ""}
     >
-      {fancyMode ? formatFancyText(rawText, fancyMode, fancyColor) : rawText}
-      <span className="absolute -top-6 right-0 bg-brand-gold text-brand-black text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shadow-lg pointer-events-none z-50 whitespace-nowrap">
-        <Edit3 size={8} /> Edit & Resize
-      </span>
-    </span>
+      {children ? children : (fancyMode ? formatFancyText(rawText, fancyMode, fancyColor) : rawText)}
+      {isEditable && (
+        <span className="absolute -top-6 right-0 bg-brand-gold text-brand-black text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shadow-lg pointer-events-none z-50 whitespace-nowrap">
+          <Edit3 size={8} /> Edit & Resize
+        </span>
+      )}
+    </Component>
   );
 }

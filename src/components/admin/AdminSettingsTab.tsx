@@ -4,7 +4,7 @@ import { ImageUploader } from '../../pages/AdminPage';
 import { Eye, EyeOff } from 'lucide-react';
 
 interface AdminSettingsTabProps {
-  activeTab: "general" | "branding" | "seo" | "security";
+  activeTab: "general" | "branding" | "seo" | "security" | "social";
 }
 
 export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
@@ -38,6 +38,28 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
               onChange={(e) => updateJSONField("generalSettingsJson", "siteName", e.target.value)}
               className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
             />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block tracking-widest">Slogan / Tagline</label>
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                value={config.slogan || ""}
+                onChange={(e) => updateJSONField("generalSettingsJson", "slogan", e.target.value)}
+                className="flex-grow bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                placeholder="e.g. Empowering Wellness & Intimacy"
+              />
+              <button
+                onClick={() => updateJSONField("generalSettingsJson", "showHeaderSlogan", !config.showHeaderSlogan)}
+                className={`px-4 text-[9px] font-black uppercase tracking-widest border transition-all ${
+                  config.showHeaderSlogan 
+                    ? "bg-brand-gold border-brand-gold text-brand-black" 
+                    : "bg-transparent border-white/10 text-white/40 hover:text-white"
+                }`}
+              >
+                {config.showHeaderSlogan ? "Header: ON" : "Header: OFF"}
+              </button>
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Support Email</label>
@@ -667,6 +689,16 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
     return (
       <div className="space-y-6">
         <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Site Slogan (SEO Tagline)</label>
+          <input 
+            type="text" 
+            value={config.slogan || ""}
+            onChange={(e) => updateJSONField("seoSettingsJson", "slogan", e.target.value)}
+            className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+            placeholder="Official Brand Slogan"
+          />
+        </div>
+        <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Meta Description</label>
           <textarea 
             value={config.metaDescription || ""}
@@ -768,6 +800,53 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
         <div className="mt-8 p-4 bg-brand-red/10 border border-brand-red/30">
           <p className="text-[10px] font-black uppercase tracking-widest text-brand-red mb-2">Notice</p>
           <p className="text-[10px] text-brand-red/80 leading-relaxed italic">Changes to security parameters may affect administrative access. Ensure you have backup procedures in place before tightening origin restrictions.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeTab === "social") {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white/5 p-6 border border-white/10 space-y-6 mb-8">
+           <p className="text-[10px] font-black uppercase tracking-widest text-brand-gold">Section Titles</p>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Main Heading Title</label>
+                <input type="text" value={content.socialSectionTitle || ""} onChange={(e) => updateContentField("socialSectionTitle", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" placeholder="e.g. JOIN THE SANCTUARY" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Sub-Title / Slogan</label>
+                <input type="text" value={content.socialSubTitle || ""} onChange={(e) => updateContentField("socialSubTitle", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" placeholder="e.g. STAY IN TOUCH WITH ME" />
+              </div>
+           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">X (Twitter) Link</label>
+            <input type="text" value={content.socialLinkX || ""} onChange={(e) => updateContentField("socialLinkX", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Instagram Link</label>
+            <input type="text" value={content.socialLinkInstagram || ""} onChange={(e) => updateContentField("socialLinkInstagram", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">TikTok Link</label>
+            <input type="text" value={content.socialLinkTiktok || ""} onChange={(e) => updateContentField("socialLinkTiktok", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Facebook Link</label>
+            <input type="text" value={content.socialLinkFacebook || ""} onChange={(e) => updateContentField("socialLinkFacebook", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">YouTube Link</label>
+            <input type="text" value={content.socialLinkYoutube || ""} onChange={(e) => updateContentField("socialLinkYoutube", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">LinkedIn Link</label>
+            <input type="text" value={content.socialLinkLinkedin || ""} onChange={(e) => updateContentField("socialLinkLinkedin", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+          </div>
         </div>
       </div>
     );

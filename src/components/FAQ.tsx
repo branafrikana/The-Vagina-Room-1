@@ -101,7 +101,7 @@ export default function FAQ() {
           </p>
         </motion.div>
 
-        <div className="space-y-4">
+        <EditableText field="faqDataJson" multiline className="space-y-4 block" as="div">
           {faqs.map((faq, index) => (
             <motion.div 
               key={index}
@@ -147,7 +147,7 @@ export default function FAQ() {
               </AnimatePresence>
             </motion.div>
           ))}
-        </div>
+        </EditableText>
 
         <motion.div 
           initial={{ opacity: 0 }}

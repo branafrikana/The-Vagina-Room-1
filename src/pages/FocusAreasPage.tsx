@@ -189,7 +189,7 @@ export default function FocusAreasPage() {
         description: "Your goal is holistic wellness education, herbal tonic implementation, and knowing your biological rights. This pathway blends physical, mental, and constitutional wellness gracefully.",
         recs: ["Herbal formula wellness insights", "Natural therapies exploration", "Reproductive advocacy resources"],
         actionLabel: "Join The Exclusive Community Lounge",
-        actionUrl: "https://join.thevaginaroom.com"
+        actionUrl: "/join-community"
       });
     }
   };
@@ -414,17 +414,15 @@ export default function FocusAreasPage() {
               </p>
 
               <div>
-                <a 
-                  href={content.focusAreasCtaUrl || "https://join.thevaginaroom.com"} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <Link 
+                  to="/join-community" 
                   className="bg-brand-red hover:bg-brand-gold text-white hover:text-brand-black px-12 py-5 font-mono text-[10px] font-black tracking-[0.4em] uppercase transition-all duration-500 shadow-2xl inline-flex items-center group relative overflow-hidden"
                 >
                   <span className="relative z-10">{content.focusAreasCtaBtnText || "Join The Community"}</span>
                   <ArrowRight className="ml-4 group-hover:translate-x-2 transition-transform relative z-10" size={14} />
                   {/* Hover white sheen */}
                   <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white/15 opacity-40 group-hover:animate-shine" />
-                </a>
+                </Link>
               </div>
             </div>
           </section>

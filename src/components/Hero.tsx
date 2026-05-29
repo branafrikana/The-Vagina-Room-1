@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { Play, ArrowRight, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useContent } from '../context/ContentContext';
 import EditableText from './EditableText';
 import { ImageLoader } from './ImageLoader';
@@ -106,22 +107,29 @@ export default function Hero() {
               <motion.div
                 variants={itemVariants}
               >
-                <div className="space-y-2 mb-8">
+                <EditableText field="kyvSubtexts" multiline className="space-y-4 mb-8 block" as="div">
                   {subtexts.map((line, i) => (
-                    <p key={i} className="text-sm font-black tracking-[0.4em] uppercase text-white">{line}</p>
+                    <p key={i} className="text-sm font-black tracking-[0.4em] uppercase text-white last:mb-2 leading-relaxed">{line}</p>
                   ))}
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-4">
+                </EditableText>
+                
+                <div className="flex flex-col sm:flex-row gap-6">
                    <a 
                      href={content.kyvYoutubeUrl || "https://www.youtube.com"}
                      target="_blank"
                      rel="noopener noreferrer"
-                     className="bg-brand-red text-white px-10 py-5 rounded-none text-xs font-black tracking-widest uppercase hover:bg-white hover:text-brand-black transition-all duration-500 shadow-2xl flex items-center justify-center"
+                     className="bg-brand-red text-white px-10 py-5 rounded-none text-xs font-black tracking-widest uppercase hover:bg-white hover:text-brand-black transition-all duration-300 shadow-2xl flex items-center justify-center group"
                    >
                      <EditableText field="kyvBtnText" />
-                     <ArrowRight className="ml-3" size={16} />
+                     <ArrowRight className="ml-3 group-hover:translate-x-1.5 transition-transform" size={16} />
                   </a>
+                  <Link 
+                     to="/join-community"
+                     className="bg-transparent border border-brand-gold text-brand-gold px-10 py-5 rounded-none text-xs font-black tracking-widest uppercase hover:bg-brand-gold hover:text-brand-black transition-all duration-300 shadow-2xl flex items-center justify-center group"
+                   >
+                     JOIN THE SANCTUARY
+                     <ArrowRight className="ml-3 group-hover:translate-x-1.5 transition-transform" size={16} />
+                  </Link>
                 </div>
               </motion.div>
 

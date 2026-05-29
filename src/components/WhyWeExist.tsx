@@ -47,7 +47,7 @@ export default function WhyWeExist() {
               <p className="text-white/40 uppercase tracking-widest text-xs font-black mb-10 border-b border-white/10 pb-4">
                 <EditableText field="whyWeExistStruggleTitle" />
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+              <EditableText field="whyWeExistStruggles" multiline className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 block" as="div">
                 {struggles.map((struggle, index) => (
                   <motion.div 
                     key={index}
@@ -61,7 +61,7 @@ export default function WhyWeExist() {
                     <p className="text-lg text-white/80 font-medium group-hover:text-white transition-colors">{struggle}</p>
                   </motion.div>
                 ))}
-              </div>
+              </EditableText>
             </div>
 
             {/* Closing Statement */}

@@ -1642,3 +1642,119 @@ export function AdminDrFidBookingTab() {
     </div>
   );
 }
+
+/* 13. JOIN COMMUNITY PAGE EDITOR */
+export function AdminJoinCommunityTab() {
+  const { content, updateContentField } = useContent();
+
+  const DEFAULT_BENEFITS = [
+    { title: "Safe & Private", text: "A confidential space where your questions are respected and your privacy is paramount.", icon: "ShieldCheck" },
+    { title: "Expert-Led Education", text: "Access trusted, science-backed guidance on reproductive and intimate wellness.", icon: "BookOpen" },
+    { title: "Global Sisterhood", text: "Connect with women worldwide on similar journeys of healing and discovery.", icon: "Users" },
+    { title: "Holistic Support", text: "Integrative wellness tools that address your physical, emotional, and relational well-being.", icon: "Heart" }
+  ];
+
+  const DEFAULT_WHAT_YOU_GET = [
+    "Bi-weekly wellness masterclasses with Dr. FID",
+    "Access to our private discussion sanctuary",
+    "Digital intimacy wellness library & resources",
+    "Priority booking for retreats and workshops",
+    "Exclusive discounts on curated healing products",
+    "A supportive network of like-minded women"
+  ];
+
+  return (
+    <div className="space-y-6">
+      <h3 className="text-base font-black uppercase tracking-[0.2em] text-brand-gold flex items-center gap-1.5 border-b border-white/5 pb-2">🤝 Community Page Settings</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Page Browser Title</label>
+          <input 
+            type="text" 
+            value={content.joinCommunityTitle || ""}
+            onChange={(e) => updateContentField("joinCommunityTitle", e.target.value)}
+            className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+            placeholder="e.g. Join The Sanctuary"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Join Registration Cost</label>
+          <input 
+            type="text" 
+            value={content.joinCommunityRegistrationCost || ""}
+            onChange={(e) => updateContentField("joinCommunityRegistrationCost", e.target.value)}
+            className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+            placeholder="e.g. Registration Fee: NGN 25,000 / $50"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Hero Heading</label>
+        <textarea 
+          value={content.joinCommunityHeading || ""}
+          onChange={(e) => updateContentField("joinCommunityHeading", e.target.value)}
+          className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold h-16 text-xs font-mono leading-relaxed" 
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Section Subheading</label>
+        <textarea 
+          value={content.joinCommunitySubheading || ""}
+          onChange={(e) => updateContentField("joinCommunitySubheading", e.target.value)}
+          className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold h-16 text-xs font-mono leading-relaxed" 
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">CTA Button Label</label>
+          <input 
+            type="text" 
+            value={content.joinCommunityCtaText || ""}
+            onChange={(e) => updateContentField("joinCommunityCtaText", e.target.value)}
+            className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Registration External Link</label>
+          <input 
+            type="text" 
+            value={content.joinCommunityCtaUrl || ""}
+            onChange={(e) => updateContentField("joinCommunityCtaUrl", e.target.value)}
+            className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+          />
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Hero Background Image</label>
+        <ImageUploader fieldKey="joinCommunityHeroBgUrl" label="Background Image" />
+      </div>
+
+      <div className="border-t border-white/5 pt-6 space-y-6">
+        <ArrayJSONEditor
+          label="Key Benefits Matrix"
+          fieldKey="joinCommunityBenefitsJson"
+          value={content.joinCommunityBenefitsJson || ""}
+          onChange={updateContentField}
+          defaultStructure={{ title: "", text: "", icon: "Heart" }}
+          itemType="Benefit Item"
+          fallbackData={DEFAULT_BENEFITS}
+        />
+
+        <ArrayJSONEditor
+          label="Member Deliverables (What You Get)"
+          fieldKey="joinCommunityWhatYouGetJson"
+          value={content.joinCommunityWhatYouGetJson || ""}
+          onChange={updateContentField}
+          defaultStructure=""
+          itemType="Deliverable"
+          fallbackData={DEFAULT_WHAT_YOU_GET}
+        />
+      </div>
+    </div>
+  );
+}

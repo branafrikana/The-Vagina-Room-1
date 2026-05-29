@@ -413,7 +413,7 @@ export default function AdminPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "submissions" | "content" | "navigation" | "general" | "branding" | "seo" | "security" | "reorder_sections" | "products" | "orders" | "business_details" | "checkout_settings">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "submissions" | "content" | "navigation" | "general" | "branding" | "seo" | "security" | "social" | "reorder_sections" | "products" | "orders" | "business_details" | "checkout_settings">("dashboard");
   const [activeContentTab, setActiveContentTab] = useState<"home" | "about_us" | "about_dr_fid" | "dr_fid_booking" | "focus_areas" | "team_partner" | "projects_events" | "gallery" | "contact" | "testimonials" | "support" | "policy_terms" | "footer">("home");
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
@@ -955,6 +955,18 @@ export default function AdminPage() {
                 <span className="text-xs">🛡️</span> Security
               </span>
             </button>
+            <button
+              onClick={() => setActiveTab("social")}
+              className={`w-full text-left px-5 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-between cursor-pointer ${
+                activeTab === "social"
+                  ? "bg-brand-gold text-brand-black"
+                  : "bg-white/[0.02] border border-white/5 text-white/70 hover:bg-white/[0.05]"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-xs">🌐</span> Social Media Links
+              </span>
+            </button>
           </div>
 
           {/* Module Panel Area */}
@@ -1318,7 +1330,7 @@ export default function AdminPage() {
                     </p>
 
                       <div className="flex flex-wrap gap-2 mb-8 border-b border-white/5 pb-2">
-                        {["home", "about_us", "about_dr_fid", "dr_fid_booking", "focus_areas", "testimonials", "team_partner", "projects_events", "gallery", "contact", "support", "policy_terms", "footer"].map((tab) => (
+                        {["home", "about_us", "about_dr_fid", "dr_fid_booking", "join_community", "focus_areas", "testimonials", "team_partner", "projects_events", "gallery", "contact", "support", "policy_terms", "footer"].map((tab) => (
                           <button
                             key={tab}
                             onClick={() => setActiveContentTab(tab as any)}
@@ -1332,6 +1344,7 @@ export default function AdminPage() {
                              : tab === "about_us" ? "About Us Page" 
                              : tab === "about_dr_fid" ? "About Dr. FID" 
                              : tab === "dr_fid_booking" ? "Dr. FID Booking"
+                             : tab === "join_community" ? "Join Community"
                              : tab === "support" ? "Support/Donate"
                              : tab === "policy_terms" ? "Policy & Terms"
                              : tab === "footer" ? "Footer Editor"
@@ -1359,7 +1372,7 @@ export default function AdminPage() {
               )}
 
               {/* Tab 3: Config Settings */}
-              {["general", "branding", "seo", "security"].includes(activeTab) && (
+              {["general", "branding", "seo", "security", "social"].includes(activeTab) && (
                 <motion.div
                   key="settings-tab"
                   initial={{ opacity: 0, x: 10 }}

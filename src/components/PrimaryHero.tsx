@@ -223,7 +223,7 @@ export default function PrimaryHero() {
             }}
             className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-24 z-10"
           >
-            <a href={content.heroBtnUrl || "https://join.thevaginaroom.com"} target="_blank" rel="noopener noreferrer">
+            <Link to="/join-community">
               <motion.button 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -231,7 +231,7 @@ export default function PrimaryHero() {
               >
                 {isAdmin && isEditMode ? <EditableText field="heroBtnText" /> : (content.heroBtnText || "👉 Join The Community")}
               </motion.button>
-            </a>
+            </Link>
             <Link 
               to="/dr-fid-booking"
               className="text-white/60 hover:text-white flex items-center space-x-2 text-xs font-black tracking-[0.3em] uppercase transition-all"

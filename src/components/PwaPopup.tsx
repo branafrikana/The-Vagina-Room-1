@@ -3,30 +3,13 @@ import { motion, AnimatePresence } from "motion/react";
 import { X, Check, RefreshCw } from "lucide-react";
 import { useContent } from "../context/ContentContext";
 
-// Cookie helper functions
-const getCookie = (name: string): string | null => {
-  if (typeof document === "undefined") return null;
-  const nameEQ = name + "=";
-  const ca = document.cookie.split(";");
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) === " ") c = c.substring(1, c.length);
-    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-  }
-  return null;
-};
-
-const setSessionCookie = (name: string, value: string) => {
-  if (typeof document !== "undefined") {
-    // Omitting Expires and Max-Age creates a session cookie that expires when browser is closed
-    document.cookie = `${name}=${value}; path=/; SameSite=Lax`;
-  }
-};
-
 export default function PwaPopup() {
   const { content } = useContent();
   const pwaSettings = JSON.parse(content.pwaSettingsJson || '{}');
+  const brandingSettings = JSON.parse(content.brandingSettingsJson || '{}');
   const isEnabledInBackend = pwaSettings.showPopup !== false;
+  
+  const appLogoUrl = brandingSettings.headerLogoUrl || "/icon-512.png";
 
   const [isVisible, setIsVisible] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
@@ -34,13 +17,7 @@ export default function PwaPopup() {
   const [deviceType, setDeviceType] = useState<"ios" | "android" | "other">("other");
   const [installSuccess, setInstallSuccess] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<"idle" | "checking" | "latest" | "error">("idle");
-
-  const isPromptDismissed = typeof document !== "undefined" && (
-    getCookie("pwa_popup_shown_session") === "true" ||
-    sessionStorage.getItem("pwa_popup_shown_session") === "true"
-  );
 
   useEffect(() => {
     // 1. Detect if already in standalone app mode
@@ -67,21 +44,15 @@ export default function PwaPopup() {
     };
     detectDevice();
 
-    // Prevent show timeouts completely if standalone OR if the session cookie/storage exists OR if disabled in backend
-    if (standalone || isPromptDismissed || !isEnabledInBackend) {
+    // Prevent show timeouts completely if standalone OR if disabled in backend
+    if (standalone || !isEnabledInBackend) {
       return;
     }
 
     let showTimeout: NodeJS.Timeout;
 
-    const triggerPopupWithSessionLock = (delayMs: number) => {
+    const triggerPopup = (delayMs: number) => {
       showTimeout = setTimeout(() => {
-        // Explicitly check the cookie again right before triggering to handle multiple instances
-        if (getCookie("pwa_popup_shown_session") === "true") return;
-
-        // Mark as shown for the session immediately so subsequent views don't display it anymore
-        setSessionCookie("pwa_popup_shown_session", "true");
-        sessionStorage.setItem("pwa_popup_shown_session", "true");
         setIsVisible(true);
       }, delayMs);
     };
@@ -91,9 +62,9 @@ export default function PwaPopup() {
       e.preventDefault();
       setDeferredPrompt(e);
       
-      // If PWA is eligible, show popup after delayed graceful introduction
+      // If PWA is eligible, show popup after short graceful introduction
       if (!showTimeout) {
-        triggerPopupWithSessionLock(8000); // Expanded 8-second delay
+        triggerPopup(2000); // Reduced delay for faster visibility
       }
     };
 
@@ -101,7 +72,7 @@ export default function PwaPopup() {
 
     // Safari / iOS and other fallback non-Chromium devices (where beforeinstallprompt won't trigger)
     // We schedule a fallback trigger
-    triggerPopupWithSessionLock(9000); // Generous 9-second delay for fallback devices
+    triggerPopup(3000); // Reduced delay for faster visibility
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -109,7 +80,7 @@ export default function PwaPopup() {
         clearTimeout(showTimeout);
       }
     };
-  }, [isStandalone, isPromptDismissed]);
+  }, [isStandalone, isEnabledInBackend]);
 
   const handleNativeInstall = async () => {
     if (!deferredPrompt) return;
@@ -204,11 +175,6 @@ export default function PwaPopup() {
     );
   }
 
-  // If the user already has seed cookie/session dismissed flag, prevent prompt rendering
-  if (isPromptDismissed) {
-    return null;
-  }
-
   return (
     <AnimatePresence>
       {isVisible && (
@@ -223,11 +189,11 @@ export default function PwaPopup() {
             {/* Main Content */}
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-white/5 border border-brand-gold/20 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 bg-white/5 border border-brand-gold/20 flex items-center justify-center flex-shrink-0">
                   <img
-                    src="/icon-512.png"
+                    src={appLogoUrl}
                     alt="App Logo"
-                    className="w-8 h-8 object-contain"
+                    className="w-full h-full object-contain p-2"
                   />
                 </div>
                 <div className="flex-grow min-w-0">
@@ -255,41 +221,32 @@ export default function PwaPopup() {
                       {deferredPrompt ? (
                         <button
                           onClick={handleNativeInstall}
-                          className="bg-brand-gold text-brand-black px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-lg shadow-brand-gold/5"
+                          className="bg-brand-gold text-brand-black px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-lg shadow-brand-gold/5 whitespace-nowrap"
                         >
-                          Install
+                          Install App
                         </button>
                       ) : (
-                        <button
-                          onClick={() => setShowInstructions(!showInstructions)}
-                          className="bg-white/5 border border-white/10 text-white/80 px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:border-brand-gold transition-all"
-                        >
-                          {showInstructions ? 'Close' : 'How?'}
-                        </button>
+                        <div className="text-[10px] text-white font-bold tracking-widest">
+                          {deviceType === 'ios' ? 'Tap Share ⇪ to Install' : 'Tap menu ⋮ to Install'}
+                        </div>
                       )}
                     </>
                   )}
                 </div>
               </div>
 
-              {showInstructions && !deferredPrompt && !installSuccess && (
+              {/* Always show instructions if not native prompt and not success */}
+              {!deferredPrompt && !installSuccess && (
                 <motion.div 
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   className="pt-4 border-t border-white/10 space-y-3"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">1</div>
-                    <p className="text-[10px] text-white/60 leading-relaxed font-serif italic">
-                      Tap the <span className="text-white font-sans not-italic font-black mx-1 inline-flex items-center gap-1 border border-white/10 px-1.5 py-0.5 rounded bg-white/5">Share</span> button in your browser toolbar.
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">2</div>
-                    <p className="text-[10px] text-white/60 leading-relaxed font-serif italic">
-                      Scroll down and select <span className="text-white font-sans not-italic font-black border border-white/10 px-1.5 py-0.5 rounded bg-white/5 ml-1">Add to Home Screen</span>.
-                    </p>
-                  </div>
+                  <p className="text-[8px] text-white font-bold tracking-widest uppercase text-center w-full">
+                    {deviceType === 'ios' 
+                      ? "Instructions: Tap 'Share' ⇪ → 'Add to Home Screen'"
+                      : "Instructions: Tap menu ⋮ → 'Install' or 'Add to Home Screen'"}
+                  </p>
                 </motion.div>
               )}
             </div>

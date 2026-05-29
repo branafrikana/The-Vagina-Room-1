@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useContent } from '../context/ContentContext';
 import EditableText from './EditableText';
 
@@ -50,7 +51,7 @@ export default function CommunitySection() {
                referrerPolicy="no-referrer"
             />
             {/* Overlay Stats or Badge inspired by the request */}
-            <div className="absolute -bottom-10 -right-10 bg-brand-gold p-12 hidden md:block border border-black/10">
+            <div className="absolute -bottom-10 -right-10 bg-brand-gold p-12 hidden md:block border border-black/10 text-center">
                <p className="text-brand-black font-black text-6xl tracking-tighter uppercase mb-2">JOIN</p>
                <p className="text-brand-black/60 text-xs font-black tracking-widest uppercase">THE COMMUNITY</p>
             </div>
@@ -86,7 +87,7 @@ export default function CommunitySection() {
                 <EditableText field="communityExperiencesTitle" fancyMode="inline" />
               </p>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-12">
+              <EditableText field="communityExperiences" multiline className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-12 block" as="div">
                 {experiences.map((experience, index) => (
                   <motion.div 
                     key={index}
@@ -100,7 +101,7 @@ export default function CommunitySection() {
                     <p className="text-sm font-medium text-white/70 group-hover:text-white transition-colors uppercase tracking-tight">{experience}</p>
                   </motion.div>
                 ))}
-              </div>
+              </EditableText>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -113,15 +114,13 @@ export default function CommunitySection() {
                   <EditableText field="communityQuote" multiline />
                 </p>
                 <div>
-                  <a 
-                    href={content.communityBtnUrl || "https://join.thevaginaroom.com"}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link 
+                    to="/join-community"
                     className="inline-flex items-center bg-brand-red text-white px-10 py-5 rounded-none text-xs font-black tracking-[0.4em] uppercase hover:bg-white hover:text-brand-black transition-all duration-500 shadow-2xl group"
                   >
                     <EditableText field="communityBtnText" />
                     <ArrowRight className="ml-4 group-hover:translate-x-1.5 transition-transform" size={14} />
-                  </a>
+                  </Link>
                 </div>
               </motion.div>
             </div>

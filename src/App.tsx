@@ -24,6 +24,7 @@ import SupportPage from './pages/SupportPage';
 import PartnerPage from './pages/PartnerPage';
 import PolicyPage from './pages/PolicyPage';
 import TermsPage from './pages/TermsPage';
+import JoinCommunityPage from './pages/JoinCommunityPage';
 import AdminPage from './pages/AdminPage';
 
 export default function App() {
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="/partner" element={<PartnerPage />} />
               <Route path="/privacy-policy" element={<PolicyPage />} />
               <Route path="/terms-of-service" element={<TermsPage />} />
+              <Route path="/join-community" element={<JoinCommunityPage />} />
               <Route path="/admin" element={<AdminPage />} />
             </Routes>
           </BrowserRouter>

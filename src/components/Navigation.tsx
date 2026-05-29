@@ -4,6 +4,7 @@ import { Menu, X, ChevronDown, Download, Search } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import SearchOverlay from './SearchOverlay';
 import { useContent } from '../context/ContentContext';
+import { safeJsonParse } from '../lib/json';
 
 export default function Navigation() {
   const { content } = useContent();
@@ -51,13 +52,14 @@ export default function Navigation() {
     setMobileSubmenuOpen(false);
   }, [location]);
 
-  const navLinks = JSON.parse(content.headerMenuJson || '[]') as {
+  const navLinks = safeJsonParse(content.headerMenuJson, []) as {
     name: string;
     href: string;
     submenu?: { name: string; href: string }[];
   }[];
 
-  const branding = JSON.parse(content.brandingSettingsJson || '{}');
+  const branding = safeJsonParse(content.brandingSettingsJson, {} as any);
+  const generalSettings = safeJsonParse(content.generalSettingsJson, {} as any);
 
   const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -75,19 +77,26 @@ export default function Navigation() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-        <Link to="/" onClick={handleLogoClick} className="font-sans text-3xl font-black tracking-tighter text-white uppercase group">
-          {branding.headerLogoType === 'image' && branding.headerLogoUrl ? (
-            <img 
-              src={branding.headerLogoUrl} 
-              alt="The Vagina Room" 
-              style={{ height: `${branding.headerLogoHeight || 44}px` }}
-              className="max-h-16 md:max-h-none w-auto object-contain transition-transform group-hover:scale-105"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <>The <span className="text-brand-gold italic font-light lowercase transition-transform group-hover:scale-110 inline-block">Vagina</span> Room</>
+        <div className="flex flex-col">
+          <Link to="/" onClick={handleLogoClick} className="font-sans text-3xl font-black tracking-tighter text-white uppercase group">
+            {branding.headerLogoType === 'image' && branding.headerLogoUrl ? (
+              <img 
+                src={branding.headerLogoUrl} 
+                alt="The Vagina Room" 
+                style={{ height: `${branding.headerLogoHeight || 44}px` }}
+                className="max-h-16 md:max-h-none w-auto object-contain transition-transform group-hover:scale-105"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <>The <span className="text-brand-gold italic font-light lowercase transition-transform group-hover:scale-110 inline-block">Vagina</span> Room</>
+            )}
+          </Link>
+          {generalSettings.slogan && generalSettings.showHeaderSlogan && (
+            <p className="text-[7px] md:text-[8px] uppercase tracking-[0.3em] text-brand-gold/50 font-mono mt-1 hidden sm:block">
+              {generalSettings.slogan}
+            </p>
           )}
-        </Link>
+        </div>
 
         {/* Unified Header Navigation Actions */}
         <div className="flex items-center space-x-2 relative z-[60]">
@@ -125,7 +134,7 @@ export default function Navigation() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed top-0 right-0 bottom-0 w-[90%] sm:w-[85%] max-w-[450px] bg-brand-black border-l border-white/10 pt-24 px-6 md:px-12 pb-24 z-50 flex flex-col overflow-y-auto"
+              className="fixed top-0 right-0 bottom-0 w-[90%] sm:w-[85%] max-w-[450px] bg-brand-black border-l border-white/10 pt-20 px-6 md:px-12 pb-10 z-50 flex flex-col overflow-y-auto h-full"
             >
               {navLinks.map((link) => (
                 <div key={link.name} className="flex flex-col space-y-6 mb-8 flex-shrink-0">

@@ -5,11 +5,19 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 import EditableText from './EditableText';
 
-function FocusAreaCard({ area, index }: { area: typeof FOCUS_AREAS[0], index: number; key?: string | number }) {
+function FocusAreaCard({ index }: { index: number }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const initialItems = area.items.slice(0, 4);
-  const remainingItems = area.items.slice(4);
-  const hasMore = area.items.length > 4;
+  const { content } = useContent();
+  
+  const titleField = `focusArea${index + 1}Title`;
+  const itemsField = `focusArea${index + 1}Items`;
+  
+  const itemsText = (content as any)[itemsField] || "";
+  const items = itemsText.split("\n").map((s: string) => s.trim()).filter(Boolean);
+
+  const initialItems = items.slice(0, 4);
+  const remainingItems = items.slice(4);
+  const hasMore = items.length > 4;
 
   return (
     <motion.div
@@ -21,11 +29,13 @@ function FocusAreaCard({ area, index }: { area: typeof FOCUS_AREAS[0], index: nu
     >
       <span className="text-brand-gold text-5xl font-sans font-black mb-12 block opacity-40 group-hover:opacity-100 transition-opacity">0{index + 1}</span>
       
-      <h3 className="font-sans text-2xl font-black mb-8 text-white tracking-widest uppercase">{area.title}</h3>
+      <h3 className="font-sans text-2xl font-black mb-8 text-white tracking-widest uppercase">
+        <EditableText field={titleField} />
+      </h3>
       
       <div className="flex-grow">
-        <ul className="space-y-4">
-          {initialItems.map((item) => (
+        <EditableText field={itemsField} multiline className="space-y-4 block" as="ul">
+          {initialItems.map((item: string) => (
             <li key={item} className="flex items-start text-sm font-black uppercase tracking-widest text-white/60 group-hover:text-white transition-colors">
               <span className="text-brand-gold mr-4">+</span>
               {item}
@@ -42,7 +52,7 @@ function FocusAreaCard({ area, index }: { area: typeof FOCUS_AREAS[0], index: nu
                 className="overflow-hidden"
               >
                 <div className="pt-6 space-y-4">
-                  {remainingItems.map((item) => (
+                  {remainingItems.map((item: string) => (
                     <li key={item} className="list-none flex items-start text-sm font-black uppercase tracking-widest text-white/60 group-hover:text-white transition-colors">
                       <span className="text-brand-gold mr-4">+</span>
                       {item}
@@ -52,7 +62,7 @@ function FocusAreaCard({ area, index }: { area: typeof FOCUS_AREAS[0], index: nu
               </motion.div>
             )}
           </AnimatePresence>
-        </ul>
+        </EditableText>
       </div>
 
       {hasMore && (
@@ -73,16 +83,6 @@ function FocusAreaCard({ area, index }: { area: typeof FOCUS_AREAS[0], index: nu
 }
 
 export default function FocusAreas() {
-  const { content } = useContent();
-  let areas = FOCUS_AREAS;
-  if (content.focusAreasJson) {
-    try {
-      areas = JSON.parse(content.focusAreasJson);
-    } catch (e) {
-      areas = FOCUS_AREAS;
-    }
-  }
-
   return (
     <section id="focus-areas" className="py-40 bg-[#050505] text-white relative">
       <div className="max-w-7xl mx-auto px-6">
@@ -96,9 +96,9 @@ export default function FocusAreas() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 border-y border-white/5">
-          {areas.map((area, index) => (
-            <FocusAreaCard key={area.title} area={area} index={index} />
-          ))}
+          <FocusAreaCard index={0} />
+          <FocusAreaCard index={1} />
+          <FocusAreaCard index={2} />
         </div>
       </div>
     </section>

@@ -12,11 +12,12 @@ import {
   AdminSupportTab,
   AdminPolicyTermsTab,
   AdminFooterTab,
-  AdminDrFidBookingTab
+  AdminDrFidBookingTab,
+  AdminJoinCommunityTab
 } from './AdminOtherTabs';
 
 interface Props {
-  activeContentTab: "home" | "about_us" | "about_dr_fid" | "dr_fid_booking" | "focus_areas" | "team_partner" | "projects_events" | "gallery" | "contact" | "testimonials" | "support" | "policy_terms" | "footer";
+  activeContentTab: "home" | "about_us" | "about_dr_fid" | "dr_fid_booking" | "focus_areas" | "team_partner" | "projects_events" | "gallery" | "contact" | "testimonials" | "support" | "policy_terms" | "join_community" | "footer";
   handleSaveAllContent: () => void;
   saveStatus: string;
 }
@@ -36,6 +37,7 @@ export default function AdminContentRenderer({ activeContentTab, handleSaveAllCo
       {activeContentTab === 'testimonials' && <AdminTestimonialsTab />}
       {activeContentTab === 'support' && <AdminSupportTab />}
       {activeContentTab === 'policy_terms' && <AdminPolicyTermsTab />}
+      {activeContentTab === 'join_community' && <AdminJoinCommunityTab />}
       {activeContentTab === 'footer' && <AdminFooterTab />}
     </div>
   );
