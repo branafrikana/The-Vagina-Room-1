@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { ShieldCheck, BookOpen, Users, Heart, ArrowRight, CheckCircle2, Star } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -35,10 +35,10 @@ export default function JoinCommunityPage() {
 
   return (
     <>
-      <Helmet>
-        <title>{content.joinCommunityTitle || "Join The Sanctuary - The Vagina Room"}</title>
-        <meta name="description" content={content.joinCommunitySubheading} />
-      </Helmet>
+      <SEO 
+        title={content.joinCommunityTitle || "Join The Sanctuary"} 
+        description={content.joinCommunitySubheading}
+      />
       
       <div className="bg-brand-black text-white min-h-screen selection:bg-brand-gold selection:text-brand-black">
         <Navigation />

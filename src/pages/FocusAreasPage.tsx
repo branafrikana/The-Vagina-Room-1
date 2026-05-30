@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { 
   Heart, 
   Sparkles, 
@@ -16,11 +16,20 @@ import {
   HeartHandshake, 
   Eye, 
   Activity, 
-  ShieldCheck 
+  ShieldCheck,
+  Orbit,
+  Sun,
+  Moon,
+  Droplets,
+  Flame,
+  Wind,
+  Infinity,
+  Star
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import Breadcrumbs from '../components/Breadcrumbs';
 import { useContent } from '../context/ContentContext';
 import EditableText from '../components/EditableText';
 
@@ -54,7 +63,21 @@ export default function FocusAreasPage() {
     actionUrl: string;
   } | null>(null);
 
-  const getSectionIcon = (title: string, size = 32) => {
+  const getSectionIcon = (title: string, index: number, size = 32) => {
+    const defaultIcons = [
+      Sparkles, 
+      Activity, 
+      Compass, 
+      Orbit, 
+      Sun, 
+      Moon, 
+      Droplets, 
+      Flame, 
+      Wind, 
+      Infinity, 
+      Star
+    ];
+    
     const lower = title.toLowerCase();
     if (lower.includes('vaginal') || lower.includes('reproductive')) {
       return <Flower2 className="text-brand-red" size={size} />;
@@ -62,7 +85,10 @@ export default function FocusAreasPage() {
     if (lower.includes('sexual') || lower.includes('relationship') || lower.includes('intimacy')) {
       return <Heart className="text-brand-gold" size={size} />;
     }
-    return <Sparkles className="text-brand-gold" size={size} />;
+    
+    // For other categories, assign a unique icon dynamically based on their index
+    const IconComponent = defaultIcons[index % defaultIcons.length];
+    return <IconComponent className="text-brand-gold" size={size} />;
   };
 
   // High-fidelity rich default sections designed with deep contextual details
@@ -196,15 +222,18 @@ export default function FocusAreasPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Focus Areas - The Vagina Room</title>
-        <meta name="description" content="Explore our core expertise: Vaginal & Reproductive Wellness, Sexual Wellness & Relationship Support, and Holistic Healing & Empowerment." />
-      </Helmet>
+      <SEO 
+        title="Focus Areas" 
+        description="Explore our core expertise: Vaginal & Reproductive Wellness, Sexual Wellness & Relationship Support, and Holistic Healing & Empowerment."
+      />
 
       <div className="bg-[#050505] text-white min-h-screen selection:bg-brand-gold selection:text-brand-black relative">
         <Navigation />
         
         <main className="pt-28 pb-12">
+          <div className="max-w-7xl mx-auto px-6 md:px-12 pt-8">
+            <Breadcrumbs items={[{ label: 'The Framework' }]} />
+          </div>
           {/* Majestic Atmospheric Hero Banner */}
           <section className="py-24 px-6 md:px-12 relative overflow-hidden flex flex-col justify-center min-h-[70vh]">
             <div className="absolute inset-0 z-0">
@@ -267,7 +296,7 @@ export default function FocusAreasPage() {
               >
                 <span>All Core Areas</span>
               </button>
-              {sections.map((sec) => (
+              {sections.map((sec, idx) => (
                 <button
                   key={sec.id}
                   onClick={() => setActiveTab(sec.id)}
@@ -277,7 +306,7 @@ export default function FocusAreasPage() {
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  {getSectionIcon(sec.title, 12)}
+                  {getSectionIcon(sec.title, idx, 12)}
                   <span className="truncate">{sec.title.split(' ')[0]} Wellness</span>
                 </button>
               ))}
@@ -288,7 +317,9 @@ export default function FocusAreasPage() {
           <section className="py-24 px-6 md:px-12 relative z-10">
             <div className="max-w-6xl mx-auto space-y-36">
               <AnimatePresence mode="wait">
-                {filteredSections.map((section, idx) => (
+                {filteredSections.map((section, filteredIdx) => {
+                  const originalIdx = sections.findIndex(s => s.id === section.id);
+                  return (
                   <motion.div
                     key={section.id}
                     initial={{ opacity: 0, y: 40 }}
@@ -300,12 +331,12 @@ export default function FocusAreasPage() {
                     {/* Left Column: Core Theme Presentation */}
                     <div className="lg:col-span-5 lg:sticky lg:top-36 space-y-6">
                       <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
-                        {getSectionIcon(section.title, 28)}
+                        {getSectionIcon(section.title, originalIdx !== -1 ? originalIdx : filteredIdx, 28)}
                       </div>
                       
                       <div className="space-y-3">
                         <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-brand-gold">
-                          0{idx + 1} / SECTION PILLAR
+                          0{originalIdx !== -1 ? originalIdx + 1 : filteredIdx + 1} / SECTION PILLAR
                         </span>
                         <h2 className="text-3xl sm:text-5xl font-serif font-light text-white leading-tight uppercase">
                           {section.title}
@@ -353,7 +384,9 @@ export default function FocusAreasPage() {
                                   <div className="bg-brand-gold/5 border border-brand-gold/20 p-1 rounded-md">
                                     <CheckCircle2 size={13} className="text-brand-gold" />
                                   </div>
-                                  <span className="font-mono text-[8px] text-white/20 tracking-widest">{idx + 1}.{i + 1}</span>
+                                  <span className="font-mono text-[8px] text-white/20 tracking-widest">
+                                    {originalIdx !== -1 ? originalIdx + 1 : filteredIdx + 1}.{i + 1}
+                                  </span>
                                 </div>
                                 
                                 <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-white group-hover:text-brand-gold transition-colors duration-300">
@@ -375,7 +408,8 @@ export default function FocusAreasPage() {
                       </div>
                     </div>
                   </motion.div>
-                ))}
+                  );
+                })}
               </AnimatePresence>
             </div>
           </section>

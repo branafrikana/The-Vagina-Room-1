@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
 import { sendWhatsAppMessage } from '../lib/whatsapp';
 import { motion } from 'motion/react';
+import SEO from '../components/SEO';
 import { Check, ClipboardList, CreditCard, Info, MapPin, Truck, User } from 'lucide-react';
 import { fetchWithApiBase } from '../lib/api';
 
@@ -219,7 +220,12 @@ Thank you for shopping with *The Vagina Room* 💜`;
   );
 
   return (
-    <div className="bg-brand-black text-white min-h-screen flex flex-col font-sans selection:bg-brand-gold selection:text-brand-black">
+    <>
+      <SEO 
+        title="Checkout" 
+        description="Complete your order from The Vagina Room Collective."
+      />
+      <div className="bg-brand-black text-white min-h-screen flex flex-col font-sans selection:bg-brand-gold selection:text-brand-black">
       <Navigation />
       
       <main className="pt-40 pb-32 flex-grow max-w-5xl mx-auto w-full px-6">
@@ -491,5 +497,6 @@ Thank you for shopping with *The Vagina Room* 💜`;
 
       <Footer />
     </div>
+    </>
   );
 }

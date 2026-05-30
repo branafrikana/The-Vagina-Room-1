@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useContent, ContentData } from "../context/ContentContext";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import SEO from "../components/SEO";
 import { 
   Lock, 
   Eye,
@@ -21,7 +21,9 @@ import {
   X, 
   Calendar,
   Layers,
-  ArrowLeft
+  ArrowLeft,
+  Cloud,
+  Database
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { fetchWithApiBase } from '../lib/api';
@@ -400,11 +402,12 @@ function AdminReorderPanel() {
 
 function AdminMediaSyncPanel() {
   const { content, adminPasswordToken } = useContent();
-  const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "success" | "error">("idle");
+  const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "success" | "error" | "validating">("idle");
   const [syncMsg, setSyncMsg] = useState("");
   const [migratedCount, setMigratedCount] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [health, setHealth] = useState<any>(null);
+  const [validationResult, setValidationResult] = useState<{ type: "cloudinary" | "firestore", success: boolean, msg: string } | null>(null);
 
   const fetchHealth = async () => {
     try {
@@ -421,6 +424,44 @@ function AdminMediaSyncPanel() {
     const interval = setInterval(fetchHealth, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleValidateFirebase = async () => {
+    setSyncStatus("validating");
+    setValidationResult(null);
+    try {
+      const res = await fetchWithApiBase(`/api/admin/validate-firestore?password=${adminPasswordToken}`);
+      const data = await res.json();
+      setValidationResult({
+        type: "firestore",
+        success: data.success,
+        msg: data.message + (data.details ? ` (${data.details})` : "")
+      });
+      fetchHealth();
+    } catch (e) {
+      setValidationResult({ type: "firestore", success: false, msg: "Connection timeout while validating Firestore." });
+    } finally {
+      setSyncStatus("idle");
+    }
+  };
+
+  const handleValidateCloudinary = async () => {
+    setSyncStatus("validating");
+    setValidationResult(null);
+    try {
+      const res = await fetchWithApiBase(`/api/admin/validate-cloudinary?password=${adminPasswordToken}`);
+      const data = await res.json();
+      setValidationResult({
+        type: "cloudinary",
+        success: data.success,
+        msg: data.message + (data.details ? ` (${JSON.stringify(data.details)})` : "")
+      });
+      fetchHealth();
+    } catch (e) {
+      setValidationResult({ type: "cloudinary", success: false, msg: "Connection timeout while validating Cloudinary." });
+    } finally {
+      setSyncStatus("idle");
+    }
+  };
 
   // Deep scan for local /uploads/ images in content
   const countLocalImages = (obj: any): number => {
@@ -456,6 +497,7 @@ function AdminMediaSyncPanel() {
     setCurrentStep(0);
     setMigratedCount(0);
     setSyncMsg("");
+    setValidationResult(null);
 
     try {
       // Transition for UI visibility
@@ -491,175 +533,140 @@ function AdminMediaSyncPanel() {
   };
 
   return (
-    <div className="bg-white/[0.02] border border-white/5 p-8 flex flex-col items-center text-center rounded-lg">
-       <div className={`w-16 h-16 border flex items-center justify-center mb-6 transition-colors duration-700 ${
-         syncStatus === "syncing" ? "bg-brand-gold/20 border-brand-gold/40 animate-pulse" : "bg-brand-gold/10 border-brand-gold/20"
-       }`}>
-          <Sparkles className={syncStatus === "syncing" ? "text-brand-gold" : "text-brand-gold/60"} size={32} />
-       </div>
-       
-       <h3 className="text-xl font-black uppercase tracking-tight text-white mb-2">Cloud Persistence Sync</h3>
-       <p className="text-xs text-white/40 max-w-lg mb-8 leading-relaxed">
-         Render and other cloud platforms do not persist local /uploads/ files after deployment. 
-         This tool migrates any existing local images found in your content to Cloudinary, ensuring they remain valid and globally accessible.
-       </p>
+    <div className="bg-white/[0.02] border border-white/5 p-8 rounded-lg">
+      <div className="flex flex-col items-center text-center">
+        <div className={`w-16 h-16 border flex items-center justify-center mb-6 transition-colors duration-700 ${
+          syncStatus === "syncing" ? "bg-brand-gold/20 border-brand-gold/40 animate-pulse" : "bg-brand-gold/10 border-brand-gold/20"
+        }`}>
+            <Sparkles className={syncStatus === "syncing" ? "text-brand-gold" : "text-brand-gold/60"} size={32} />
+        </div>
 
-       {/* System Health Indicators */}
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg mb-8">
-          <div className={`p-4 border rounded bg-black/20 ${health?.cloudinary?.configured ? "border-emerald-500/20" : "border-brand-red/30"}`}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Cloudinary</span>
-              <div className={`w-2 h-2 rounded-full ${health?.cloudinary?.configured ? "bg-emerald-500" : "bg-brand-red animate-pulse"}`} />
-            </div>
-            <p className={`text-[11px] font-mono ${health?.cloudinary?.configured ? "text-emerald-400" : "text-brand-red"}`}>
-              {health?.cloudinary?.configured ? `CONFIGURED (${health.cloudinary.cloudName})` : "MISSING CREDENTIALS"}
-            </p>
-          </div>
-          <div className={`p-4 border rounded bg-black/20 ${health?.firestore?.connected ? "border-emerald-500/20" : "border-brand-red/30"}`}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Firestore DB</span>
-              <div className={`w-2 h-2 rounded-full ${health?.firestore?.connected ? "bg-emerald-500" : "bg-brand-red animate-pulse"}`} />
-            </div>
-            <p className={`text-[11px] font-mono ${health?.firestore?.connected ? "text-emerald-400" : "text-brand-red"}`}>
-              {health?.firestore?.connected ? `CONNECTED (${health.firestore.databaseId})` : "DATABASE ERROR"}
-            </p>
-          </div>
-       </div>
+        <h3 className="text-xl font-black uppercase tracking-[0.2em] text-white mb-3">Cloud Infrastructure Portal</h3>
+        <p className="text-white/40 text-xs max-w-lg leading-relaxed mb-8">
+          Verify and mirror your site assets to ensure permanent accessibility across production environments. Local uploads are ephemeral and should be mirrored to the Cloud Mirror (Cloudinary).
+        </p>
 
-       {detectedCount > 0 && syncStatus === "idle" && (
-         <div className="mb-8 px-6 py-3 bg-brand-gold/5 border border-brand-gold/20 rounded-full flex items-center gap-3">
-           <div className="w-2 h-2 rounded-full bg-brand-gold animate-ping" />
-           <span className="text-[10px] font-black uppercase tracking-widest text-brand-gold">
-             {detectedCount} local asset{detectedCount > 1 ? 's' : ''} awaiting migration
-           </span>
-         </div>
-       )}
-
-       {syncStatus === "syncing" ? (
-         <div className="w-full max-w-md space-y-6 mb-8">
-           <div className="grid grid-cols-4 gap-2">
-             {SYNC_STEPS.map((step, idx) => (
-                <div key={idx} className="flex flex-col items-center gap-2">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm border-2 transition-all duration-500 ${
-                    currentStep > idx ? "bg-emerald-500 border-emerald-500 text-white" :
-                    currentStep === idx ? "bg-brand-gold border-brand-gold text-brand-black animate-pulse shadow-[0_0_15px_rgba(212,175,55,0.4)]" :
-                    "bg-white/5 border-white/10 text-white/20"
-                  }`}>
-                    {currentStep > idx ? "✓" : step.icon}
-                  </div>
-                  <span className={`text-[8px] uppercase font-black tracking-widest ${currentStep === idx ? "text-brand-gold" : "text-white/20"}`}>
-                    {step.label}
-                  </span>
-                </div>
-             ))}
-           </div>
-           
-           <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-              <motion.div 
-                className="h-full bg-brand-gold shadow-[0_0_10px_rgba(212,175,55,0.8)]"
-                initial={{ width: "0%" }}
-                animate={{ width: `${(currentStep + 1) * 25}%` }}
-                transition={{ duration: 0.5 }}
-              />
-           </div>
-           <p className="text-[10px] font-mono text-white/40 animate-pulse uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-             <span className="w-1.5 h-1.5 bg-brand-gold rounded-full" />
-             Currently: {SYNC_STEPS[currentStep].label}...
-           </p>
-         </div>
-       ) : (
-         <div className="space-y-4">
-           {(!health || health.cloudinary.configured) ? (
-             <button
-               onClick={handleSync}
-               className="group relative bg-brand-gold hover:bg-white text-brand-black px-12 py-5 text-xs font-black uppercase tracking-widest transition-all shadow-2xl flex items-center gap-2 cursor-pointer overflow-hidden"
-             >
-               <span className="relative z-10 flex items-center gap-2">
-                 <Sparkles size={14} className="group-hover:scale-125 transition-transform" />
-                 Build Cloud Mirror
-               </span>
-               <div className="absolute inset-0 bg-white/20 translate-y-full hover:translate-y-0 transition-transform duration-300" />
-             </button>
-           ) : (
-             <div className="p-6 border border-brand-red/30 bg-brand-red/10 rounded">
-                <p className="text-xs font-black uppercase text-brand-red mb-2">Cloud Migration Gateway Restricted</p>
-                <p className="text-[10px] text-white/60 mb-4">You must configure Cloudinary environment variables before you can mirror assets.</p>
-                <button 
-                  onClick={() => alert("Please check your Render/Local .env for CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET")}
-                  className="px-6 py-3 border border-brand-red text-brand-red text-[9px] font-black uppercase tracking-widest hover:bg-brand-red hover:text-white transition-all cursor-pointer"
-                >
-                  View Setup Instructions
-                </button>
-             </div>
-           )}
-           
-           {detectedCount === 0 && syncStatus === "idle" && (
-             <p className="text-[9px] uppercase font-black tracking-widest text-white/20 italic">
-               No local images detected in current site content.
-             </p>
-           )}
-         </div>
-       )}
-
-       {syncStatus === "success" && (
-         <motion.div 
-           initial={{ opacity: 0, scale: 0.95 }}
-           animate={{ opacity: 1, scale: 1 }}
-           className="mt-8 p-6 border border-emerald-500/30 bg-emerald-950/10 w-full max-w-md text-center"
-         >
-            <div className="flex flex-col items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xl font-black shadow-lg">✓</div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Sync Accomplished</p>
-            </div>
-            <p className="text-[10px] font-mono text-white/60 leading-normal mb-4">{syncMsg}</p>
-            {migratedCount > 0 ? (
-              <div className="pt-4 border-t border-white/10">
-                <p className="text-[10px] text-brand-gold uppercase font-black tracking-widest">
-                  Migrated: {migratedCount} Assets
-                </p>
-                <button 
-                  onClick={() => window.location.reload()}
-                  className="mt-4 px-6 py-2 border border-brand-gold text-brand-gold text-[9px] font-black uppercase tracking-widest hover:bg-brand-gold hover:text-brand-black transition-all cursor-pointer"
-                >
-                  Refresh Browser to Apply
-                </button>
+        {/* Status Indicators */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mb-10">
+           <div className="bg-black/40 border border-white/5 p-5 flex flex-col items-center">
+              <div className="flex items-center gap-2 mb-3">
+                 <Cloud className="text-brand-gold" size={16} />
+                 <span className="text-[10px] font-black uppercase tracking-widest">Mirror Cloud (Cloudinary)</span>
               </div>
-            ) : (
-              <p className="text-[9px] mt-4 text-white/30 uppercase tracking-[0.1em]">Verification complete. No pending local assets found.</p>
-            )}
-            <button 
-              onClick={() => setSyncStatus("idle")}
-              className="mt-6 text-[9px] text-white/20 uppercase tracking-widest hover:text-white transition-colors"
+              <div className={`text-[11px] font-mono px-3 py-1 mb-4 ${health?.cloudinary?.configured ? "text-emerald-400 bg-emerald-400/5" : "text-brand-red bg-brand-red/5"}`}>
+                 {health?.cloudinary?.configured ? "CONFIGURED" : "NOT CONFIGURED"}
+              </div>
+              <button 
+                onClick={handleValidateCloudinary}
+                disabled={syncStatus !== "idle"}
+                className="w-full py-2 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer border border-white/10 disabled:opacity-50"
+              >
+                Validate Cloud Mirror
+              </button>
+           </div>
+
+           <div className="bg-black/40 border border-white/5 p-5 flex flex-col items-center">
+              <div className="flex items-center gap-2 mb-3">
+                 <Database className="text-brand-gold" size={16} />
+                 <span className="text-[10px] font-black uppercase tracking-widest">Global Persistence (Firestore)</span>
+              </div>
+              <div className={`text-[11px] font-mono px-3 py-1 mb-4 ${health?.firestore?.connected ? "text-emerald-400 bg-emerald-400/5" : "text-brand-red bg-brand-red/5"}`}>
+                 {health?.firestore?.connected ? "CONNECTED" : "DISCONNECTED"}
+              </div>
+              <button 
+                onClick={handleValidateFirebase}
+                disabled={syncStatus !== "idle"}
+                className="w-full py-2 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer border border-white/10 disabled:opacity-50"
+              >
+                Validate Database
+              </button>
+           </div>
+        </div>
+
+        {/* Validation Feedback */}
+        <AnimatePresence>
+          {validationResult && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`w-full max-w-2xl mb-8 p-4 border text-[11px] font-mono leading-relaxed ${
+                validationResult.success ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-brand-red/10 border-brand-red/20 text-brand-red"
+              }`}
             >
-              Back to Mirror Module
-            </button>
-         </motion.div>
-       )}
+              <div className="flex items-start gap-3">
+                <span className="shrink-0 mt-0.5">{validationResult.success ? "✅" : "❌"}</span>
+                <div className="flex-grow text-left">
+                  <p className="font-bold uppercase tracking-widest mb-1 italic">Validation Result: {validationResult.type}</p>
+                  <p className="opacity-80">{validationResult.msg}</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-       <AnimatePresence>
-         {syncStatus === "error" && (
-           <motion.div 
-             initial={{ opacity: 0, y: 10 }}
-             animate={{ opacity: 1, y: 0 }}
-             exit={{ opacity: 0, scale: 0.9 }}
-             className="mt-8 p-6 border border-brand-red/30 bg-brand-red/5 w-full max-w-md text-brand-red"
-           >
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <X size={16} />
-                <p className="text-[10px] font-mono uppercase font-black">Migration Failed</p>
+        <div className="w-full max-w-xl bg-black/40 border border-white/5 p-8">
+           <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
+              <div className="text-left">
+                 <h4 className="text-[10px] font-black uppercase tracking-widest text-white/60">Asset Mirror Control</h4>
+                 <p className="text-[9px] font-mono text-white/20 mt-1 uppercase leading-none">Scans /uploads/ pattern and mirrors to Cloudinary</p>
               </div>
-              <p className="text-[10px] font-mono opacity-80 leading-relaxed mb-4">{syncMsg}</p>
-              <div className="flex flex-col gap-2">
+              <div className="text-right">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-brand-gold">{detectedCount} Local Assets</p>
+              </div>
+           </div>
+
+           {syncStatus === "idle" || syncStatus === "success" || syncStatus === "error" ? (
+             <div className="space-y-6">
                 <button 
-                  onClick={() => setSyncStatus("idle")}
-                  className="px-6 py-3 bg-brand-red/10 border border-brand-red/30 text-[9px] uppercase font-black tracking-widest hover:bg-brand-red hover:text-white transition-all cursor-pointer"
+                  onClick={handleSync}
+                  disabled={detectedCount === 0 || !health?.cloudinary?.configured}
+                  className="w-full py-4 bg-brand-gold text-brand-black font-black uppercase tracking-[0.2em] text-[10px] transition-all hover:scale-[1.01] active:scale-95 disabled:grayscale disabled:opacity-50 cursor-pointer"
                 >
-                  Retry Configuration
+                  {detectedCount > 0 ? "Mirror Site Assets to Cloud" : "No Local Assets Detected"}
                 </button>
-              </div>
-           </motion.div>
-         )}
-       </AnimatePresence>
+                
+                {syncStatus === "success" && (
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono uppercase tracking-widest">
+                    Mirror Build Complete: {migratedCount} Assets Synced.
+                  </div>
+                )}
+                
+                {syncStatus === "error" && (
+                  <div className="p-4 bg-brand-red/10 border border-brand-red/20 text-brand-red text-[10px] font-mono uppercase tracking-widest">
+                    SYNC ERROR: {syncMsg}
+                  </div>
+                )}
+             </div>
+           ) : syncStatus === "syncing" ? (
+             <div className="space-y-8">
+                <div className="flex gap-2 justify-center">
+                  {SYNC_STEPS.map((step, i) => (
+                    <div 
+                      key={i} 
+                      className={`flex flex-col items-center gap-2 p-3 border transition-all duration-500 ${
+                        currentStep === i ? "border-brand-gold bg-brand-gold/10 scale-110 z-10" : 
+                        currentStep > i ? "border-emerald-500/40 bg-emerald-500/5 opacity-50" : 
+                        "border-white/5 opacity-20"
+                      }`}
+                    >
+                      <span className="text-sm">{step.icon}</span>
+                      <span className="text-[8px] font-black uppercase tracking-tighter w-16 text-center">{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="w-full h-1 bg-white/5 relative overflow-hidden">
+                   <motion.div 
+                     className="absolute top-0 left-0 h-full bg-brand-gold"
+                     initial={{ width: "0%" }}
+                     animate={{ width: `${(currentStep + 1) * 25}%` }}
+                     transition={{ duration: 0.5 }}
+                   />
+                </div>
+             </div>
+           ) : null}
+        </div>
+      </div>
     </div>
   );
 }
@@ -795,10 +802,10 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <>
-        <Helmet>
-          <title>Admin Login - The Room</title>
-          <meta name="description" content="Administration panel login for The Room." />
-        </Helmet>
+        <SEO 
+          title="Admin Login" 
+          description="Administration panel login for The Vagina Room."
+        />
         <div className="flex flex-col min-h-screen bg-brand-black">
           <AdminHeader />
           <main className="flex-grow flex items-center justify-center p-6 md:p-12 relative">
@@ -956,10 +963,10 @@ export default function AdminPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Admin Dashboard - The Room</title>
-        <meta name="description" content="Administration panel for The Room." />
-      </Helmet>
+      <SEO 
+        title="System Dashboard" 
+        description="Administration panel for The Vagina Room."
+      />
       <div className="flex flex-col min-h-screen bg-brand-black text-white selection:bg-brand-gold selection:text-brand-black">
         <AdminHeader />
 
@@ -1245,6 +1252,18 @@ export default function AdminPage() {
             >
               <span className="flex items-center gap-2">
                 <span className="text-xs">🌐</span> Social Media Links
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab("integrations")}
+              className={`w-full text-left px-5 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-between cursor-pointer ${
+                activeTab === "integrations"
+                  ? "bg-brand-gold text-brand-black"
+                  : "bg-white/[0.02] border border-white/5 text-white/70 hover:bg-white/[0.05]"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-xs">🔌</span> API Integrations
               </span>
             </button>
           </div>
@@ -1666,7 +1685,7 @@ export default function AdminPage() {
               )}
 
               {/* Tab 3: Config Settings */}
-              {["general", "branding", "seo", "security", "social"].includes(activeTab) && (
+              {["general", "branding", "seo", "security", "social", "integrations"].includes(activeTab) && (
                 <motion.div
                   key="settings-tab"
                   initial={{ opacity: 0, x: 10 }}

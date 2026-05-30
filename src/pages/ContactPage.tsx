@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { Mail, Phone, MapPin, Send, MessageSquare, Heart, HandHelping, ArrowRight, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
@@ -18,6 +18,22 @@ export default function ContactPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email is invalid";
+    }
+    if (!formData.message.trim()) newErrors.message = "Message is required";
+    else if (formData.message.trim().length < 10) newErrors.message = "Message must be at least 10 characters";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const contactDetails = [
     {
@@ -42,6 +58,7 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     setIsSubmitting(true);
     try {
       const res = await submitFormSubmission("contact", formData);
@@ -66,15 +83,25 @@ export default function ContactPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Contact Us - The Room</title>
-        <meta name="description" content="Get in touch with The Room. We are here to support you in your intimate and reproductive wellness journey." />
-      </Helmet>
+      <SEO 
+        title="Contact Us" 
+        description="Get in touch with The Vagina Room. We are here to support you in your intimate and reproductive wellness journey."
+      />
       <div className="bg-brand-black text-white min-h-screen">
         <Navigation />
         
-        <main className="pt-32">
-        {/* Hero Section */}
+        <main className="pt-32 relative">
+          {/* Blurred Background Image */}
+          <div 
+            className="fixed inset-0 z-[-1] opacity-20 filter blur-3xl pointer-events-none"
+            style={{ 
+              backgroundImage: `url(${content.contactBgUrl || "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&q=80&w=1600"})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+          />
+          
+          {/* Hero Section */}
         <section className="py-24 px-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_20%,rgba(180,31,45,0.05)_0%,transparent_50%)] pointer-events-none" />
           <div className="max-w-7xl mx-auto text-center">
@@ -172,10 +199,14 @@ export default function ContactPage() {
                             type="text" 
                             required
                             value={formData.name}
-                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                            className="w-full bg-white/5 border-b border-white/10 px-0 py-4 text-white focus:border-brand-gold focus:outline-none transition-colors" 
+                            onChange={(e) => {
+                              setFormData(prev => ({ ...prev, name: e.target.value }));
+                              if (errors.name) setErrors(prev => ({ ...prev, name: "" }));
+                            }}
+                            className={`w-full bg-white/5 border-b px-0 py-4 text-white focus:border-brand-gold focus:outline-none transition-colors ${errors.name ? "border-brand-red" : "border-white/10"}`} 
                             placeholder="Full Name" 
                           />
+                          {errors.name && <p className="text-[10px] text-brand-red font-bold uppercase tracking-widest mt-2">{errors.name}</p>}
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">Email</label>
@@ -183,10 +214,14 @@ export default function ContactPage() {
                             type="email" 
                             required
                             value={formData.email}
-                            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                            className="w-full bg-white/5 border-b border-white/10 px-0 py-4 text-white focus:border-brand-gold focus:outline-none transition-colors" 
+                            onChange={(e) => {
+                              setFormData(prev => ({ ...prev, email: e.target.value }));
+                              if (errors.email) setErrors(prev => ({ ...prev, email: "" }));
+                            }}
+                            className={`w-full bg-white/5 border-b px-0 py-4 text-white focus:border-brand-gold focus:outline-none transition-colors ${errors.email ? "border-brand-red" : "border-white/10"}`} 
                             placeholder="Email Address" 
                           />
+                          {errors.email && <p className="text-[10px] text-brand-red font-bold uppercase tracking-widest mt-2">{errors.email}</p>}
                         </div>
                       </div>
                       
@@ -210,10 +245,14 @@ export default function ContactPage() {
                         <textarea 
                           required
                           value={formData.message}
-                          onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-                          className="w-full bg-white/5 border-b border-white/10 px-0 py-4 text-white focus:border-brand-gold focus:outline-none transition-colors h-40 resize-none" 
+                          onChange={(e) => {
+                            setFormData(prev => ({ ...prev, message: e.target.value }));
+                            if (errors.message) setErrors(prev => ({ ...prev, message: "" }));
+                          }}
+                          className={`w-full bg-white/5 border-b px-0 py-4 text-white focus:border-brand-gold focus:outline-none transition-colors h-40 resize-none ${errors.message ? "border-brand-red" : "border-white/10"}`} 
                           placeholder="Your Message..."
                         />
+                        {errors.message && <p className="text-[10px] text-brand-red font-bold uppercase tracking-widest mt-2">{errors.message}</p>}
                       </div>
 
                       <button 

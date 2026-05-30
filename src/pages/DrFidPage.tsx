@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { Award, BookOpen, Heart, Shield, Star, Briefcase, Users, ArrowRight, Quote } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
@@ -324,10 +324,10 @@ export default function DrFidPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Dr. FID - The Room</title>
-        <meta name="description" content="Meet Dr. FID, combining medical expertise with holistic care to empower women's health and wellness." />
-      </Helmet>
+      <SEO 
+        title="Meet Dr. FID" 
+        description="Ambassador Dr. Damilola Awoyemi (Dr. FID) is a seasoned SPA Business Consultant, Holistic Wellness Expert, and women’s health advocate."
+      />
       <div className="bg-brand-black text-white min-h-screen">
         <Navigation />
         

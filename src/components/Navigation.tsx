@@ -159,7 +159,7 @@ export default function Navigation() {
                       <ChevronDown size={28} className={`transition-transform duration-300 text-brand-gold ${mobileSubmenuOpen ? 'rotate-180' : ''}`} />
                     </button>
                   ) : (
-                    link.href.startsWith('/') && !link.href.includes('#') ? (
+                    link.href.startsWith('/') ? (
                       <Link 
                         to={link.href}
                         onClick={() => setIsOpen(false)}
@@ -189,7 +189,7 @@ export default function Navigation() {
                           className="flex flex-col space-y-6 pl-4 border-l border-white/10 overflow-hidden"
                         >
                           {link.submenu.map((sub) => (
-                            sub.href.startsWith('/') && !sub.href.includes('#') ? (
+                            sub.href.startsWith('/') ? (
                                <Link
                                 key={sub.name}
                                 to={sub.href}

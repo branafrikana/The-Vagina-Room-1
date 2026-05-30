@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { HandHelping, Users, Globe, Send, Sparkles, ArrowRight, ShieldCheck, Upload, Trash2, FileText, CheckCircle } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -122,10 +122,10 @@ export default function PartnerPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Partner With Us - The Room</title>
-        <meta name="description" content="Become a partner of The Room to empower women globally." />
-      </Helmet>
+      <SEO 
+        title="Partner With Us" 
+        description="Join forces with The Vagina Room. Discover corporate sponsorship, healthcare practitioner, and community advocacy partnership opportunities."
+      />
       <div className="bg-brand-black text-white min-h-screen">
         <Navigation />
         

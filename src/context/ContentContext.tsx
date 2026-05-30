@@ -299,6 +299,10 @@ export const FALLBACK_DEFAULTS = {
   socialLinkFacebook: "https://facebook.com",
   socialLinkYoutube: "https://youtube.com",
 
+  // Background Images for generic forms/sections
+  contactBgUrl: "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&q=80&w=1600",
+  bookingBgUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=1600",
+
   // Serialized lists with JSON defaults for advanced programmatic lists
   faqDataJson: "",
   focusAreasJson: "",
@@ -375,6 +379,8 @@ export const FALLBACK_DEFAULTS = {
   drFidPageSectionsOrder: '["profile_hero", "career_expertise", "education_certifications", "ancp_framework", "vagina_room_context", "personal_life", "closing_cta"]',
   aboutPageSectionsOrder: '["about_hero", "manifesto", "mission_vision", "who_we_serve", "differentiators", "core_values", "promise"]',
   paymentSettingsJson: '{\n  "paystackSecretKey": "",\n  "flutterwaveSecretKey": "",\n  "flutterwavePublicKey": ""\n}',
+  mediaSettingsJson: '{\n  "cloudinaryCloudName": "",\n  "cloudinaryApiKey": "",\n  "cloudinaryApiSecret": ""\n}',
+  firebaseConfigRaw: "",
   adminPassword: "admin123",
   pwaSettingsJson: '{\n  "name": "The Vagina Room",\n  "short_name": "Vagina Room",\n  "description": "A sanctuary for intimate wellness and reproductive education.",\n  "theme_color": "#C41E3A",\n  "background_color": "#0a0a0a",\n  "display": "standalone",\n  "orientation": "portrait",\n  "iconUrl": "/icon-512.png"\n}',
   checkoutSettingsJson: '{\n  "shippingLocations": [\n    { "name": "Within Asaba", "fee": 1000 },\n    { "name": "Outside Asaba (Delta State)", "fee": 2500 },\n    { "name": "Nationwide Delivery (Nigeria)", "fee": 5000 },\n    { "name": "International Delivery", "fee": 15000 }\n  ],\n  "paymentMethods": [\n    "Pay with Card / Bank Transfer",\n    "Flutterwave Payment Gateway",\n    "Paystack Payment Gateway",\n    "Bank Transfer",\n    "Pay on WhatsApp Confirmation",\n    "Payment After Ordering (Manual Confirmation)"\n  ]\n}',

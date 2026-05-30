@@ -1,9 +1,10 @@
 import { motion } from 'motion/react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { Heart, Shield, GraduationCap, HandHelping, Users, Star, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import Breadcrumbs from '../components/Breadcrumbs';
 import { useContent } from '../context/ContentContext';
 import EditableText from '../components/EditableText';
 
@@ -345,14 +346,17 @@ export default function AboutPage() {
 
   return (
     <>
-      <Helmet>
-        <title>About Us - The Room</title>
-        <meta name="description" content="Discover the mission, vision, and core values of The Room. We are a trusted ecosystem aiming to break stigmas and empower women's health." />
-      </Helmet>
+      <SEO 
+        title="About Us" 
+        description="Discover the mission, vision, and core values of The Vagina Room. We are a sanctuary for women's health, breaking stigmas and empowering through education."
+      />
       <div className="bg-brand-black text-white min-h-screen">
         <Navigation />
         
         <main className="pt-32">
+          <div className="max-w-7xl mx-auto px-6 pt-8">
+            <Breadcrumbs items={[{ label: 'About Us' }]} />
+          </div>
           {sectionIds.map(id => renderSection(id))}
         </main>
 

@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { Heart, Globe, Users, Star, ArrowRight, ShieldCheck } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -37,10 +37,10 @@ export default function SupportPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Support The Vision - The Room</title>
-        <meta name="description" content="Support us in expanding the reach of women's wellness resources and community initiatives." />
-      </Helmet>
+      <SEO 
+        title="Support The Vision" 
+        description="Support us in expanding the reach of women's wellness resources and community initiatives."
+      />
       <div className="bg-brand-black text-white min-h-screen">
         <Navigation />
         

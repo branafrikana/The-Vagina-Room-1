@@ -1,6 +1,6 @@
 import { useState, ChangeEvent, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { 
   User, 
   MapPin, 
@@ -40,6 +40,23 @@ export default function DrFidBookingPage() {
   const { content } = useContent();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.fullName.trim()) newErrors.fullName = "Full name is required";
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email is invalid";
+    }
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+    if (!formData.date) newErrors.date = "Event date is required";
+    if (!formData.eventTitle.trim()) newErrors.eventTitle = "Event title is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const [formData, setFormData] = useState({
     // Personal
@@ -78,10 +95,16 @@ export default function DrFidBookingPage() {
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!validate()) {
+      const firstError = document.querySelector('[data-error="true"]');
+      if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     setIsSubmitting(true);
     
     try {
@@ -135,15 +158,25 @@ export default function DrFidBookingPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Book Dr. FID - The Vagina Room</title>
-        <meta name="description" content="Invite Dr. Damilola Awoyemi (Dr. FID) for speaking engagements, wellness conferences, corporate trainings, and more." />
-      </Helmet>
+      <SEO 
+        title="Book Dr. FID" 
+        description="Invite Dr. Damilola Awoyemi (Dr. FID) for speaking engagements, wellness conferences, corporate trainings, and more."
+      />
       
       <div className="bg-brand-black min-h-screen text-white selection:bg-brand-red selection:text-white">
         <Navigation />
+        
+        <main className="pt-32 relative">
+          {/* Blurred Background Image */}
+          <div 
+            className="fixed inset-0 z-[-1] opacity-20 filter blur-3xl pointer-events-none"
+            style={{ 
+              backgroundImage: `url(${content.bookingBgUrl || "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&q=80&w=1600"})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+          />
 
-        <main className="pt-32">
           {/* Hero Header */}
           <section className="py-24 px-6 relative overflow-hidden text-center">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.05)_0%,transparent_70%)] pointer-events-none" />
@@ -221,15 +254,16 @@ export default function DrFidBookingPage() {
                     <h3 className="text-[10px] font-black uppercase tracking-[0.5em]">01. Personal Information</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-6">
-                    <div className="space-y-2">
+                    <div className="space-y-2" data-error={errors.fullName ? "true" : "false"}>
                       <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">Full Name</label>
                       <input 
                         required
                         name="fullName"
                         value={formData.fullName}
                         onChange={handleChange}
-                        className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold outline-none transition-colors text-white font-serif italic" 
+                        className={`w-full bg-transparent border-b py-3 focus:border-brand-gold outline-none transition-colors text-white font-serif italic ${errors.fullName ? "border-brand-red" : "border-white/10"}`} 
                       />
+                      {errors.fullName && <p className="text-[9px] text-brand-red font-bold uppercase tracking-widest mt-1">{errors.fullName}</p>}
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">Organization / Company</label>
@@ -249,7 +283,7 @@ export default function DrFidBookingPage() {
                         className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold outline-none transition-colors text-white font-serif italic" 
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2" data-error={errors.email ? "true" : "false"}>
                       <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">Email Address</label>
                       <input 
                         required
@@ -257,18 +291,20 @@ export default function DrFidBookingPage() {
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold outline-none transition-colors text-white font-serif italic" 
+                        className={`w-full bg-transparent border-b py-3 focus:border-brand-gold outline-none transition-colors text-white font-serif italic ${errors.email ? "border-brand-red" : "border-white/10"}`} 
                       />
+                      {errors.email && <p className="text-[9px] text-brand-red font-bold uppercase tracking-widest mt-1">{errors.email}</p>}
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2" data-error={errors.phone ? "true" : "false"}>
                       <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">Phone Number</label>
                       <input 
                         required
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
-                        className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold outline-none transition-colors text-white font-serif italic" 
+                        className={`w-full bg-transparent border-b py-3 focus:border-brand-gold outline-none transition-colors text-white font-serif italic ${errors.phone ? "border-brand-red" : "border-white/10"}`} 
                       />
+                      {errors.phone && <p className="text-[9px] text-brand-red font-bold uppercase tracking-widest mt-1">{errors.phone}</p>}
                     </div>
                   </div>
                 </div>
@@ -302,14 +338,16 @@ export default function DrFidBookingPage() {
                      </div>
 
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-2">
+                        <div className="space-y-2" data-error={errors.eventTitle ? "true" : "false"}>
                           <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">Event Title</label>
                           <input 
                             name="eventTitle"
+                            required
                             value={formData.eventTitle}
                             onChange={handleChange}
-                            className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold outline-none transition-colors text-white font-serif italic" 
+                            className={`w-full bg-transparent border-b py-3 focus:border-brand-gold outline-none transition-colors text-white font-serif italic ${errors.eventTitle ? "border-brand-red" : "border-white/10"}`} 
                           />
+                          {errors.eventTitle && <p className="text-[9px] text-brand-red font-bold uppercase tracking-widest mt-1">{errors.eventTitle}</p>}
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">Event Theme / Topic</label>
@@ -373,15 +411,17 @@ export default function DrFidBookingPage() {
                         className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold outline-none transition-colors text-white font-serif italic" 
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2" data-error={errors.date ? "true" : "false"}>
                       <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">Event Date</label>
                       <input 
                         type="date"
+                        required
                         name="date"
                         value={formData.date}
                         onChange={handleChange}
-                        className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold outline-none transition-colors text-white font-serif italic" 
+                        className={`w-full bg-transparent border-b py-3 focus:border-brand-gold outline-none transition-colors text-white font-serif italic ${errors.date ? "border-brand-red" : "border-white/10"}`} 
                       />
+                      {errors.date && <p className="text-[9px] text-brand-red font-bold uppercase tracking-widest mt-1">{errors.date}</p>}
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">Event Time</label>

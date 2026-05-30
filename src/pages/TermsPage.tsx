@@ -1,4 +1,4 @@
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { Scale } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -17,9 +17,10 @@ export default function TermsPage() {
 
   return (
     <div className="min-h-screen bg-brand-black text-brand-offwhite pt-24 font-sans">
-      <Helmet>
-        <title>{content.termsHeading || "Terms of Engagement"} - The Vagina Room</title>
-      </Helmet>
+      <SEO 
+        title={content.termsHeading || "Terms of Engagement"} 
+        description="Terms of engagement and user policy contract for members and visitors of The Vagina Room."
+      />
       
       <Navigation />
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { LayoutGrid, Filter, Camera, Play, Maximize2, Share2, Sparkles, ArrowRight, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
@@ -103,10 +103,10 @@ export default function GalleryPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Gallery - The Room</title>
-        <meta name="description" content="Explore photos and videos from our past events and community gatherings." />
-      </Helmet>
+      <SEO 
+        title="Sanctuary Gallery" 
+        description="Explore visual highlights, therapeutic spaces, and community moments from our past intimate health events and outreach drives."
+      />
       <div className="bg-brand-black text-white min-h-screen">
         <Navigation />
         

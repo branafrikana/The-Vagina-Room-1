@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { Calendar, MapPin, Clock, ArrowRight, Ticket, Star, Users, Sparkles } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -81,10 +81,10 @@ export default function EventsPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Events - The Room</title>
-        <meta name="description" content="Join our upcoming events, masterclasses, and workshops designed for women's wellness and education." />
-      </Helmet>
+      <SEO 
+        title="Upcoming Events" 
+        description="Join our upcoming events, intensive masterclasses, and workshops designed to empower your reproductive and intimate wellness."
+      />
       <div className="bg-brand-black text-white min-h-screen">
         <Navigation />
         

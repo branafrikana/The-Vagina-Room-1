@@ -4,7 +4,7 @@ import { ImageUploader } from '../../pages/AdminPage';
 import { Eye, EyeOff } from 'lucide-react';
 
 interface AdminSettingsTabProps {
-  activeTab: "general" | "branding" | "seo" | "security" | "social";
+  activeTab: "general" | "branding" | "seo" | "security" | "social" | "integrations";
 }
 
 export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
@@ -137,6 +137,97 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
             </select>
           </div>
         </div>
+
+        {/* WhatsApp Floating Widget Options */}
+        <div className="border border-white/5 bg-white/[0.01] p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-white/10 pb-3 mb-2">
+            <div>
+              <h4 className="text-xs font-black text-brand-gold uppercase tracking-[0.2em]">WhatsApp Floating Chat</h4>
+              <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5">Interactive helpdesk button served globally to clients</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => updateJSONField("generalSettingsJson", "whatsappWidgetEnabled", config.whatsappWidgetEnabled !== false ? false : true)}
+              className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest border transition-all cursor-pointer ${
+                config.whatsappWidgetEnabled !== false 
+                  ? "bg-green-600/20 border-green-500 text-green-400" 
+                  : "bg-transparent border-white/10 text-white/40 hover:text-white"
+              }`}
+            >
+              {config.whatsappWidgetEnabled !== false ? "Widget: ACTIVE" : "Widget: DISABLED"}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Widget Screen Position</label>
+              <select
+                value={config.whatsappWidgetPosition || "RIGHT"}
+                onChange={(e) => updateJSONField("generalSettingsJson", "whatsappWidgetPosition", e.target.value)}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs"
+              >
+                <option value="RIGHT">Right-Hand Side (Recommended)</option>
+                <option value="LEFT">Left-Hand Side</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Launcher Button Icon</label>
+              <select
+                value={config.whatsappWidgetIconStyle || "MESSAGE"}
+                onChange={(e) => updateJSONField("generalSettingsJson", "whatsappWidgetIconStyle", e.target.value)}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs"
+              >
+                <option value="MESSAGE">Support Message Bubble</option>
+                <option value="WHATSAPP">Official WhatsApp Icon</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Linked WhatsApp Line</label>
+              <input 
+                type="text" 
+                value={config.whatsappPhone || ""}
+                onChange={(e) => updateJSONField("generalSettingsJson", "whatsappPhone", e.target.value)}
+                placeholder="e.g. +234 813 546 4432"
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Chat Window Welcome Memo</label>
+              <textarea 
+                value={config.whatsappWidgetGreeting || "Hi! Welcome to The Vagina Room. How can we guide your wellness journey today?"}
+                onChange={(e) => updateJSONField("generalSettingsJson", "whatsappWidgetGreeting", e.target.value)}
+                rows={2}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Text Entry Box Placeholder</label>
+              <textarea 
+                value={config.whatsappWidgetPlaceholder || "Ask about private clinical consultation, events, community, or products..."}
+                onChange={(e) => updateJSONField("generalSettingsJson", "whatsappWidgetPlaceholder", e.target.value)}
+                rows={2}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+              />
+            </div>
+          </div>
+
+          <div className="border-t border-white/5 pt-4">
+            <ImageUploader 
+              fieldKey={"whatsappWidgetLogo" as any} 
+              label="WhatsApp Widget Header Avatar Logo" 
+              currentValue={config.whatsappWidgetLogo} 
+              onUploadSuccess={(url: string) => updateJSONField("generalSettingsJson", "whatsappWidgetLogo", url)}
+            />
+            <p className="text-[9px] text-white/30 uppercase tracking-wider mt-1">If empty, defaults automatically to your site header navigation logo or the brand symbol</p>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Meta Title (Browser Tab)</label>
           <input 
@@ -171,32 +262,6 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
-          </div>
-        </div>
-
-        <div className="pt-6 border-t border-white/10">
-          <p className="text-[10px] font-black uppercase tracking-widest text-brand-gold mb-4">SMTP Configuration</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">SMTP Host</label>
-              <input type="text" value={parseJSON(content.smtpSettingsJson, {}).host || ""} onChange={(e) => updateJSONField("smtpSettingsJson", "host", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">SMTP Port</label>
-              <input type="text" value={parseJSON(content.smtpSettingsJson, {}).port || ""} onChange={(e) => updateJSONField("smtpSettingsJson", "port", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">SMTP User</label>
-              <input type="text" value={parseJSON(content.smtpSettingsJson, {}).user || ""} onChange={(e) => updateJSONField("smtpSettingsJson", "user", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">SMTP Pass</label>
-              <input type="password" value={parseJSON(content.smtpSettingsJson, {}).pass || ""} onChange={(e) => updateJSONField("smtpSettingsJson", "pass", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">SMTP From Address</label>
-              <input type="email" value={parseJSON(content.smtpSettingsJson, {}).from || ""} onChange={(e) => updateJSONField("smtpSettingsJson", "from", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
-            </div>
           </div>
         </div>
 
@@ -850,6 +915,176 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
             <input type="text" value={content.socialLinkLinkedin || ""} onChange={(e) => updateContentField("socialLinkLinkedin", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (activeTab === "integrations") {
+    const mediaConfig = parseJSON(content.mediaSettingsJson, {});
+    const paymentConfig = parseJSON(content.paymentSettingsJson, {});
+    const smtpConfig = parseJSON(content.smtpSettingsJson, {});
+    
+    const [systemStatus, setSystemStatus] = useState<any>(null);
+    const [statusLoading, setStatusLoading] = useState(false);
+
+    const refreshStatus = React.useCallback(async () => {
+      setStatusLoading(true);
+      try {
+        const res = await fetch(`/api/admin/system-status?password=${content.adminPassword}`);
+        const data = await res.json();
+        setSystemStatus(data);
+      } catch (err) {
+        console.error("Failed to fetch system status", err);
+      } finally {
+        setStatusLoading(false);
+      }
+    }, [content.adminPassword]);
+
+    React.useEffect(() => {
+      refreshStatus();
+    }, [refreshStatus]);
+
+    const StatusIndicator = ({ isActive }: { isActive: boolean }) => (
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-widest ${isActive ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-brand-red"}`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-emerald-500" : "bg-brand-red"}`} />
+        {isActive ? "Configured & Active" : "Not Configured / Inactive"}
+      </span>
+    );
+
+    return (
+      <div className="space-y-8">
+        <div className="flex justify-between items-center bg-white/5 p-4 border border-white/10 rounded-sm">
+          <div>
+            <p className="text-sm font-black uppercase tracking-widest text-white">API Integrations</p>
+            <p className="text-[10px] text-white/50 mt-1">Configure external services. Save standard dashboard to apply changes.</p>
+          </div>
+          <button 
+            onClick={refreshStatus}
+            disabled={statusLoading}
+            className="px-4 py-2 bg-white/5 border border-white/10 text-[10px] uppercase font-bold text-white hover:bg-white/10 transition-colors disabled:opacity-50"
+          >
+            {statusLoading ? "Testing..." : "Test Connections"}
+          </button>
+        </div>
+
+        {/* Cloudinary */}
+        <div className="bg-brand-black border border-white/10 p-6 space-y-4">
+          <div className="flex justify-between items-center border-b border-white/5 pb-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-brand-gold">Cloudinary (Media Storage)</p>
+              <p className="text-[10px] text-white/40 mt-1">Replaces local /uploads with persistent cloud storage.</p>
+            </div>
+            <StatusIndicator isActive={systemStatus?.cloudinary === true} />
+          </div>
+          <div className="grid grid-cols-1 gap-4 pt-2">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-white/30 block">Cloud Name</label>
+              <input type="text" value={mediaConfig.cloudinaryCloudName || ""} onChange={(e) => updateJSONField("mediaSettingsJson", "cloudinaryCloudName", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-white/30 block">API Key</label>
+              <input type="text" value={mediaConfig.cloudinaryApiKey || ""} onChange={(e) => updateJSONField("mediaSettingsJson", "cloudinaryApiKey", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-white/30 block">API Secret</label>
+              <input type="password" value={mediaConfig.cloudinaryApiSecret || ""} onChange={(e) => updateJSONField("mediaSettingsJson", "cloudinaryApiSecret", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+            </div>
+          </div>
+        </div>
+
+        {/* Firebase */}
+        <div className="bg-brand-black border border-white/10 p-6 space-y-4">
+          <div className="flex justify-between items-center border-b border-white/5 pb-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-[#FFCA28]">Firebase (Database)</p>
+              <p className="text-[10px] text-white/40 mt-1">Saves configuration to firebase-applet-config.json</p>
+            </div>
+            <StatusIndicator isActive={systemStatus?.firestore === true} />
+          </div>
+          <div className="pt-2 space-y-4">
+            <p className="text-[10px] text-white/50 leading-relaxed italic">
+              Paste your Firebase Service Account JSON or client configuration JSON here. This will be saved to the local configuration file and used by the server on subsequent restarts. Note that the FIREBASE_CONFIG environment variable takes precedence on deployment platforms like Render.
+            </p>
+            <div className="space-y-2">
+               <label className="text-[10px] font-bold uppercase tracking-wider text-white/30 block">Firebase Config JSON String</label>
+               <textarea 
+                  value={content.firebaseConfigRaw || ""} 
+                  onChange={(e) => updateContentField("firebaseConfigRaw", e.target.value)} 
+                  placeholder='{"projectId": "...", "apiKey": "..."}'
+                  className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs font-mono min-h-[120px]" 
+               />
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Gateways */}
+        <div className="bg-brand-black border border-white/10 p-6 space-y-4">
+          <div className="flex justify-between items-center border-b border-white/5 pb-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-[#0ea5e9]">Payment Gateways</p>
+              <p className="text-[10px] text-white/40 mt-1">Keys for online checkout payments.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            {/* Paystack */}
+            <div className="space-y-4 p-4 border border-white/5">
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Paystack</p>
+                <StatusIndicator isActive={systemStatus?.paystack === true} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30 block">Secret Key</label>
+                <input type="password" value={paymentConfig.paystackSecretKey || ""} onChange={(e) => updateJSONField("paymentSettingsJson", "paystackSecretKey", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+              </div>
+            </div>
+
+            {/* Flutterwave */}
+            <div className="space-y-4 p-4 border border-white/5">
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Flutterwave</p>
+                <StatusIndicator isActive={systemStatus?.flutterwave === true} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30 block">Secret Key</label>
+                <input type="password" value={paymentConfig.flutterwaveSecretKey || ""} onChange={(e) => updateJSONField("paymentSettingsJson", "flutterwaveSecretKey", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SMTP Details */}
+        <div className="bg-brand-black border border-white/10 p-6 space-y-4">
+          <div className="flex justify-between items-center border-b border-white/5 pb-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-white">SMTP (Email Delivery)</p>
+              <p className="text-[10px] text-white/40 mt-1">Used for system alerts, booking confirmations, and orders.</p>
+            </div>
+            <StatusIndicator isActive={systemStatus?.smtp === true} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">SMTP Host</label>
+              <input type="text" value={smtpConfig.host || ""} onChange={(e) => updateJSONField("smtpSettingsJson", "host", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">SMTP Port</label>
+              <input type="text" value={smtpConfig.port || ""} onChange={(e) => updateJSONField("smtpSettingsJson", "port", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">SMTP User</label>
+              <input type="text" value={smtpConfig.user || ""} onChange={(e) => updateJSONField("smtpSettingsJson", "user", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">SMTP Pass</label>
+              <input type="password" value={smtpConfig.pass || ""} onChange={(e) => updateJSONField("smtpSettingsJson", "pass", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">SMTP From Address</label>
+              <input type="email" value={smtpConfig.from || ""} onChange={(e) => updateJSONField("smtpSettingsJson", "from", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+            </div>
+          </div>
+        </div>
+
       </div>
     );
   }

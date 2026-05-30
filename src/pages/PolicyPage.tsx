@@ -1,4 +1,4 @@
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { Shield } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -17,9 +17,10 @@ export default function PolicyPage() {
 
   return (
     <div className="min-h-screen bg-brand-black text-brand-offwhite pt-24 font-sans">
-      <Helmet>
-        <title>{content.policyHeading || "Privacy Policy"} - The Vagina Room</title>
-      </Helmet>
+      <SEO 
+        title={content.policyHeading || "Privacy Policy"} 
+        description="Privacy policy and data safeguarding standard for members and visitors of The Vagina Room."
+      />
       
       <Navigation />
 

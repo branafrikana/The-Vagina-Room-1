@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { Mail, Linkedin, Twitter, ArrowRight, Heart, Shield, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
@@ -75,10 +75,10 @@ export default function TeamPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Meet The Team - The Room</title>
-        <meta name="description" content="Meet the compassionate team behind The Room, dedicated to supporting women's wellness." />
-      </Helmet>
+      <SEO 
+        title="Meet The Team" 
+        description="Meet the compassionate team behind The Vagina Room, dedicated to supporting women's wellness, clinical education, and restorative therapy."
+      />
       <div className="bg-brand-black text-white min-h-screen">
         <Navigation />
         

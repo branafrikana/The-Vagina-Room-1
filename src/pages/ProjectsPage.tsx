@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { LayoutGrid, Calendar, MapPin, ArrowRight, ExternalLink, Sparkles, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
@@ -86,10 +86,10 @@ export default function ProjectsPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Projects - The Room</title>
-        <meta name="description" content="Discover our ongoing and upcoming projects dedicated to making a difference." />
-      </Helmet>
+      <SEO 
+        title="Our Projects" 
+        description="Discover our ongoing and upcoming advocacy, clinical outreach, and education projects making a real difference in women's reproductive health."
+      />
       <div className="bg-brand-black text-white min-h-screen">
         <Navigation />
         

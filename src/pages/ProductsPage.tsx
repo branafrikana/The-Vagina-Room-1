@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import { ShoppingBag, HelpCircle, Sparkles, ExternalLink, Globe, Award, ShieldAlert, ShoppingCart, MessageCircle } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -160,10 +160,10 @@ export default function ProductsPage() {
 
   return (
     <>
-      <Helmet>
-        <title>{content.productsTitle || "Our Curated Products"} - The Vagina Room</title>
-        <meta name="description" content="Explore custom botanical preparations and external partner products recommended for intimate, somatic, and reproductive restoration." />
-      </Helmet>
+      <SEO 
+        title={content.productsTitle || "Our Curated Products"} 
+        description="Explore custom botanical preparations and external partner products recommended for intimate, somatic, and reproductive restoration."
+      />
       
       <div className="bg-brand-black text-white min-h-screen flex flex-col justify-between">
         <Navigation />

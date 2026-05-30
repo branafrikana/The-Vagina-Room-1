@@ -8,19 +8,89 @@ export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // If there's a hash, scroll to that element
+    // If there's a hash, scroll to that element with a robust polling/retry mechanism
     if (hash) {
       const id = hash.replace("#", "");
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-        return;
-      }
+      let retries = 0;
+      const maxRetries = 15; // 1.5 seconds max
+      const intervalTime = 100;
+      
+      const scrollToHashElement = (): boolean => {
+        const element = document.getElementById(id);
+        if (element) {
+          setTimeout(() => {
+            const headerOffset = 100; // Account for the sticky navigation bar
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.scrollY - headerOffset;
+            
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: "smooth"
+            });
+          }, 50);
+          return true;
+        }
+        return false;
+      };
+
+      // Try scrolling immediately
+      if (scrollToHashElement()) return;
+
+      // Fallback interval if the element takes time to mount (e.g. during page entry animations)
+      const interval = setInterval(() => {
+        retries++;
+        if (scrollToHashElement() || retries >= maxRetries) {
+          clearInterval(interval);
+        }
+      }, intervalTime);
+
+      return () => clearInterval(interval);
+    } else {
+      // Standard scroll-to-top fallback on route change
+      const timer = setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: "instant" as any // Use direct instant jump to avoid intermediate visual jitter
+        });
+      }, 50);
+      return () => clearTimeout(timer);
     }
-    
-    // Otherwise scroll to top
-    window.scrollTo(0, 0);
   }, [pathname, hash]);
+
+  // Global document click event listener to smoothly scroll hash hrefs
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest("a");
+      if (!target) return;
+
+      const href = target.getAttribute("href");
+      if (!href) return;
+
+      // Smooth scroll for local in-page links
+      if (href.startsWith("#") && href.length > 1) {
+        const id = href.substring(1);
+        const element = document.getElementById(id);
+        if (element) {
+          e.preventDefault();
+          
+          const headerOffset = 100;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.scrollY - headerOffset;
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth"
+          });
+
+          // Gracefully state change url without instant visual jump
+          window.history.pushState(null, "", href);
+        }
+      }
+    };
+
+    document.addEventListener("click", handleDocumentClick);
+    return () => document.removeEventListener("click", handleDocumentClick);
+  }, []);
 
   useEffect(() => {
     const toggleVisibility = () => {

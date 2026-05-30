@@ -1,5 +1,5 @@
 import Navigation from '../components/Navigation';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 import PrimaryHero from '../components/PrimaryHero';
 import Hero from '../components/Hero';
 import AboutTheRoom from '../components/AboutTheRoom';
@@ -104,10 +104,7 @@ export default function HomePage() {
 
   return (
     <>
-      <Helmet>
-        <title>{siteName} — {slogan}</title>
-        <meta name="description" content={metaDescription} />
-      </Helmet>
+      <SEO />
       <div className="flex flex-col min-h-screen">
         <Navigation />
         <main className="flex-grow">

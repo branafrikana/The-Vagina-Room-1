@@ -59,10 +59,12 @@ let submissionsColl: any;
 let ordersColl: any;
 let currentDbId: string | null | undefined = undefined;
 let isFirestoreAvailable = true;
+let lastFirestoreError: string | null = null;
 
 function initFirestore(databaseId?: string | null) {
   if (!appInstance) {
     isFirestoreAvailable = false;
+    lastFirestoreError = "No Firebase App Instance (missing config)";
     console.log("[FIREBASE] Firestore not initialized (no appInstance), running in standalone mode.");
     return;
   }
@@ -74,8 +76,10 @@ function initFirestore(databaseId?: string | null) {
     ordersColl = clientCollection(db, "orders");
     console.log(`[FIREBASE] Firestore client prepared (db: ${currentDbId || "(default)"})`);
     isFirestoreAvailable = true; 
+    lastFirestoreError = null;
   } catch (err: any) {
     isFirestoreAvailable = false;
+    lastFirestoreError = err.message;
     console.warn(`[FIREBASE] Firestore client initialization failed for db ${databaseId || "(default)"}. Error: ${err.message}`);
   }
 }
@@ -87,7 +91,7 @@ function initFirestore(databaseId?: string | null) {
 async function withFirestoreFallback<T>(operation: (coll: any) => Promise<T>): Promise<T> {
   // If we already know Firestore is completely unavailable, don't even try and throw an error that the caller can catch
   if (!isFirestoreAvailable || !contentColl) {
-    const err = new Error("Firestore is currently unavailable or disabled.");
+    const err = new Error(lastFirestoreError || "Firestore is currently unavailable or disabled.");
     (err as any).isFirestoreUnavailable = true;
     throw err;
   }
@@ -95,7 +99,7 @@ async function withFirestoreFallback<T>(operation: (coll: any) => Promise<T>): P
   try {
     return await operation(contentColl);
   } catch (err: any) {
-    const isNotFound = err.message?.includes("NOT_FOUND") || err.code === 5 || err.message?.includes("database not found");
+    const isNotFound = err.message?.includes("NOT_FOUND") || err.code === 5 || err.message?.includes("database not found") || err.code === "not-found";
     const isPermissionDenied = err.message?.includes("PERMISSION_DENIED") || 
                                err.message?.toLowerCase().includes("permission") || 
                                err.message?.toLowerCase().includes("insufficient") ||
@@ -119,8 +123,9 @@ async function withFirestoreFallback<T>(operation: (coll: any) => Promise<T>): P
       try {
         return await operation(contentColl);
       } catch (retryErr: any) {
-        if (retryErr.message?.includes("NOT_FOUND") || retryErr.code === 5) {
+        if (retryErr.message?.includes("NOT_FOUND") || retryErr.code === 5 || retryErr.code === "not-found") {
           isFirestoreAvailable = false; // Even the default is missing
+          lastFirestoreError = "Default database not found.";
           console.info("[FIREBASE] Default Firestore database not found. Moving to standalone flat-file mode.");
         }
         throw retryErr;
@@ -129,6 +134,7 @@ async function withFirestoreFallback<T>(operation: (coll: any) => Promise<T>): P
     
     if (isNotFound || isPermissionDenied) {
       isFirestoreAvailable = false;
+      lastFirestoreError = err.message || err.code;
     }
     throw err;
   }
@@ -143,14 +149,16 @@ async function seedFirestore() {
   try {
     const dRef = clientDoc(contentColl, "global");
     const docSnap = await clientGetDoc(dRef);
-    if (fs.existsSync(CONTENT_FILE)) {
-      console.log(`[FIREBASE] Merging local content into Firestore (db: ${currentDbId || "(default)"})...`);
+    if (!docSnap.exists() && fs.existsSync(CONTENT_FILE)) {
+      console.log(`[FIREBASE] Seeding local content into Firestore (db: ${currentDbId || "(default)"})...`);
       const localData = JSON.parse(fs.readFileSync(CONTENT_FILE, "utf8"));
       await clientSetDoc(dRef, localData, { merge: true });
-      console.log("[FIREBASE] Merging successful.");
+      console.log("[FIREBASE] Seeding successful.");
+    } else {
+      console.log("[FIREBASE] Cloud content detected. Skipping initial seed.");
     }
   } catch (err: any) {
-    const isNotFound = err.message?.includes("NOT_FOUND") || err.code === 5 || err.message?.includes("database not found");
+    const isNotFound = err.message?.includes("NOT_FOUND") || err.code === 5 || err.message?.includes("database not found") || err.code === "not-found";
     const isPermissionDenied = err.message?.includes("PERMISSION_DENIED") || 
                                err.message?.toLowerCase().includes("permission") || 
                                err.message?.toLowerCase().includes("insufficient") ||
@@ -165,10 +173,12 @@ async function seedFirestore() {
         seedFirestore(); // Retry once
       } else {
         isFirestoreAvailable = false;
+        lastFirestoreError = "Default database missing.";
         console.info("[FIREBASE] Default Firestore database not found. Seeding skipped.");
       }
     } else if (isPermissionDenied) {
       isFirestoreAvailable = false;
+      lastFirestoreError = "Permission Denied (Rules might not be deployed yet).";
       console.info("[FIREBASE] Permission denied during seeding. Proceeding with local fallback.");
     } else {
       console.warn("[FIREBASE] Could not check/seed Firestore:", err.message);
@@ -244,7 +254,8 @@ app.get("/api/media/status", async (req, res) => {
     },
     firestore: {
       connected: isFirestoreAvailable,
-      databaseId: currentDbId || "(default)"
+      databaseId: currentDbId || "(default)",
+      error: lastFirestoreError
     },
     localAssets: fs.existsSync(UPLOADS_DIR) ? fs.readdirSync(UPLOADS_DIR).filter(f => !f.startsWith('.')).length : 0
   });
@@ -255,8 +266,24 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
     return res.status(400).json({ error: "No file uploaded." });
   }
 
-  if (useCloudinary) {
+  const content = await getLatestContent();
+  let mediaConfig: any = {};
+  try { mediaConfig = JSON.parse(content.mediaSettingsJson || "{}"); } catch(e) {}
+  
+  const cCloudName = mediaConfig.cloudinaryCloudName || process.env.CLOUDINARY_CLOUD_NAME;
+  const cApiKey = mediaConfig.cloudinaryApiKey || process.env.CLOUDINARY_API_KEY;
+  const cApiSecret = mediaConfig.cloudinaryApiSecret || process.env.CLOUDINARY_API_SECRET;
+  
+  const isCloudinarySet = !!(cCloudName && cApiKey && cApiSecret);
+
+  if (isCloudinarySet) {
     try {
+      // Re-configure cloudinary for this upload in case it changed
+      cloudinary.config({
+        cloud_name: cCloudName,
+        api_key: cApiKey,
+        api_secret: cApiSecret
+      });
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "thevaginaroom",
       });
@@ -370,7 +397,9 @@ const DEFAULT_CONTENT = {
   securitySettingsJson: '{\n  "sessionTimeout": "60 mins",\n  "twoFactorAuth": "Optional",\n  "restrictIframe": "No",\n  "allowedOrigins": "*"\n}',
   topHeaderSettingsJson: '{\n  "logoText": "The Vagina Room",\n  "logoImageUrl": "",\n  "enableSearchBar": true,\n  "enableNotificationsIcon": true,\n  "enableMessagesIcon": true,\n  "enableAdminProfileDropdown": true\n}',
   leftSidebarSettingsJson: '{\n  "isCollapsible": true,\n  "defaultCollapsed": false,\n  "sections": [\n    {\n      "label": "Main Operations",\n      "items": [\n        { "label": "Client Enquiries", "path": "/admin?tab=submissions", "icon": "Inbox", "badge": "Active" },\n        { "label": "Live Page Designer", "path": "/admin?tab=content", "icon": "Layout", "badge": "" }\n      ]\n    },\n    {\n      "label": "Content Management",\n      "items": [\n        { "label": "Community Content", "path": "/admin?tab=content&sub=home", "icon": "Home", "badge": "" },\n        { "label": "Reproductive Focus Areas", "path": "/admin?tab=content&sub=focus_areas", "icon": "BookOpen", "badge": "" },\n        { "label": "Testimonials Slider", "path": "/admin?tab=content&sub=testimonials", "icon": "MessageSquare", "badge": "" }\n      ]\n    }\n  ],\n  "quickAccessLinks": [\n    { "label": "View Live Site", "path": "/", "icon": "ExternalLink" },\n    { "label": "System Settings", "path": "/admin?tab=settings", "icon": "Settings" }\n  ]\n}',
-  pwaSettingsJson: '{\n  "name": "The Vagina Room",\n  "short_name": "Vagina Room",\n  "description": "A sanctuary for intimate wellness and reproductive education.",\n  "theme_color": "#C41E3A",\n  "background_color": "#0a0a0a",\n  "display": "standalone",\n  "orientation": "portrait",\n  "iconUrl": "/icon-512.png"\n}'
+  pwaSettingsJson: '{\n  "name": "The Vagina Room",\n  "short_name": "Vagina Room",\n  "description": "A sanctuary for intimate wellness and reproductive education.",\n  "theme_color": "#C41E3A",\n  "background_color": "#0a0a0a",\n  "display": "standalone",\n  "orientation": "portrait",\n  "iconUrl": "/icon-512.png"\n}',
+  contactBgUrl: "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&q=80&w=1600",
+  bookingBgUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=1600"
 };
 
 // Ensure database files and directory exist
@@ -674,6 +703,22 @@ app.post("/api/content", async (req, res) => {
 
   if (!rawContent) {
     return res.status(400).json({ error: "Missing updated content payload." });
+  }
+
+  // Intercept firebaseConfigRaw to update local firebase-applet-config.json
+  if (rawContent.firebaseConfigRaw) {
+    try {
+      // Validate that it's actually valid JSON before saving.
+      const parsed = JSON.parse(rawContent.firebaseConfigRaw);
+      fs.writeFileSync("firebase-applet-config.json", JSON.stringify(parsed, null, 2), "utf8");
+      
+      // Update running config as well just in case, but usually requires restart
+      if (!process.env.FIREBASE_CONFIG) {
+         // Optionally you could try to reinit here, but we will let restart handle it fully
+      }
+    } catch(e) {
+      console.error("[FIREBASE] Ignoring invalid json for firebaseConfigRaw", e);
+    }
   }
 
   const content = migrateObsoleteIdentities(rawContent);
@@ -997,6 +1042,120 @@ app.get("/api/orders", async (req, res) => {
   } catch (err: any) {
     res.status(500).json({ error: "Failed to load orders", details: err.message });
   }
+});
+
+// Media Sync Endpoint: Migrates local /uploads/ to Cloudinary
+app.get("/api/admin/validate-cloudinary", async (req, res) => {
+  const password = req.query.password as string;
+  if (!(await checkAdminPassword(password))) {
+    return res.status(401).json({ error: "Unauthorized access denied." });
+  }
+
+  if (!useCloudinary) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Cloudinary is not configured in environment variables.",
+      details: "Missing CLOUDINARY_CLOUD_NAME, API_KEY, or API_SECRET."
+    });
+  }
+
+  try {
+    // Try to ping cloudinary API
+    const ping = await cloudinary.api.ping();
+    res.json({ 
+      success: true, 
+      message: "Cloudinary Cloud Mirror is successfully configured and reachable.",
+      details: ping
+    });
+  } catch (err: any) {
+    res.status(500).json({ 
+      success: false, 
+      message: "Cloudinary configuration is invalid or unreachable.",
+      details: err.message 
+    });
+  }
+});
+
+app.get("/api/admin/validate-firestore", async (req, res) => {
+  const password = req.query.password as string;
+  if (!(await checkAdminPassword(password))) {
+    return res.status(401).json({ error: "Unauthorized access denied." });
+  }
+
+  if (!isFirestoreAvailable || !contentColl) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Firestore is currently disconnected or in standalone mode.",
+      details: lastFirestoreError || "Initialization failed."
+    });
+  }
+
+  try {
+    // Perform a test read/write
+    const testRef = clientDoc(contentColl, "_system_test_");
+    await clientSetDoc(testRef, { lastCheck: new Date().toISOString(), status: "validated" });
+    const snap = await clientGetDoc(testRef);
+    
+    if (snap.exists()) {
+      res.json({ 
+        success: true, 
+        message: "Firestore Database is successfully validated (Read/Write OK).",
+        databaseId: currentDbId || "(default)"
+      });
+    } else {
+      throw new Error("Test write succeeded but document not found on read.");
+    }
+  } catch (err: any) {
+    res.status(500).json({ 
+      success: false, 
+      message: "Firestore validation failed.",
+      details: err.message 
+    });
+  }
+});
+
+app.get("/api/admin/system-status", async (req, res) => {
+  const password = req.query.password as string;
+  if (!(await checkAdminPassword(password))) {
+    return res.status(401).json({ error: "Unauthorized access denied." });
+  }
+
+  const content = await getLatestContent();
+  
+  // Cloudinary
+  let mediaConfig: any = {};
+  try { mediaConfig = JSON.parse(content.mediaSettingsJson || "{}"); } catch(e) {}
+  const cCloudName = mediaConfig.cloudinaryCloudName || process.env.CLOUDINARY_CLOUD_NAME;
+  const cApiKey = mediaConfig.cloudinaryApiKey || process.env.CLOUDINARY_API_KEY;
+  const cApiSecret = mediaConfig.cloudinaryApiSecret || process.env.CLOUDINARY_API_SECRET;
+  const isCloudinarySet = !!(cCloudName && cApiKey && cApiSecret);
+
+  // Firestore (Either ENV or local config file)
+  const isFirestoreSet = isFirestoreAvailable && !!contentColl || fs.existsSync(path.join(process.cwd(), "firebase-applet-config.json"));
+
+  // SMTP
+  let smtpConfig: any = {};
+  try { smtpConfig = JSON.parse(content.smtpSettingsJson || "{}"); } catch(e) {}
+  const smtpHost = smtpConfig.host || process.env.SMTP_HOST;
+  const smtpUser = smtpConfig.user || process.env.SMTP_USER;
+  const smtpPass = smtpConfig.pass || process.env.SMTP_PASS;
+  const isSmtpSet = !!(smtpHost && smtpUser && smtpPass);
+
+  // Payment
+  let paymentConfig: any = {};
+  try { paymentConfig = JSON.parse(content.paymentSettingsJson || "{}"); } catch(e) {}
+  const paystackSecret = paymentConfig.paystackSecretKey || process.env.PAYSTACK_SECRET_KEY;
+  const flutterwaveSecret = paymentConfig.flutterwaveSecretKey || process.env.FLUTTERWAVE_SECRET_KEY;
+  const stripeSecret = paymentConfig.stripeSecretKey || process.env.STRIPE_SECRET_KEY;
+
+  res.json({
+    cloudinary: isCloudinarySet,
+    firestore: isFirestoreSet,
+    smtp: isSmtpSet,
+    paystack: !!paystackSecret,
+    flutterwave: !!flutterwaveSecret,
+    stripe: !!stripeSecret
+  });
 });
 
 // Media Sync Endpoint: Migrates local /uploads/ to Cloudinary

@@ -101,6 +101,39 @@ export default function AdminBusinessProfile() {
               value={generalConfig.whatsappPhone} 
               onChange={(val: string) => updateJSONField("generalSettingsJson", "whatsappPhone", val)}
             />
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">WhatsApp Widget Position</label>
+              <select
+                value={generalConfig.whatsappWidgetPosition || "RIGHT"}
+                onChange={(e) => updateJSONField("generalSettingsJson", "whatsappWidgetPosition", e.target.value)}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold outline-none text-xs transition-colors"
+              >
+                <option value="RIGHT">Right-Hand Side</option>
+                <option value="LEFT">Left-Hand Side</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">WhatsApp Launcher Icon Icon</label>
+              <select
+                value={generalConfig.whatsappWidgetIconStyle || "MESSAGE"}
+                onChange={(e) => updateJSONField("generalSettingsJson", "whatsappWidgetIconStyle", e.target.value)}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold outline-none text-xs transition-colors"
+              >
+                <option value="MESSAGE">Message Chat bubble</option>
+                <option value="WHATSAPP">WhatsApp Logo</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">WhatsApp Widget Toggle</label>
+              <select
+                value={generalConfig.whatsappWidgetEnabled !== false ? "TRUE" : "FALSE"}
+                onChange={(e) => updateJSONField("generalSettingsJson", "whatsappWidgetEnabled", e.target.value === "TRUE")}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold outline-none text-xs transition-colors"
+              >
+                <option value="TRUE">Enabled / Active</option>
+                <option value="FALSE">Disabled</option>
+              </select>
+            </div>
             <InputField 
               label="Physical Office Address" 
               value={content.contactAddress} 

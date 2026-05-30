@@ -1044,6 +1044,11 @@ export function AdminContactTab() {
         />
       </div>
 
+      <div className="space-y-4 mb-8">
+        <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Contact Feed Blurred Background Image</label>
+        <ImageUploader fieldKey="contactBgUrl" label="Background Image" />
+      </div>
+
       <h3 className="text-base font-black uppercase tracking-[0.2em] text-brand-gold flex items-center gap-1.5 border-b border-white/5 pb-2 mt-8">📞 Communication Coordinates</h3>
       
       <div className="space-y-2">
@@ -1568,6 +1573,12 @@ export function AdminDrFidBookingTab() {
       {/* Hero Section */}
       <div className="space-y-6">
         <h4 className="text-xs font-black uppercase tracking-wider text-white/50 border-l-2 border-brand-gold pl-3">Landing Hero Copy</h4>
+        
+        <div className="space-y-4 mb-4">
+          <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Booking Feed Blurred Background Image</label>
+          <ImageUploader fieldKey="bookingBgUrl" label="Background Image" />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Page Subtitle (Label)</label>
