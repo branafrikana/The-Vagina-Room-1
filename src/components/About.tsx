@@ -18,10 +18,10 @@ export default function About() {
             className="lg:col-span-8"
           >
             <p className="text-brand-gold font-black tracking-[0.4em] uppercase text-xs mb-10">
-              <EditableText field="aboutUsSub" />
+              <EditableText field="homeAboutUsSub" />
             </p>
             <h2 className="font-sans text-5xl md:text-7xl font-black mb-12 text-white leading-[0.85] tracking-tighter uppercase">
-              <EditableText field="aboutUsTitle" />
+              <EditableText field="homeAboutUsTitle" />
             </h2>
             
             <div className="relative p-12 bg-white/5 border-l-4 border-brand-red backdrop-blur-sm group mb-12">
@@ -33,7 +33,7 @@ export default function About() {
             <div className="space-y-8 text-white/50 text-xl leading-relaxed font-light max-w-3xl mb-12 block">
                <EditableText field="homeAboutUsParagraph1" multiline />
             </div>
-
+            
             <Link to="/about" className="inline-block mt-4">
               <motion.button
                 whileHover={{ scale: 1.05 }}

@@ -56,16 +56,30 @@ export default function EditableText({
   const currentSize = sizeOverrides[field as string] || null;
 
   useEffect(() => {
-    setValue(rawText);
-  }, [rawText]);
+    if (!isEditing) {
+      setValue(rawText);
+    }
+  }, [rawText, isEditing]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      if ("selectionStart" in inputRef.current) {
-        inputRef.current.selectionStart = inputRef.current.value.length;
-        inputRef.current.selectionEnd = inputRef.current.value.length;
-      }
+      const focusAndSetCursor = () => {
+        const el = inputRef.current;
+        if (!el) return;
+        el.focus();
+        if ("selectionStart" in el) {
+          el.selectionStart = el.value.length;
+          el.selectionEnd = el.value.length;
+        }
+      };
+
+      focusAndSetCursor();
+      const rafId = requestAnimationFrame(focusAndSetCursor);
+      const timerId = setTimeout(focusAndSetCursor, 30);
+      return () => {
+        cancelAnimationFrame(rafId);
+        clearTimeout(timerId);
+      };
     }
   }, [isEditing]);
 
@@ -103,9 +117,19 @@ export default function EditableText({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !multiline) {
-      handleSave();
+    e.stopPropagation(); // Shield keyboard shortcuts and other system page listeners from intercepting keys
+    
+    if (e.key === "Enter") {
+      if (!multiline) {
+        e.preventDefault();
+        handleSave();
+      } else if (e.ctrlKey || e.metaKey) {
+        // Support Ctrl+Enter / Cmd+Enter to save in textarea
+        e.preventDefault();
+        handleSave();
+      }
     } else if (e.key === "Escape") {
+      e.preventDefault();
       handleCancel();
     }
   };

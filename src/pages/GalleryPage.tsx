@@ -75,7 +75,7 @@ export default function GalleryPage() {
   if (content.galleryImagesListJson) {
     try {
       const parsed = JSON.parse(content.galleryImagesListJson);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         images = parsed;
       }
     } catch (e) {
@@ -104,7 +104,7 @@ export default function GalleryPage() {
   return (
     <>
       <SEO 
-        title="Sanctuary Gallery" 
+        title="Community Gallery" 
         description="Explore visual highlights, therapeutic spaces, and community moments from our past intimate health events and outreach drives."
       />
       <div className="bg-brand-black text-white min-h-screen">
@@ -149,6 +149,11 @@ export default function GalleryPage() {
               layout
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             >
+              {filteredImages.length === 0 && (
+                <div className="col-span-1 md:col-span-2 lg:col-span-3 py-24 text-center border border-dashed border-white/10 rounded-xl bg-white/[0.01]">
+                  <p className="text-[11px] font-black uppercase tracking-widest text-white/30">There are no visual highlights captured at this time</p>
+                </div>
+              )}
               <AnimatePresence mode='popLayout'>
                 {filteredImages.map((img) => (
                   <motion.div

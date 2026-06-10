@@ -4,24 +4,36 @@ import { useContent } from '../context/ContentContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
+import { usePaystackPayment } from 'react-paystack';
 import { sendWhatsAppMessage } from '../lib/whatsapp';
 import { motion } from 'motion/react';
 import SEO from '../components/SEO';
-import { Check, ClipboardList, CreditCard, Info, MapPin, Truck, User } from 'lucide-react';
-import { fetchWithApiBase } from '../lib/api';
+import { Check, ClipboardList, CreditCard, Info, MapPin, Truck, User, ArrowRight, Sparkles } from 'lucide-react';
+import { db } from '../lib/firebase';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 
 export default function CheckoutPage() {
   const { cartItems, totalPrice, clearCart } = useCart();
   const { content } = useContent();
   const navigate = useNavigate();
 
-  const checkoutConfig = JSON.parse(content.checkoutSettingsJson || '{}');
-  const shippingLocations = checkoutConfig.shippingLocations || [];
-  const rawPaymentMethods = checkoutConfig.paymentMethods || [];
-  const paymentMethods = rawPaymentMethods
-    .map((m: any) => typeof m === 'string' ? { name: m, enabled: true } : m)
-    .filter((m: any) => m.enabled)
-    .map((m: any) => m.name);
+  const generalConfig = JSON.parse(content.generalSettingsJson || '{}');
+  const paymentConfig = JSON.parse(content.paymentSettingsJson || '{}');
+  const shippingLocations = JSON.parse(content.checkoutSettingsJson || '{}').shippingLocations || [];
+
+  const getEnabledMethods = () => {
+    const methods = [];
+    if (paymentConfig.gateways) {
+      for (const [key, val] of Object.entries(paymentConfig.gateways)) {
+        if ((val as any).store?.enabled) methods.push(key.charAt(0).toUpperCase() + key.slice(1));
+      }
+    }
+    if (paymentConfig.manual?.store) {
+      paymentConfig.manual.store.forEach((m: any) => methods.push(m.name));
+    }
+    return methods;
+  };
+  const paymentMethods = getEnabledMethods();
 
   const [formData, setFormData] = useState({
     // Personal
@@ -63,10 +75,36 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const deliveryFee = shippingLocations.find((l: any) => l.name === formData.shippingLocation)?.fee || 0;
-  const grandTotal = totalPrice + deliveryFee;
+  const discountAmount = formData.discountType === 'percentage' ? (totalPrice * (Number(formData.discountValue) / 100)) : (Number(formData.discountValue) || 0);
+  const grandTotal = Math.max(0, totalPrice + deliveryFee - discountAmount);
 
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
+
+  const digitalItems = cartItems.filter(item => item.isDigital && item.downloadUrl);
+  const hasDigital = digitalItems.length > 0;
+  
+  const paystackKey = generalConfig.paystackPublicKeyStore || "";
+
+  // Handle setting-based redirection for digital products
+  React.useEffect(() => {
+    if (isSuccess && hasDigital) {
+      try {
+        const seoSettings = JSON.parse(content.seoSettingsJson || '{}');
+        const generalSettings = JSON.parse(content.generalSettingsJson || '{}');
+        
+        // If "Instant Redirect" is enabled in Admin, and a URL exists
+        if (generalSettings.autoRedirectDigital && seoSettings.digitalSuccessRedirect) {
+          const timer = setTimeout(() => {
+            window.location.href = seoSettings.digitalSuccessRedirect;
+          }, 3000);
+          return () => clearTimeout(timer);
+        }
+      } catch (e) {
+        console.warn("Failed to process digital redirect", e);
+      }
+    }
+  }, [isSuccess, hasDigital, content.seoSettingsJson, content.generalSettingsJson]);
 
   const currencySymbol = cartItems[0]?.currency === 'NGN' ? '₦' : cartItems[0]?.currency === 'USD' ? '$' : '₦';
 
@@ -125,7 +163,13 @@ Thank you for shopping with *The Vagina Room* 💜`;
     return encodeURIComponent(message);
   };
 
-  const handleWhatsAppOrder = async () => {
+  const bankDetails = {
+    name: generalConfig.storeBankName || generalConfig.bankName || "",
+    accountName: generalConfig.storeAccountName || generalConfig.accountName || "",
+    accountNo: generalConfig.storeAccountNumber || generalConfig.accountNumber || ""
+  };
+  
+  const handleCheckout = async () => {
     const newErrors: Record<string, string> = {};
     if (!formData.fullName) newErrors.fullName = 'Full Name is required';
     if (!formData.email) newErrors.email = 'Email is required';
@@ -133,60 +177,85 @@ Thank you for shopping with *The Vagina Room* 💜`;
     if (!formData.billingAddress) newErrors.billingAddress = 'Billing Address is required';
     if (!formData.agreedToPolicies) newErrors.agreedToPolicies = 'You must agree to store policies';
     
+    if (formData.paymentMethod.toLowerCase().includes('card') && !paystackKey) {
+      newErrors.paymentMethod = "Card payment is currently unavailable. Please use Bank Transfer.";
+    }
+
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
       const orderNo = Math.floor(Math.random() * 1000000).toString();
       
-      try {
-        // Save order via API
-        await fetchWithApiBase('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderNo,
-            customer: formData,
-            items: cartItems,
-            subtotal: totalPrice,
-            deliveryFee,
-            grandTotal,
-            status: 'pending',
-            createdAt: new Date().toISOString()
-          })
-        });
-
-        // Send confirmation email via server-side API
+      const processOrder = async (isPaid = false, paymentRef = '') => {
         try {
-          await fetchWithApiBase('/api/checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          // Save order via direct Firestore client
+          await addDoc(collection(db, "orders"), {
               orderNo,
-              name: formData.fullName,
-              email: formData.email,
-              cartItems,
-              totalPrice: grandTotal,
-              shippingAddress: formData.useBillingForShipping ? formData.billingAddress : formData.shippingAddress,
-              phone: formData.phone
-            })
+              customer: formData,
+              items: cartItems,
+              subtotal: totalPrice,
+              deliveryFee,
+              grandTotal,
+              status: isPaid ? 'paid' : 'pending',
+              paymentReference: paymentRef,
+              orderType: 'store',
+              createdAt: new Date().toISOString()
           });
-        } catch (mailErr) {
-          console.error("Mail trigger failed:", mailErr);
-          // Don't block the UI for email failures
-        }
 
-        const generalConfig = JSON.parse(content.generalSettingsJson || '{}');
-        const phoneToUse = generalConfig.whatsappPhone || content.contactPhone;
-        const message = generateWhatsAppMessage(orderNo);
-        
-        await sendWhatsAppMessage(phoneToUse, message, generalConfig.whatsappMethod || 'REDIRECT');
-        
-        setOrderId(orderNo);
-        setIsSuccess(true);
-        clearCart();
-      } catch (e) {
-        console.error("Error saving order: ", e);
-        alert("Failed to place order. Please try again.");
+          // (Removed /api/checkout sending as no backend is configured)
+
+          if (!isPaid) {
+            const phoneToUse = generalConfig.whatsappPhone || content.contactPhone;
+            const message = generateWhatsAppMessage(orderNo);
+            await sendWhatsAppMessage(phoneToUse, message, generalConfig.whatsappMethod || 'REDIRECT');
+          }
+          
+          setOrderId(orderNo);
+          setIsSuccess(true);
+          clearCart();
+        } catch (e) {
+          console.error("Error saving order: ", e);
+          alert("Failed to place order. Please try again.");
+        }
+      };
+
+      if (formData.paymentMethod.toLowerCase().includes('card')) {
+        const config = {
+          reference: (new Date()).getTime().toString(),
+          email: formData.email,
+          amount: Math.round(grandTotal * 100), // kobo
+          publicKey: paystackKey,
+          metadata: {
+            custom_fields: [
+              {
+                display_name: "Customer Name",
+                variable_name: "customer_name",
+                value: formData.fullName
+              },
+              {
+                display_name: "Order Type",
+                variable_name: "order_type",
+                value: "store"
+              }
+            ]
+          }
+        };
+
+        const initializePayment = usePaystackPayment(config);
+
+        const onSuccess = (reference: any) => {
+          processOrder(true, reference.reference);
+        };
+
+        const onClose = () => {
+          alert("Payment was cancelled. Order not placed.");
+        };
+
+        // @ts-ignore
+        initializePayment(onSuccess, onClose);
+      } else {
+        // Manual Transfer / WhatsApp flow
+        processOrder(false);
       }
     }
   };
@@ -249,13 +318,50 @@ Thank you for shopping with *The Vagina Room* 💜`;
             <div className="w-20 h-20 bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center mx-auto rounded-full">
               <Check className="text-brand-gold w-10 h-10" />
             </div>
-            <div className="space-y-4 max-w-lg mx-auto">
-              <h2 className="text-3xl font-black uppercase tracking-tight">Order Request Sent!</h2>
-              <p className="text-white/60 font-serif leading-relaxed italic">
-                Your order #<span className="text-brand-gold font-mono font-bold font-sans not-italic">{orderId}</span> has been processed. 
-                Our team will confirm your order on WhatsApp shortly.
+            <div className="space-y-4 max-w-lg mx-auto px-6">
+              <h2 className="text-3xl font-black uppercase tracking-tight">Order Confirmed!</h2>
+              <p className="text-white/60 font-serif leading-relaxed italic text-sm">
+                Your order #<span className="text-brand-gold font-mono font-bold font-sans not-italic">{orderId}</span> has been received. 
+                {formData.paymentMethod.toLowerCase().includes('card') 
+                  ? "A confirmation email has been sent to you."
+                  : "Please complete your payment confirmation on WhatsApp via the button below."
+                }
               </p>
             </div>
+
+            {hasDigital && (
+              <div className="max-w-xl mx-auto border border-brand-gold/20 bg-brand-gold/[0.03] p-8 space-y-6">
+                <div className="flex items-center justify-center gap-3">
+                  <Sparkles className="w-5 h-5 text-brand-gold animate-pulse" />
+                  <h3 className="text-lg font-black uppercase tracking-widest text-brand-gold">Secure Digital Community Access</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <p className="text-[10px] text-white/50 uppercase tracking-widest font-mono">Your acquired digital assets are ready for instant calibration:</p>
+                  <div className="space-y-2">
+                    {digitalItems.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between bg-brand-black/40 border border-white/10 p-4 group hover:border-brand-gold transition-colors">
+                        <div className="text-left">
+                          <p className="text-[11px] font-black uppercase tracking-tight">{item.title}</p>
+                          <p className="text-[8px] text-white/40 uppercase font-mono tracking-widest">Digital Resource Vault</p>
+                        </div>
+                        <a 
+                          href={item.downloadUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="bg-brand-gold text-brand-black px-4 py-2 text-[9px] font-black uppercase tracking-widest hover:bg-white transition-all flex items-center gap-2"
+                        >
+                          Download Access
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[9px] text-white/30 uppercase leading-relaxed italic">
+                    * A digital receipt with these community links has also been dispatched to your provided email address.
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="pt-8 flex flex-col md:flex-row gap-4 justify-center">
               <button 
                 onClick={() => navigate('/products')}
@@ -391,7 +497,16 @@ Thank you for shopping with *The Vagina Room* 💜`;
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(paymentConfig.manual?.store || []).some((m: any) => m.name === formData.paymentMethod) && (
+                    <div className="p-4 bg-brand-gold/10 border border-brand-gold/20 text-xs text-white space-y-2">
+                      <p className="font-bold uppercase tracking-widest text-[9px] text-brand-gold">Payment Details:</p>
+                      <div className="font-mono text-white/80 space-y-1">
+                        <p>{paymentConfig.manual.store.find((m: any) => m.name === formData.paymentMethod)?.details}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <InputField 
                       label="Transaction Reference (Optional)" 
                       value={formData.transactionReference} 
@@ -445,10 +560,52 @@ Thank you for shopping with *The Vagina Room* 💜`;
                   </div>
 
                   <div className="pt-6 border-t border-white/10 space-y-3">
+                    <div className="flex gap-2 mb-4">
+                      <input 
+                        type="text"
+                        placeholder="Discount Code"
+                        className="w-full bg-brand-black/40 border border-white/10 p-3 text-[10px] uppercase font-mono tracking-widest text-white/70"
+                        value={formData.discountCode || ""}
+                        onChange={(e) => setFormData({...formData, discountCode: e.target.value.toUpperCase()})}
+                      />
+                      <button 
+                        type="button" 
+                        onClick={async () => {
+                           try {
+                             const q = query(collection(db, "discountCodes"), where("code", "==", formData.discountCode), where("isActive", "==", true));
+                             const snapshot = await getDocs(q);
+                             if (snapshot.empty) {
+                               alert("Invalid or inactive discount code");
+                               return;
+                             }
+                             const data = snapshot.docs[0].data();
+                             if (data.expiryDate && new Date(data.expiryDate) < new Date()) {
+                               alert("This discount code has expired");
+                               return;
+                             }
+                             alert("Discount Applied!");
+                             setFormData({...formData, discountType: data.type, discountValue: data.value});
+                           } catch(e) {
+                             console.error("Discount check failed", e);
+                             alert("Failed to validate discount");
+                           }
+                        }}
+                        className="bg-brand-gold text-brand-black px-4 text-[10px] font-black uppercase tracking-widest"
+                      >
+                        Apply
+                      </button>
+                    </div>
+
                     <div className="flex justify-between text-[10px] uppercase font-black">
                       <span className="text-white/40">Subtotal</span>
                       <span>{currencySymbol}{totalPrice.toFixed(2)}</span>
                     </div>
+                    {formData.discountType && (
+                      <div className="flex justify-between text-[10px] uppercase font-black text-brand-gold">
+                        <span>Discount ({formData.discountType === 'percentage' ? `${formData.discountValue}%` : currencySymbol + formData.discountValue})</span>
+                        <span>-{currencySymbol}{(formData.discountType === 'percentage' ? (totalPrice * (formData.discountValue / 100)) : formData.discountValue).toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-[10px] uppercase font-black">
                       <span className="text-white/40">Delivery Fee</span>
                       <span>{currencySymbol}{deliveryFee.toFixed(2)}</span>
@@ -477,11 +634,20 @@ Thank you for shopping with *The Vagina Room* 💜`;
                     {errors.agreedToPolicies && <p className="text-brand-gold text-[10px] uppercase font-black">{errors.agreedToPolicies}</p>}
 
                     <button 
-                      onClick={handleWhatsAppOrder}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white p-5 font-black uppercase text-sm tracking-widest transition-all flex items-center justify-center gap-3 active:scale-95"
+                      onClick={handleCheckout}
+                      className={`w-full ${formData.paymentMethod.toLowerCase().includes('card') ? 'bg-brand-gold text-brand-black' : 'bg-green-600 text-white'} p-5 font-black uppercase text-sm tracking-widest transition-all flex items-center justify-center gap-3 active:scale-95`}
                     >
-                      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.100-.198.05-.371-.026-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.394 0 12.03c0 2.119.554 4.188 1.606 6.046L0 24l6.117-1.605a11.803 11.803 0 005.925 1.586h.005c6.634 0 12.032-5.396 12.036-12.032.002-3.213-1.248-6.231-3.517-8.502"/></svg>
-                      Order on WhatsApp
+                      {formData.paymentMethod.toLowerCase().includes('card') ? (
+                        <>
+                          <CreditCard className="w-5 h-5" />
+                          Pay with Paystack
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.100-.198.05-.371-.026-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.394 0 12.03c0 2.119.554 4.188 1.606 6.046L0 24l6.117-1.605a11.803 11.803 0 005.925 1.586h.005c6.634 0 12.032-5.396 12.036-12.032.002-3.213-1.248-6.231-3.517-8.502"/></svg>
+                          Order on WhatsApp
+                        </>
+                      )}
                     </button>
                     
                     <p className="text-[9px] text-white/30 text-center uppercase tracking-widest leading-relaxed">

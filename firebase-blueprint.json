@@ -1,158 +1,287 @@
 {
   "entities": {
-    "SiteContent": {
-      "title": "Site Content",
-      "description": "Global dictionary of all editable content fields on the platform",
+    "User": {
+      "title": "User",
+      "description": "User profile with role, membership status, partner capital investment parameters and referral commission tracker.",
       "type": "object",
       "properties": {
-        "heroWelcome": { "type": "string" },
-        "heroHeading": { "type": "string" },
-        "heroSub": { "type": "string" },
-        "heroBtnText": { "type": "string" },
-        "heroBtnUrl": { "type": "string" },
-        "heroBgUrl": { "type": "string" },
-        "drFidHeading": { "type": "string" },
-        "drFidQuote": { "type": "string" },
-        "drFidBio1": { "type": "string" },
-        "drFidBio2": { "type": "string" },
-        "drFidBio3": { "type": "string" },
-        "drFidImageUrl": { "type": "string" },
-        "drFidStats": { "type": "string" },
-        "focusAreasHeading": { "type": "string" },
-        "focusAreasSub": { "type": "string" },
-        "focusAreasJson": { "type": "string" },
-        "testimonialsHeading": { "type": "string" },
-        "testimonialsSub": { "type": "string" },
-        "testimonialsJson": { "type": "string" },
-        "eventsHeading": { "type": "string" },
-        "eventsSub": { "type": "string" },
-        "eventsJson": { "type": "string" },
-        "ctaHeading": { "type": "string" },
-        "ctaSub": { "type": "string" },
-        "ctaBtnText": { "type": "string" },
-        "ctaBtnUrl": { "type": "string" },
-        "ctaBgUrl": { "type": "string" },
-        "aboutStoryHeading": { "type": "string" },
-        "aboutStoryText1": { "type": "string" },
-        "aboutStoryText2": { "type": "string" },
-        "aboutStoryImageUrl": { "type": "string" },
-        "missionHeading": { "type": "string" },
-        "missionSub": { "type": "string" },
-        "visionHeading": { "type": "string" },
-        "visionSub": { "type": "string" },
-        "missionPointsJson": { "type": "string" },
-        "valuesHeading": { "type": "string" },
-        "valuesSub": { "type": "string" },
-        "valuesJson": { "type": "string" },
-        "projectsHeading": { "type": "string" },
-        "projectsSub": { "type": "string" },
-        "projectsJson": { "type": "string" },
-        "galleryHeading": { "type": "string" },
-        "gallerySub": { "type": "string" },
-        "galleryJson": { "type": "string" },
-        "teamHeading": { "type": "string" },
-        "teamSub": { "type": "string" },
-        "teamJson": { "type": "string" },
-        "partnerHeading": { "type": "string" },
-        "partnerSub": { "type": "string" },
-        "partnerLogosJson": { "type": "string" },
-        "partnerCTAHeading": { "type": "string" },
-        "partnerCTASub": { "type": "string" },
-        "partnerCTABtnText": { "type": "string" },
-        "contactHeading": { "type": "string" },
-        "contactSub": { "type": "string" },
-        "contactMainEmail": { "type": "string" },
-        "contactMainPhone": { "type": "string" },
-        "contactMainAddress": { "type": "string" },
-        "socialLinksJson": { "type": "string" },
-        "footerHeading": { "type": "string" },
-        "footerSub": { "type": "string" },
-        "footerLinksJson": { "type": "string" },
-        "footerCopyright": { "type": "string" },
-        "privacyPolicyHeading": { "type": "string" },
-        "privacyPolicyText": { "type": "string" },
-        "termsHeading": { "type": "string" },
-        "termsText": { "type": "string" },
-        "eventsPageHeading": { "type": "string" },
-        "eventsPageSub": { "type": "string" },
-        "submissionsJson": { "type": "string" },
-        "supportPageHeading": { "type": "string" },
-        "supportPageSub": { "type": "string" },
-        "supportFaqsJson": { "type": "string" },
-        "aboutTimelineJson": { "type": "string" },
-        "aboutValuesJson": { "type": "string" },
-        "teamMembersJson": { "type": "string" },
-        "projectsCategoriesJson": { "type": "string" },
-        "projectsItemsJson": { "type": "string" },
-        "galleryItemsJson": { "type": "string" },
-        "homeVideoUrl": { "type": "string" },
-        "homeStatsJson": { "type": "string" },
-        "navigationMenuJson": { "type": "string" },
-        "generalSettingsJson": { "type": "string" },
-        "brandingSettingsJson": { "type": "string" },
-        "seoSettingsJson": { "type": "string" },
-        "securitySettingsJson": { "type": "string" },
-        "topHeaderSettingsJson": { "type": "string" },
-        "leftSidebarSettingsJson": { "type": "string" },
-        "adminDashboardWidgetsJson": { "type": "string" },
-        "logoUrlAlt": { "type": "string" },
-        "ogImage": { "type": "string" }
-      }
-    },
-    "Admin": {
-      "title": "Admin",
-      "description": "Information about administrative users",
-      "type": "object",
-      "properties": {
-        "email": { "type": "string" },
-        "role": { "type": "string", "enum": ["superadmin", "editor"] }
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["member", "partner", "admin"] },
+        "isMember": { "type": "boolean" },
+        "isFreeMemberForLife": { "type": "boolean" },
+        "birthDate": { "type": "string", "format": "date" },
+        "adminPermissions": { "type": "array", "items": { "type": "string" } },
+        "membershipType": { "type": "string", "enum": ["quarterly", "yearly", "none"] },
+        "paymentStatus": { "type": "string", "enum": ["pending", "paid"] },
+        "referredBy": { "type": "string" },
+        "totalReferrals": { "type": "number" },
+        "activeReferredMembers": { "type": "number" },
+        "referralEarningsUSD": { "type": "number" },
+        "referralEarningsNGN": { "type": "number" },
+        "customCommissionPercentage": { "type": "number" },
+        "investmentAmount": { "type": "number" },
+        "percentageShare": { "type": "number" },
+        "payoutFrequency": { "type": "string", "enum": ["monthly", "quarterly"] }
       },
       "required": ["email", "role"]
     },
-    "Submission": {
-      "title": "Submission",
-      "description": "Form submissions from contact or partnership forms",
+    "Membership": {
+      "title": "Membership",
+      "description": "Subscription details for a member.",
       "type": "object",
       "properties": {
-        "timestamp": { "type": "string", "format": "date-time" },
-        "formType": { "type": "string" },
-        "data": { "type": "object" }
+        "userId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive", "expired"] },
+        "startDate": { "type": "string", "format": "date-time" },
+        "endDate": { "type": "string", "format": "date-time" },
+        "subscriptionType": { "type": "string", "enum": ["quarterly", "yearly"] }
       },
-      "required": ["timestamp", "formType", "data"]
+      "required": ["userId", "status", "startDate", "endDate"]
     },
-    "Order": {
-      "title": "Order",
-      "description": "Product orders from the checkout page",
+    "ExclusiveContent": {
+      "title": "ExclusiveContent",
+      "description": "Exclusive content for members.",
       "type": "object",
       "properties": {
-        "orderNo": { "type": "string" },
-        "customer": { "type": "object" },
-        "items": { "type": "array" },
-        "subtotal": { "type": "number" },
-        "deliveryFee": { "type": "number" },
-        "grandTotal": { "type": "number" },
-        "status": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["webinar", "recording"] },
+        "url": { "type": "string", "format": "uri" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["orderNo", "customer", "items", "subtotal", "deliveryFee", "grandTotal", "status", "createdAt"]
+      "required": ["title", "type", "url", "createdAt"]
+    },
+    "BlogPost": {
+      "title": "BlogPost",
+      "description": "Articles, wellness insights, or journal entries.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "summary": { "type": "string" },
+        "content": { "type": "string" },
+        "coverImageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "author": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "slug", "content", "status", "createdAt"]
+    },
+    "CustomPage": {
+      "title": "CustomPage",
+      "description": "CMS-driven dynamic pages with custom sections and SEO metadata overrides.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "metaTitle": { "type": "string" },
+        "metaDescription": { "type": "string" },
+        "seoKeywords": { "type": "string" },
+        "ogTitle": { "type": "string" },
+        "ogDescription": { "type": "string" },
+        "ogImage": { "type": "string" },
+        "ogType": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "sections": { "type": "array" }
+      },
+      "required": ["title", "slug", "status"]
+    },
+    "MediaItem": {
+      "title": "MediaItem",
+      "description": "Uploaded media elements referenced inside content.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "url": { "type": "string" },
+        "type": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "url", "createdAt"]
+    },
+    "ProductReview": {
+      "title": "ProductReview",
+      "description": "Customer submitted review for a product.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "userId": { "type": "string" },
+        "rating": { "type": "number" },
+        "text": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "deleted"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["productId", "userId", "rating", "status", "createdAt"]
+    },
+    "StockLedger": {
+      "title": "StockLedger",
+      "description": "Stock changes ledger.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "change": { "type": "number" },
+        "reason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["productId", "change", "createdAt"]
+    },
+    "InventoryNotification": {
+      "title": "InventoryNotification",
+      "description": "Alert for low inventory.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "level": { "type": "number" },
+        "status": { "type": "string", "enum": ["unread", "read"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["productId", "level", "status", "createdAt"]
+    },
+    "DiscountCode": {
+      "title": "DiscountCode",
+      "description": "Discount codes for checkout.",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "type": { "type": "string", "enum": ["percentage", "fixed"] },
+        "value": { "type": "number" },
+        "expiryDate": { "type": "string", "format": "date-time" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["code", "type", "value", "isActive", "createdAt"]
+    },
+    "WellnessReflection": {
+      "title": "WellnessReflection",
+      "description": "Daily reflection of mood and symptoms for a member.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "mood": { "type": "number", "description": "1 to 5 scale" },
+        "symptoms": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "mood", "createdAt"]
+    },
+    "WellnessGoal": {
+      "title": "WellnessGoal",
+      "description": "Personal health or educational milestone for a member.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string", "enum": ["health", "education", "spiritual", "other"] },
+        "progress": { "type": "number", "minimum": 0, "maximum": 100 },
+        "isCompleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "category", "progress", "isCompleted", "createdAt"]
     }
   },
   "firestore": {
-    "configs/global": {
-      "schema": "SiteContent",
-      "description": "Singleton document for all site configuration"
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "User profile collection."
     },
-    "admins/{uid}": {
-      "schema": "Admin",
-      "description": "Administrative users table"
+    "/admins/{uid}": {
+      "schema": {
+        "title": "Admin",
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "addedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Admin authorization mapping."
     },
-    "submissions/{subId}": {
-      "schema": "Submission",
-      "description": "Form submissions collection"
+    "/configs/{configId}": {
+      "schema": {
+        "title": "Config",
+        "type": "object",
+        "properties": {
+          "generalSettingsJson": { "type": "string" }
+        }
+      },
+      "description": "Global application configuration."
     },
-    "orders/{orderId}": {
-      "schema": "Order",
-      "description": "Product orders collection"
+    "/submissions/{subId}": {
+      "schema": {
+        "title": "Submission",
+        "type": "object",
+        "properties": {
+          "formType": { "type": "string" },
+          "formData": { "type": "object" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Form submissions and inquiries."
+    },
+    "/orders/{orderId}": {
+      "schema": {
+        "title": "Order",
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string" },
+          "status": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Product orders collection."
+    },
+    "/direct_messages/{msgId}": {
+      "schema": {
+        "title": "DirectMessage",
+        "type": "object",
+        "properties": {
+          "chatId": { "type": "string" },
+          "senderId": { "type": "string" },
+          "recipientId": { "type": "string" },
+          "text": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Private messages between members."
+    },
+    "/exclusiveContent/{contentId}": {
+      "schema": { "$ref": "ExclusiveContent" },
+      "description": "Exclusive member-only content collection."
+    },
+    "/blogs/{blogId}": {
+      "schema": { "$ref": "BlogPost" },
+      "description": "Public and admin-managed wellness publications."
+    },
+    "/pages/{pageId}": {
+      "schema": { "$ref": "CustomPage" },
+      "description": "Public and admin-managed dynamic custom pages."
+    },
+    "/media/{mediaId}": {
+      "schema": { "$ref": "MediaItem" },
+      "description": "Asset library management reference list."
+    },
+    "/productReviews/{reviewId}": {
+      "schema": { "$ref": "ProductReview" },
+      "description": "Product reviews collection."
+    },
+    "/stockLedger/{ledgerId}": {
+      "schema": { "$ref": "StockLedger" },
+      "description": "Product inventory change records."
+    },
+    "/inventoryNotifications/{notificationId}": {
+      "schema": { "$ref": "InventoryNotification" },
+      "description": "Inventory alerts."
+    },
+    "/discountCodes/{codeId}": {
+      "schema": { "$ref": "DiscountCode" },
+      "description": "Checkout discount codes."
+    },
+    "/wellnessReflections/{reflectionId}": {
+      "schema": { "$ref": "WellnessReflection" },
+      "description": "Member wellness reflections."
+    },
+    "/wellnessGoals/{goalId}": {
+      "schema": { "$ref": "WellnessGoal" },
+      "description": "Member wellness and educational goals."
     }
   }
 }

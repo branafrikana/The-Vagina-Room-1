@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useContent } from "../../context/ContentContext";
 import { Trash2, Plus, ArrowUp, ArrowDown, Upload, Globe, Award, Sparkles, FileText, DollarSign, Link2, Eye, EyeOff, Check, MessageCircle, ShoppingCart, ExternalLink, Star } from "lucide-react";
-import { ImageUploader } from "../../pages/AdminPage";
+import { ImageUploader } from "./ImageUploader";
 
 interface ProductItem {
   id: string;
   title: string;
   price: string;
+  memberDiscountPrice?: string;
   currency: string;
   description: string;
   imageUrl: string;
@@ -14,6 +15,8 @@ interface ProductItem {
   orderLink?: string;
   externalLink?: string; // Legacy
   featured?: boolean;
+  isDigital?: boolean;
+  downloadUrl?: string;
 }
 
 export default function AdminProductsPanel() {
@@ -473,34 +476,6 @@ export default function AdminProductsPanel() {
               </div>
             </div>
           </div>
-
-          {/* External Source Setup */}
-          <div className="bg-white/[0.01] border border-white/5 p-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <Globe className="text-brand-gold" size={16} />
-              <h4 className="text-xs font-black uppercase tracking-wider text-brand-gold">
-                🗺️ External Products Inventory Source API
-              </h4>
-            </div>
-            
-            <p className="text-[10px] text-white/50 leading-relaxed uppercase tracking-wider">
-              In addition to your manually curated Dr. FID products, you can list products from any REST API, public database, or Shopify shop feed. Our backend routes secure inquiries to bypass browser-specific CORS issues automatically.
-            </p>
-
-            <div className="space-y-2 pt-2">
-              <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">External API Feed Source URL</label>
-              <input
-                type="text"
-                value={content.productsExternalUrl || ""}
-                onChange={(e) => updateContentField("productsExternalUrl", e.target.value)}
-                className="w-full bg-brand-black border border-white/10 text-white font-mono text-xs px-4 py-3.5 focus:border-brand-gold outline-none"
-                placeholder="e.g., https://fakestoreapi.com/products"
-              />
-              <span className="text-[9px] font-mono text-brand-gold/60 block mt-1">
-                💡 Current Source Default: <strong className="select-all">https://fakestoreapi.com/products/category/women's clothing</strong> (Use this for dynamic testing).
-              </span>
-            </div>
-          </div>
         </div>
       )}
 
@@ -648,9 +623,9 @@ export default function AdminProductsPanel() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5 md:col-span-2">
+                        <div className="space-y-1.5">
                           <label className="text-[9px] font-black uppercase tracking-wider text-white/40 block flex items-center gap-1">
-                            <DollarSign size={10} /> Cost/Price Amount
+                            <DollarSign size={10} /> Base Price
                           </label>
                           <input
                             type="text"
@@ -658,6 +633,18 @@ export default function AdminProductsPanel() {
                             onChange={(e) => handleModifyProduct(idx, "price", e.target.value)}
                             className="w-full bg-brand-black border border-white/10 text-white font-mono text-xs px-3 py-2.5 outline-none focus:border-brand-gold"
                             placeholder="e.g., 45,000"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] font-black uppercase tracking-wider text-white/40 block flex items-center gap-1">
+                            <Award size={10} /> Member Discount Price
+                          </label>
+                          <input
+                            type="text"
+                            value={p.memberDiscountPrice || ""}
+                            onChange={(e) => handleModifyProduct(idx, "memberDiscountPrice", e.target.value)}
+                            className="w-full bg-brand-black border border-white/10 text-white font-mono text-xs px-3 py-2.5 outline-none focus:border-brand-gold"
+                            placeholder="e.g., 40,000"
                           />
                         </div>
                       </div>
@@ -671,6 +658,47 @@ export default function AdminProductsPanel() {
                           className="w-full bg-brand-black border border-white/10 text-white font-serif text-xs p-3 outline-none focus:border-brand-gold leading-relaxed"
                           placeholder="State clinical components, uses, and instructions."
                         />
+                      </div>
+
+                      {/* Digital Fulfillment & Access Node */}
+                      <div className="border border-white/5 bg-white/[0.02] p-4 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-black uppercase text-brand-gold flex items-center gap-2">
+                             {p.isDigital ? <FileText size={14} /> : <ShoppingCart size={14} />}
+                             {p.isDigital ? "Digital Resource Fulfillment" : "Physical Goods Fulfillment"}
+                          </label>
+                          <button
+                            onClick={() => handleModifyProduct(idx, "isDigital", !p.isDigital)}
+                            className={`px-3 py-1.5 text-[8px] font-black uppercase tracking-widest border transition-all ${
+                              p.isDigital 
+                                ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-400" 
+                                : "bg-white/5 border-white/10 text-white/40 hover:text-white"
+                            }`}
+                          >
+                            Mark as {p.isDigital ? "Physical" : "Digital"} Asset
+                          </button>
+                        </div>
+                        
+                        {p.isDigital && (
+                          <div className="space-y-3 pt-2 border-t border-white/5">
+                            <div className="space-y-1.5">
+                              <label className="text-[9px] font-black uppercase tracking-wider text-white/40 block flex items-center gap-1.5">
+                                <Link2 size={10} /> Secure Download/Asset URL
+                                <span className="text-[8px] lowercase font-normal italic opacity-50 px-2">(Delivered via encrypted email after payment)</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={p.downloadUrl || ""}
+                                onChange={(e) => handleModifyProduct(idx, "downloadUrl", e.target.value)}
+                                placeholder="e.g. https://cloudinary.com/ebook-pdf-link"
+                                className="w-full bg-brand-black border border-white/10 text-white font-mono text-[10px] px-3 py-2 outline-none focus:border-emerald-500/50"
+                              />
+                            </div>
+                            <p className="text-[8px] text-white/30 uppercase leading-relaxed font-mono">
+                              * World-class delivery enabled. Paid digital products will trigger an automated fulfillment cycle on payment confirmation. Free assets (0 cost) will be available instantly.
+                            </p>
+                          </div>
+                        )}
                       </div>
 
                       {/* Ordering Method Controls */}

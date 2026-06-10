@@ -68,7 +68,7 @@ export default function AboutPage() {
     }
   }
 
-  let coreValues = [
+  let coreValues: { name?: string; title?: string; desc: string }[] = [
     { name: "Confidentiality", desc: "We protect every story with strict privacy and trust." },
     { name: "Compassion", desc: "We deliver care with empathy and understanding." },
     { name: "Education", desc: "We simplify knowledge for informed health decisions." },
@@ -289,7 +289,7 @@ export default function AboutPage() {
                     transition={{ delay: i * 0.1 }}
                     className="space-y-6"
                   >
-                    <h4 className="text-2xl font-black text-brand-gold italic uppercase tracking-tighter">{v.name}</h4>
+                    <h4 className="text-2xl font-black text-brand-gold italic uppercase tracking-tighter">{v.name || v.title}</h4>
                     <p className="text-white/40 font-light text-sm italic tracking-wide max-w-xs mx-auto">
                       {v.desc}
                     </p>
@@ -348,15 +348,12 @@ export default function AboutPage() {
     <>
       <SEO 
         title="About Us" 
-        description="Discover the mission, vision, and core values of The Vagina Room. We are a sanctuary for women's health, breaking stigmas and empowering through education."
+        description="Discover the mission, vision, and core values of The Vagina Room. We are a safe space for women's health, breaking stigmas and empowering through education."
       />
       <div className="bg-brand-black text-white min-h-screen">
         <Navigation />
         
         <main className="pt-32">
-          <div className="max-w-7xl mx-auto px-6 pt-8">
-            <Breadcrumbs items={[{ label: 'About Us' }]} />
-          </div>
           {sectionIds.map(id => renderSection(id))}
         </main>
 

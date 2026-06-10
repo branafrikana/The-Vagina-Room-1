@@ -1,17 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   --color-brand-red: #e23411;
   --color-brand-gold: #D4AF37;
   --color-brand-black: #1A1717;
   --color-brand-cream: #FFFCF9;
   --color-brand-muted: #F3ECE7;
-  --brand-primary-gradient: linear-gradient(135deg, #C41E3A 0%, #8B0000 100%);
+  --brand-primary-gradient: linear-gradient(135deg, #1A1717 0%, #000000 100%);
   --brand-secondary-gradient: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+  --background-image-brand-primary-gradient: var(--brand-primary-gradient);
+  --background-image-brand-secondary-gradient: var(--brand-secondary-gradient);
 
   @keyframes scroll {
     from { transform: translateX(0); }
@@ -21,11 +24,32 @@
 
 @layer base {
   body {
-    @apply bg-brand-cream text-brand-black font-sans antialiased selection:bg-brand-red selection:text-white overflow-x-hidden;
+    @apply bg-brand-black text-white font-sans antialiased selection:bg-brand-gold selection:text-brand-black overflow-x-hidden;
+  }
+  
+  select option {
+    background-color: #1A1717 !important;
+    color: #ffffff !important;
+  }
+  
+  .bg-white select option,
+  select.bg-white option,
+  select.text-black option,
+  .text-black select option {
+    background-color: #ffffff !important;
+    color: #1A1717 !important;
+  }
+  
+  select:focus option:checked {
+    @apply bg-brand-gold text-brand-black;
   }
 }
 
 .text-gradient-gold {
-  @apply bg-gradient-to-r from-brand-gold via-[#F7E7CE] to-brand-gold bg-clip-text text-transparent;
+  background-image: var(--brand-secondary-gradient) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  color: transparent !important;
+  display: inline-block;
 }
 

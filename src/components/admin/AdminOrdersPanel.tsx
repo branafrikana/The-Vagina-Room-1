@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useContent } from '../../context/ContentContext';
-import { fetchWithApiBase } from '../../lib/api';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
@@ -20,6 +19,9 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { WHATSAPP_TEMPLATES, sendWhatsAppMessage } from '../../lib/whatsapp';
+import { useNotifications } from '../../context/NotificationContext';
+import { db } from '../../lib/firebase';
+import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 
 interface AdminOrdersPanelProps {
   orders: any[];
@@ -28,6 +30,7 @@ interface AdminOrdersPanelProps {
 
 export default function AdminOrdersPanel({ orders, onRefresh }: AdminOrdersPanelProps) {
   const { content } = useContent();
+  const { showToast } = useNotifications();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -56,32 +59,28 @@ export default function AdminOrdersPanel({ orders, onRefresh }: AdminOrdersPanel
 
   const handleUpdateStatus = async (order: any, newStatus: string, notify = true) => {
     try {
-      const res = await fetchWithApiBase(`/api/orders/${order.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: newStatus }),
-      });
+      await updateDoc(doc(db, "orders", order.id), { status: newStatus });
       
-      if (!res.ok) throw new Error("Failed to update status");
-
+      showToast(`Order #${order.orderNo} status updated to ${newStatus}`, "success");
+      
       if (notify && order.customer?.phone) {
-        // ... (rest of logic)
-        // Need to fetch generalSettingsJson from server if not available in context? 
-        // Or assume it's in content.
+        // Option to trigger WhatsApp notification can be added here if desired.
       }
       
       onRefresh();
-      alert(`Order status updated to: ${newStatus}`);
+      if (selectedOrder?.id === order.id) {
+        setSelectedOrder({ ...order, status: newStatus });
+      }
     } catch(e) {
       console.error("Error updating status", e);
-      alert("Failed to update status");
+      showToast("Failed to update status", "error");
     }
   };
 
   const handleDeleteOrder = async (id: string) => {
     if (!window.confirm("Permanently delete this order record?")) return;
     try {
-      const res = await fetchWithApiBase(`/api/orders/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error("Failed to delete order");
+      await deleteDoc(doc(db, "orders", id));
       
       onRefresh();
       if (selectedOrder?.id === id) setSelectedOrder(null);
@@ -100,13 +99,8 @@ export default function AdminOrdersPanel({ orders, onRefresh }: AdminOrdersPanel
   const handleSaveEdit = async () => {
     if (!editFormData || !selectedOrder) return;
     try {
-      const res = await fetchWithApiBase(`/api/orders/${selectedOrder.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(editFormData),
-      });
+      await updateDoc(doc(db, "orders", selectedOrder.id), editFormData);
 
-      if (!res.ok) throw new Error("Failed to update order");
-      
       alert("Order details updated successfully");
       setIsEditing(false);
       onRefresh();

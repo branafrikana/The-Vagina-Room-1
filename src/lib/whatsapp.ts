@@ -24,26 +24,19 @@ Thank you for choosing *The Vagina Room* 💜
 We appreciate your trust and support.`
 };
 
+export const formatPhoneForWhatsApp = (phone: string): string => {
+  if (!phone) return '';
+  // Remove all non-digit characters
+  return phone.replace(/\D/g, '');
+};
+
 export const sendWhatsAppMessage = async (phone: string, message: string, method: 'REDIRECT' | 'API' = 'REDIRECT') => {
-  const formattedPhone = phone.replace(/\s+/g, '').replace('+', '');
+  const formattedPhone = formatPhoneForWhatsApp(phone);
   
   if (method === 'API') {
-    try {
-      const response = await fetchWithApiBase('/api/whatsapp/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: formattedPhone, message })
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send WhatsApp message via API');
-      }
-      return { success: true };
-    } catch (err: any) {
-      console.error(err);
-      alert('Error sending WhatsApp message via API: ' + err.message);
-      return { success: false, error: err.message };
-    }
+    alert("Direct WhatsApp API sending is currently disabled (No Backend configured). Defaulting to redirect.");
+    window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
+    return { success: true };
   } else {
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
     return { success: true };

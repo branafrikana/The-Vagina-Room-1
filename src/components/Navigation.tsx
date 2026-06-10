@@ -1,22 +1,67 @@
 import React, { useState, useEffect } from 'react';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, ChevronDown, Download, Search } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, ChevronDown, Download, Search, LogOut } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import SearchOverlay from './SearchOverlay';
 import { useContent } from '../context/ContentContext';
+import { useAuth } from '../context/AuthContext';
+import { auth, db } from '../lib/firebase';
 import { safeJsonParse } from '../lib/json';
+
+function formatHref(url: string) {
+  if (!url) return "/";
+  if (url.startsWith("/") || url.startsWith("#") || url.startsWith("mailto:") || url.startsWith("tel:")) {
+    return url;
+  }
+  if (!/^https?:\/\//i.test(url) && !url.startsWith("//")) {
+    return `https://${url}`;
+  }
+  return url;
+}
 
 export default function Navigation() {
   const { content, isAdmin } = useContent();
+  const { user, userData, isSystemAdmin, hasActiveMembership, realUserData } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showWhoDropdown, setShowWhoDropdown] = useState(false);
-  const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState(false);
+  const [activeMobileSubmenuIdx, setActiveMobileSubmenuIdx] = useState<number | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
 
   const showAdminBar = isAdmin && location.pathname !== '/admin';
+
+  // Monitor unread messages
+  useEffect(() => {
+    if (!user || typeof user.uid !== 'string') {
+      setUnreadCount(0);
+      return;
+    }
+
+    try {
+      const q = query(
+        collection(db, 'direct_messages'),
+        where('recipientId', '==', user.uid),
+        where('read', '==', false)
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        setUnreadCount(snapshot.size);
+      }, (err) => {
+        console.warn("Direct Messages Listener failed:", err);
+        setUnreadCount(0);
+      });
+
+      return unsubscribe;
+    } catch (e) {
+      console.error("Error setting up unread count query:", e);
+      return () => {};
+    }
+  }, [user?.uid]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,14 +96,39 @@ export default function Navigation() {
   useEffect(() => {
     setIsOpen(false);
     setShowWhoDropdown(false);
-    setMobileSubmenuOpen(false);
+    setActiveMobileSubmenuIdx(null);
   }, [location]);
 
-  const navLinks = safeJsonParse(content.headerMenuJson, []) as {
+  const rawNavLinks = safeJsonParse(content.headerMenuJson, []) as {
     name: string;
     href: string;
     submenu?: { name: string; href: string }[];
   }[];
+
+  let disabledPageSet: Record<string, boolean> = {};
+  if (content?.disabledPagesJson) {
+    try {
+      disabledPageSet = JSON.parse(content.disabledPagesJson);
+    } catch (e) {}
+  }
+
+  const isLinkActive = (href: string) => {
+    if (href === "#") return true;
+    return !disabledPageSet[href];
+  };
+
+  const navLinks = rawNavLinks
+    .filter(link => isLinkActive(link.href))
+    .map(link => {
+      if (link.submenu) {
+        return {
+          ...link,
+          submenu: link.submenu.filter(sub => isLinkActive(sub.href))
+        };
+      }
+      return link;
+    })
+    .filter(link => link.href !== "#" || (link.submenu && link.submenu.length > 0));
 
   const branding = safeJsonParse(content.brandingSettingsJson, {} as any);
   const generalSettings = safeJsonParse(content.generalSettingsJson, {} as any);
@@ -66,9 +136,9 @@ export default function Navigation() {
   const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     if (location.pathname === '/') {
-      window.location.reload();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      window.location.href = '/';
+      navigate('/');
     }
   };
 
@@ -96,7 +166,7 @@ export default function Navigation() {
             )}
           </Link>
           {generalSettings.slogan && generalSettings.showHeaderSlogan && (
-            <p className="text-[7px] md:text-[8px] uppercase tracking-[0.3em] text-brand-gold/50 font-mono mt-1 hidden sm:block">
+            <p className="text-[7px] md:text-[8px] uppercase tracking-[0.3em] text-brand-gold/70 font-mono mt-1 hidden sm:block">
               {generalSettings.slogan}
             </p>
           )}
@@ -117,7 +187,16 @@ export default function Navigation() {
             onClick={() => setIsOpen(!isOpen)}
             aria-label={isOpen ? "Close menu" : "Open menu"}
           >
-            {isOpen ? <X size={28} className="text-brand-gold" /> : <Menu size={24} className={isScrolled ? 'text-brand-gold' : 'text-white'} />}
+            {isOpen ? <X size={28} className="text-brand-gold" /> : (
+              <div className="relative">
+                <Menu size={24} className={isScrolled ? 'text-brand-gold' : 'text-white'} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-brand-red rounded-full flex items-center justify-center text-[7px] font-bold text-white border border-brand-black">
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
+            )}
           </button>
         </div>
       </div>
@@ -148,73 +227,152 @@ export default function Navigation() {
                 <X size={16} /> Close Menu
               </button>
               <div className="flex flex-col flex-grow">
-                {navLinks.map((link) => (
-                <div key={link.name} className="flex flex-col space-y-6 mb-8 flex-shrink-0">
-                  {link.submenu ? (
-                    <button 
-                      onClick={() => setMobileSubmenuOpen(!mobileSubmenuOpen)}
-                      className="text-3xl font-sans font-black tracking-tighter text-white hover:text-brand-gold transition-colors flex items-center justify-between w-full text-left"
-                    >
-                      <span>{link.name}</span>
-                      <ChevronDown size={28} className={`transition-transform duration-300 text-brand-gold ${mobileSubmenuOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                  ) : (
-                    link.href.startsWith('/') ? (
-                      <Link 
-                        to={link.href}
-                        onClick={() => setIsOpen(false)}
-                        className="text-3xl font-sans font-black tracking-tighter text-white hover:text-brand-gold transition-colors"
-                      >
-                        {link.name}
-                      </Link>
-                    ) : (
-                      <a 
-                        href={link.href}
-                        onClick={() => setIsOpen(false)}
-                        className="text-3xl font-sans font-black tracking-tighter text-white hover:text-brand-gold transition-colors"
-                      >
-                        {link.name}
-                      </a>
-                    )
-                  )}
-
-                  {link.submenu && (
-                    <AnimatePresence>
-                      {mobileSubmenuOpen && (
-                        <motion.div 
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.3, ease: 'easeInOut' }}
-                          className="flex flex-col space-y-6 pl-4 border-l border-white/10 overflow-hidden"
+                {navLinks.map((link, idx) => {
+                  const hasSubmenu = Array.isArray(link.submenu) && link.submenu.length > 0;
+                  const formattedHref = formatHref(link.href);
+                  const isExternal = formattedHref.startsWith('http') || formattedHref.startsWith('//');
+                  const isSubmenuOpen = activeMobileSubmenuIdx === idx;
+                  return (
+                    <div key={link.name} className="flex flex-col space-y-6 mb-8 flex-shrink-0">
+                      {hasSubmenu ? (
+                        <button 
+                          onClick={() => setActiveMobileSubmenuIdx(isSubmenuOpen ? null : idx)}
+                          className="text-3xl font-sans font-black tracking-tighter text-white hover:text-brand-gold transition-colors flex items-center justify-between w-full text-left"
                         >
-                          {link.submenu.map((sub) => (
-                            sub.href.startsWith('/') ? (
-                               <Link
-                                key={sub.name}
-                                to={sub.href}
-                                onClick={() => setIsOpen(false)}
-                                className="text-2xl font-serif text-brand-gold hover:text-white transition-colors first:pt-2"
-                              >
-                                {sub.name}
-                              </Link>
-                            ) : (
-                              <a
-                                key={sub.name}
-                                href={sub.href}
-                                onClick={() => setIsOpen(false)}
-                                className="text-2xl font-serif text-brand-gold hover:text-white transition-colors first:pt-2"
-                              >
-                                {sub.name}
-                              </a>
-                            )
-                          ))}
-                        </motion.div>
+                          <span>{link.name}</span>
+                          <ChevronDown size={28} className={`transition-transform duration-300 text-brand-gold ${isSubmenuOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                      ) : (
+                        isExternal ? (
+                          <a 
+                            href={formattedHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setIsOpen(false)}
+                            className="text-3xl font-sans font-black tracking-tighter text-white hover:text-brand-gold transition-colors"
+                          >
+                            {link.name}
+                          </a>
+                        ) : (
+                          <Link 
+                            to={formattedHref}
+                            onClick={() => setIsOpen(false)}
+                            className="text-3xl font-sans font-black tracking-tighter text-white hover:text-brand-gold transition-colors"
+                          >
+                            {link.name}
+                          </Link>
+                        )
                       )}
-                    </AnimatePresence>
-                  )}
-                </div>
-              ))}
+
+                      {hasSubmenu && link.submenu && (
+                        <AnimatePresence>
+                          {isSubmenuOpen && (
+                            <motion.div 
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3, ease: 'easeInOut' }}
+                              className="flex flex-col space-y-6 pl-4 border-l border-white/10 overflow-hidden"
+                            >
+                              {link.submenu.map((sub, sIdx) => {
+                                const subFormatted = formatHref(sub.href);
+                                const subExternal = subFormatted.startsWith('http') || subFormatted.startsWith('//');
+                                return subExternal ? (
+                                  <a
+                                    key={sIdx}
+                                    href={subFormatted}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => setIsOpen(false)}
+                                    className="text-2xl font-serif text-brand-gold hover:text-white transition-colors first:pt-2"
+                                  >
+                                    {sub.name}
+                                  </a>
+                                ) : (
+                                  <Link
+                                    key={sIdx}
+                                    to={subFormatted}
+                                    onClick={() => setIsOpen(false)}
+                                    className="text-2xl font-serif text-brand-gold hover:text-white transition-colors first:pt-2"
+                                  >
+                                    {sub.name}
+                                  </Link>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      )}
+                    </div>
+                  );
+                })}
+
+              {/* Dynamic authentication quicklinks based on current security session state */}
+              <div className="border-t border-white/5 pt-6 mt-4 space-y-6 flex-shrink-0">
+                {user ? (
+                  <>
+                    <p className="text-[8px] font-mono uppercase tracking-[0.2em] text-white/50">Session Authorized: {user.email}</p>
+                    
+                    {userData?.role === 'partner' && (
+                      <Link
+                        to="/partner-dashboard"
+                        onClick={() => setIsOpen(false)}
+                        className="text-2xl font-sans font-black tracking-tighter text-brand-gold hover:text-white transition-colors block"
+                      >
+                        Partner Dashboard
+                      </Link>
+                    )}
+
+                    {(hasActiveMembership || userData?.role === 'admin' || userData?.isAdmin === true || realUserData?.role === 'admin' || realUserData?.isAdmin === true) && (
+                      <Link
+                        to="/member-dashboard"
+                        onClick={() => setIsOpen(false)}
+                        className="text-2xl font-sans font-black tracking-tighter text-brand-gold hover:text-white transition-colors block"
+                      >
+                        Member Dashboard
+                      </Link>
+                    )}
+
+                    {isSystemAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setIsOpen(false)}
+                        className="text-2xl font-sans font-black tracking-tighter text-brand-gold hover:text-white transition-colors block"
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
+
+                    <button
+                      onClick={async () => {
+                        await auth.signOut();
+                        setIsOpen(false);
+                        window.location.href = '/';
+                      }}
+                      className="text-sm font-black uppercase tracking-widest text-white/60 hover:text-brand-red transition-colors flex items-center gap-2 mt-4 text-left cursor-pointer border border-white/5 bg-white/[0.01] px-4 py-2"
+                    >
+                      <LogOut size={12} /> Sign Out Action
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <Link
+                      to="/register"
+                      onClick={() => setIsOpen(false)}
+                      className="text-2xl font-sans font-black tracking-tighter text-brand-gold hover:text-white transition-colors block"
+                    >
+                      Member Portal / Join
+                    </Link>
+                    <Link
+                      to="/login"
+                      onClick={() => setIsOpen(false)}
+                      className="text-lg font-sans font-black tracking-widest text-white/60 hover:text-white transition-colors block uppercase"
+                    >
+                      Member Login
+                    </Link>
+                  </div>
+                )}
+              </div>
               </div>
               
               <div className="pt-8 border-t border-white/5 flex-shrink-0 space-y-4">

@@ -5,24 +5,28 @@ import { ShoppingBag, HelpCircle, Sparkles, ExternalLink, Globe, Award, ShieldAl
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useContent } from '../context/ContentContext';
+import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import EditableText from '../components/EditableText';
 import { Link } from 'react-router-dom';
-import { fetchWithApiBase } from '../lib/api';
 
 interface ProductItem {
   id: string;
   title: string;
   price: string;
+  memberDiscountPrice?: string;
   currency: string;
   description: string;
   imageUrl: string;
   externalLink: string;
   isExternal?: boolean;
+  isDigital?: boolean;
+  downloadUrl?: string;
 }
 
 export default function ProductsPage() {
   const { content } = useContent();
+  const { userData, hasActiveMembership } = useAuth();
   const { addToCart, totalItems } = useCart();
   const [activeTab, setActiveTab] = useState<'all' | 'in_house' | 'external'>('all');
   
@@ -66,7 +70,7 @@ export default function ProductsPage() {
         return;
       }
       
-      const activeSources = externalSources.filter((s: any) => s.active && s.url && s.url.trim() !== "");
+      const activeSources = Array.isArray(externalSources) ? externalSources.filter((s: any) => s.active && s.url && s.url.trim() !== "") : [];
       
       if (activeSources.length === 0) {
         setExternalProducts([]);
@@ -79,26 +83,59 @@ export default function ProductsPage() {
       try {
         const fetchPromises = activeSources.map(async (source: any, sourceIdx: number) => {
           try {
-            const response = await fetchWithApiBase(`/api/proxy-products?url=${encodeURIComponent(source.url)}`);
+            // Use server-side CORS bypass API proxy, with direct fetch as automatic client-side fallback
+            const proxyUrl = `/api/proxy-products?url=${encodeURIComponent(source.url)}`;
+            let response;
+            try {
+              response = await fetch(proxyUrl);
+            } catch (proxyErr) {
+              console.warn(`Proxy fetch failed for ${source.name}, trying direct connection:`, proxyErr);
+            }
+
+            if (!response || !response.ok) {
+              response = await fetch(source.url);
+            }
+
             if (!response.ok) return [];
             const data = await response.json();
             
+            // Handle lists that are directly arrays or nested within search payloads
+            let list: any[] = [];
             if (Array.isArray(data)) {
-              return data.map((item: any, itemIdx: number) => ({
-                id: item.id ? String(item.id) : `ext-${sourceIdx}-${itemIdx}-${Math.random()}`,
-                title: item.title || "External Product",
-                price: item.price !== undefined ? String(item.price) : "0",
-                currency: item.currency || (item.price !== undefined && !isNaN(Number(item.price)) ? "USD" : "NGN"),
-                description: item.description || "Premium partner item.",
-                imageUrl: item.image || item.imageUrl || "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?auto=format&fit=crop&q=80&w=300",
-                externalLink: item.externalLink || item.link || "", 
+              list = data;
+            } else if (data && typeof data === 'object') {
+              const arrayKeys = ["products", "items", "data", "results", "list"];
+              const foundKey = arrayKeys.find(key => Array.isArray(data[key]));
+              if (foundKey) {
+                list = data[foundKey];
+              } else {
+                list = [data]; // Single product response
+              }
+            }
+            
+            return list.map((item: any, itemIdx: number) => {
+              const id = item.id || item.productId || item.asin || item.itemId || `ext-${sourceIdx}-${itemIdx}-${Math.random()}`;
+              const title = item.title || item.name || item.productName || "External Product";
+              const price = item.price !== undefined ? String(item.price) : (item.salePrice !== undefined ? String(item.salePrice) : "0");
+              const currency = item.currency || (price !== "0" && !isNaN(Number(price)) ? "USD" : "NGN");
+              const description = item.description || item.desc || item.summary || "Premium partner item.";
+              const imageUrl = item.image || item.imageUrl || item.imgUrl || item.img || item.photo || "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?auto=format&fit=crop&q=80&w=300";
+              const externalLink = item.externalLink || item.link || item.url || item.affiliateLink || item.affiliateUrl || item.buyUrl || "";
+
+              return {
+                id: String(id),
+                title,
+                price,
+                currency,
+                description,
+                imageUrl,
+                externalLink,
                 isExternal: true,
                 sourceName: source.name
-              }));
-            }
-            return [];
+              };
+            });
           } catch (e) {
-            console.error(`Failed to fetch from ${source.name}`, e);
+            console.error(`Failed to fetch and parse from source ${source.name}:`, e);
             return [];
           }
         });
@@ -214,10 +251,12 @@ export default function ProductsPage() {
               </div>
 
               {/* Quick source details summary */}
-              <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest flex items-center gap-1.5 self-end md:self-auto text-right">
-                <Sparkles size={11} className="text-brand-gold" />
-                <span>Aggregating {renderedProducts.length} curated selections from {externalSources.filter((s:any)=>s.active).length} networks</span>
-              </div>
+              {showExternal && (
+                <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest flex items-center gap-1.5 self-end md:self-auto text-right">
+                  <Sparkles size={11} className="text-brand-gold" />
+                  <span>Aggregating {renderedProducts.length} curated selections from {externalSources.filter((s:any)=>s.active).length} {externalSources.filter((s:any)=>s.active).length === 1 ? 'network' : 'networks'}</span>
+                </div>
+              )}
                 <div className="flex flex-wrap gap-4 items-center w-full md:w-auto">
                   <div className="relative">
                     <input 
@@ -353,10 +392,18 @@ export default function ProductsPage() {
                               <span className="text-[10px] font-mono text-brand-gold/80 block uppercase tracking-wider font-bold">
                                 {isAffiliateMode ? "Marketplace Ref" : isWhatsAppMode ? "Social Shop" : "In-Stock Formulation"}
                               </span>
-                              <span className="text-lg font-mono font-black text-brand-gold">
-                                {p.currency === "NGN" ? "₦" : p.currency === "USD" ? "$" : `${p.currency} `}
-                                {priceFormatted}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className={hasActiveMembership && p.memberDiscountPrice && p.memberDiscountPrice.trim() !== '' ? "text-sm font-mono font-black text-white/40 line-through" : "text-lg font-mono font-black text-brand-gold"}>
+                                  {p.currency === "NGN" ? "₦" : p.currency === "USD" ? "$" : `${p.currency} `}
+                                  {priceFormatted}
+                                </span>
+                                {hasActiveMembership && p.memberDiscountPrice && p.memberDiscountPrice.trim() !== '' && (
+                                  <span className="text-lg font-mono font-black text-brand-gold">
+                                    {p.currency === "NGN" ? "₦" : p.currency === "USD" ? "$" : `${p.currency} `}
+                                    {Number(String(p.memberDiscountPrice).replace(/[^0-9.]/g, '')).toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
                             {isAffiliateMode ? (
@@ -381,7 +428,16 @@ export default function ProductsPage() {
                               </a>
                             ) : (
                               <button
-                                onClick={() => addToCart({ id: p.id, title: p.title, price: p.price, currency: p.currency, imageUrl: p.imageUrl })}
+                                onClick={() => addToCart({ 
+                                  id: p.id, 
+                                  title: p.title, 
+                                  price: p.price, 
+                                  memberDiscountPrice: p.memberDiscountPrice,
+                                  currency: p.currency, 
+                                  imageUrl: p.imageUrl,
+                                  isDigital: p.isDigital,
+                                  downloadUrl: p.downloadUrl
+                                })}
                                 className="bg-brand-gold text-brand-black group-hover:bg-white group-hover:text-brand-black px-4 py-3 text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all duration-300"
                               >
                                 <span>Add to Cart</span>

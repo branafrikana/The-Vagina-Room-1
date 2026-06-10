@@ -1,8 +1,45 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // Global Safety Net: Default Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
 
-    // Helper functions for validation
+    // --- PILLARS OF ACCESS CONTROL helper functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email_verified == true && (
+          request.auth.token.email == "branafrikana@gmail.com" ||
+          request.auth.token.email == "admin@thevaginaroom.com" ||
+          exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
+          ))
+        )
+      );
+    }
+
+    function isMember() {
+      return isSignedIn() && (
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isMember == true ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isFreeMemberForLife == true
+        ))
+      );
+    }
+
     function isValidId(id) {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
@@ -11,56 +48,190 @@ service cloud.firestore {
       return request.resource.data;
     }
 
-    // Site Content Validation
-    function isValidSiteContent(data) {
-      return data is map &&
-             (data.get('heroHeading', '') is string) &&
-             (data.get('heroSub', '') is string);
+    function existing() {
+      return resource.data;
     }
 
-    // Submission Validation
-    function isValidSubmission(data) {
-      return data is map &&
-             data.keys().hasAll(['timestamp', 'formType', 'data']) &&
-             data.formType is string &&
-             data.timestamp is string;
+    // --- SCHEMA RULES & DATA INTEGRITY HELPER FUNCTIONS ---
+
+    function isValidUser(data) {
+      return data.email is string 
+        && data.email.size() <= 256
+        && data.role is string
+        && data.role.size() <= 64;
     }
 
-    // Order Validation
-    function isValidOrder(data) {
-      return data is map &&
-             data.keys().hasAll(['orderNo', 'customer', 'items', 'status']) &&
-             data.orderNo is string &&
-             data.status is string;
+    function isValidReflection(data) {
+      return data.userId == request.auth.uid
+        && data.mood is int
+        && data.mood >= 1
+        && data.mood <= 5
+        && data.notes is string
+        && data.notes.size() <= 50000;
     }
 
-    // Catch-all deny
-    match /{document=**} {
-      allow read, write: if false;
+    function isValidGoal(data) {
+      return data.userId == request.auth.uid
+        && data.title is string
+        && data.title.size() <= 1000
+        && data.category is string
+        && data.category.size() <= 64;
     }
 
-    // Global configurations (accessed via proxy)
+    function isValidMessage(data) {
+      return data.senderId == request.auth.uid
+        && data.recipientId is string
+        && data.recipientId.size() <= 128
+        && data.content is string
+        && data.content.size() <= 10000;
+    }
+
+    function isValidPayout(data) {
+      return data.userId == request.auth.uid
+        && data.amount is number
+        && data.amount >= 0
+        && data.status == 'pending';
+    }
+
+    // --- COLLECTION MATCHES ---
+
+    // 1. Users Profile
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isAdmin() || (
+        isOwner(userId) 
+        && isValidUser(incoming()) 
+        && !incoming().diff(existing()).affectedKeys().hasAny(['role', 'isAdmin', 'isMember', 'isFreeMemberForLife', 'membershipType'])
+      );
+    }
+
+    // 2. Admins Authorization List
+    match /admins/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // 3. Configurations
     match /configs/{configId} {
       allow read: if true;
-      allow write: if isValidId(configId) && isValidSiteContent(incoming());
+      allow write: if isAdmin();
     }
 
-    // Admin management
-    match /admins/{uid} {
-      allow read, write: if isValidId(uid);
+    // 4. Multipurpose Custom Page Content
+    match /content/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    // Form submissions
-    match /submissions/{subId} {
-      allow read, delete: if true; // In production, restrict to isAdmin() if you use Auth
-      allow create: if isValidId(subId) && isValidSubmission(incoming());
+    // 5. Blogs
+    match /blogs/{blogId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    // Product orders
+    // 6. Pages
+    match /pages/{pageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 7. Media Registry
+    match /media/{mediaId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 8. Orders
     match /orders/{orderId} {
-      allow read, delete: if true; // In production, restrict to isAdmin()
-      allow create: if isValidId(orderId) && isValidOrder(incoming());
+      allow get: if isOwner(resource.data.userId) || isAdmin();
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // 9. Inquiries & Form Submissions
+    match /submissions/{subId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // 10. Wellness Journal Reflections
+    match /wellnessReflections/{id} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(incoming().userId) && isValidReflection(incoming());
+      allow update: if isOwner(resource.data.userId) && isValidReflection(incoming());
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // 11. Wellness Goals
+    match /wellnessGoals/{id} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(incoming().userId) && isValidGoal(incoming());
+      allow update: if isOwner(resource.data.userId) && isValidGoal(incoming());
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    // 12. Direct Messages (Inbox)
+    match /direct_messages/{id} {
+      allow read: if isSignedIn() && (resource.data.recipientId == request.auth.uid || resource.data.senderId == request.auth.uid);
+      allow create: if isSignedIn() && incoming().senderId == request.auth.uid && isValidMessage(incoming());
+      allow update: if isSignedIn() && (resource.data.recipientId == request.auth.uid || resource.data.senderId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // 13. Community Hub Forums
+    match /community_threads/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+    }
+
+    // 14. Registration Member ID Counter Stats
+    match /stats/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if incoming().keys().hasAll(['lastCount']) && incoming().keys().size() == 1 && incoming().lastCount is int;
+      allow update: if incoming().diff(existing()).affectedKeys().hasOnly(['lastCount']) && incoming().lastCount is int && incoming().lastCount >= existing().lastCount;
+    }
+
+    // 15. Disount Keys
+    match /discountCodes/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 16. Exclusive Premium Lessons
+    match /exclusiveContent/{id} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+
+    // 17. Resource Guides
+    match /resource_library/{id} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+
+    // 18. Lounge Events
+    match /events/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 19. Ambassador Payout Requests
+    match /payout_history/{id} {
+      allow get: if isOwner(resource.data.userId) || isAdmin();
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && isValidPayout(incoming());
+      allow update, delete: if isAdmin();
+    }
+
+    // 20. Application Error Diagnostics
+    match /errorLogs/{id} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
   }
 }
-

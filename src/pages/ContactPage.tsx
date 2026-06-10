@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import SEO from '../components/SEO';
 import { Mail, Phone, MapPin, Send, MessageSquare, Heart, HandHelping, ArrowRight, CheckCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import React, { useState } from 'react';
@@ -10,6 +10,7 @@ import EditableText from '../components/EditableText';
 
 export default function ContactPage() {
   const { submitFormSubmission, content } = useContent();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -63,13 +64,13 @@ export default function ContactPage() {
     try {
       const res = await submitFormSubmission("contact", formData);
       if (res.success) {
-        setSubmitted(true);
         setFormData({
           name: '',
           email: '',
           subject: 'General Inquiry',
           message: ''
         });
+        navigate("/thank-you");
       } else {
         alert("The server refused the transmission. Please try again later.");
       }

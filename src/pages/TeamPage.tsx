@@ -48,7 +48,7 @@ export default function TeamPage() {
   if (content.teamMembersJson) {
     try {
       const parsed = JSON.parse(content.teamMembersJson);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         team = parsed;
       }
     } catch (e) {

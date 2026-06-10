@@ -233,10 +233,10 @@ export default function PrimaryHero() {
               </motion.button>
             </Link>
             <Link 
-              to="/dr-fid-booking"
-              className="text-white/60 hover:text-white flex items-center space-x-2 text-xs font-black tracking-[0.3em] uppercase transition-all"
+              to="/login"
+              className="text-white/80 hover:text-white flex items-center space-x-2 text-xs font-black tracking-[0.3em] uppercase transition-all"
             >
-              <span>BOOK DR FID</span>
+              <span>MEMBERS DASHBOARD</span>
               <ArrowRight size={14} className="ml-2 hover:translate-x-1 transition-transform" />
             </Link>
           </motion.div>

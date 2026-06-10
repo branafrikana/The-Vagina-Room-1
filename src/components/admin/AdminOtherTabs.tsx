@@ -1,7 +1,8 @@
 import React from 'react';
 import { useContent } from '../../context/ContentContext';
 import ArrayJSONEditor from './ArrayJSONEditor';
-import { ImageUploader } from '../../pages/AdminPage';
+import { ImageUploader } from './ImageUploader';
+import { ChevronDown, ChevronUp, Plus, Trash2, Info } from 'lucide-react';
 
 // Defaults
 const DEFAULT_ABOUT_OBJECTIVES = [
@@ -122,7 +123,7 @@ const DEFAULT_EVENTS = [
     title: "Healing & Wholeness Retreat",
     date: "July 22, 2026",
     time: "Full Day Experience",
-    location: "Private Sanctuary, Delta State",
+    location: "Private Community, Delta State",
     type: "Retreat",
     price: "Exclusive Invite",
     image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=800",
@@ -184,9 +185,9 @@ export function AdminAboutUsTab() {
   const { content, updateContentField } = useContent();
 
   const DEFAULT_ABOUT_VALUES = [
-    { title: "SINCERE INTENTION", desc: "No judgment, no bias—just real restorative guidance." },
-    { title: "RESTORATIVE CARE", desc: "Rebuilding anatomical and tissue balance naturally." },
-    { title: "EMPOWERING KNOWLEDGE", desc: "Equipping women with tools and terms to advocate for themselves." }
+    { name: "SINCERE INTENTION", desc: "No judgment, no bias—just real restorative guidance." },
+    { name: "RESTORATIVE CARE", desc: "Rebuilding anatomical and tissue balance naturally." },
+    { name: "EMPOWERING KNOWLEDGE", desc: "Equipping women with tools and terms to advocate for themselves." }
   ];
 
   const DEFAULT_ABOUT_DIFFERENTIATORS = [
@@ -224,7 +225,7 @@ export function AdminAboutUsTab() {
             value={content.aboutHeading || ""}
             onChange={(e) => updateContentField("aboutHeading", e.target.value)}
             className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs" 
-            placeholder="e.g. A SANCTUARY FOR EVERY WOMAN'S HEALTH JOURNEY"
+            placeholder="e.g. A COMMUNITY FOR EVERY WOMAN'S HEALTH JOURNEY"
           />
         </div>
       </div>
@@ -334,7 +335,7 @@ export function AdminAboutUsTab() {
             fieldKey="coreValuesJson"
             value={content.coreValuesJson || ""}
             onChange={updateContentField}
-            defaultStructure={{ title: "", desc: "" }}
+            defaultStructure={{ name: "", desc: "" }}
             itemType="Value Principle"
             fallbackData={DEFAULT_ABOUT_VALUES}
           />
@@ -408,9 +409,15 @@ export function AdminDrFidTab() {
         />
       </div>
 
-      <div className="space-y-4">
-        <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Dr. FID Profile Cover Portrait Photo</label>
-        <ImageUploader fieldKey="drFidPageImageUrl" label="Primary Portrait Landscape Photo" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Dr. FID Profile Picture / Main Portrait (Cards & Home)</label>
+          <ImageUploader fieldKey="drFidImageUrl" label="Portrait Image (Profile pic)" />
+        </div>
+        <div className="space-y-4">
+          <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Dr. FID Biography Page Background / Cover Portrait Photo</label>
+          <ImageUploader fieldKey="drFidPageImageUrl" label="Primary Portrait Landscape Photo" />
+        </div>
       </div>
 
       {/* NEW DISCOVERY: ADD CERTIFICATIONS & EXPERTISE TAGS */}
@@ -532,6 +539,75 @@ export function AdminDrFidTab() {
             onChange={(e) => updateContentField("drFidPersonalLifePhilosophy", e.target.value)}
             className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold h-16 text-[11px] font-mono leading-relaxed" 
           />
+        </div>
+      </div>
+
+      {/* DR. FID ONBOARDING WELCOME PAGE CONFIGURATION */}
+      <div className="border-t border-white/5 pt-6 space-y-6">
+        <div>
+          <h4 className="text-sm font-black uppercase tracking-[0.2em] text-brand-gold">🌸 First-Time Paid Member Welcome Screen</h4>
+          <p className="text-[9.5px] text-white/40 italic mt-1 leading-normal">
+            Configure the personalized welcome gate shown immediately to first-time members upon successful card checkout, or to manual payment members once their registration is approved by you. This page appears only once upon onboarding as a premier, high-fidelity landing zone.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Welcome Headline Title</label>
+            <input 
+              type="text" 
+              value={content.welcomeTitle || ""}
+              onChange={(e) => updateContentField("welcomeTitle", e.target.value)}
+              className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs" 
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Sub-headline Description</label>
+            <input 
+              type="text" 
+              value={content.welcomeSubtitle || ""}
+              onChange={(e) => updateContentField("welcomeSubtitle", e.target.value)}
+              className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs" 
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Personal Welcome Narrative Message (Markdown or Paragraphs)</label>
+          <textarea 
+            value={content.welcomeMessage || ""}
+            onChange={(e) => updateContentField("welcomeMessage", e.target.value)}
+            className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold h-32 text-xs font-mono leading-relaxed" 
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Onboarding Actions & Next Steps (One statement per line)</label>
+            <textarea 
+              value={content.welcomeInstructions || ""}
+              onChange={(e) => updateContentField("welcomeInstructions", e.target.value)}
+              className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold h-32 text-xs font-mono leading-relaxed" 
+            />
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Onboarding Call-to-Action Buttons Title</label>
+              <input 
+                type="text" 
+                value={content.welcomeActionBtnText || ""}
+                onChange={(e) => updateContentField("welcomeActionBtnText", e.target.value)}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs" 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Dr. Fid Onboarding Greeting Cover Photo</label>
+              <ImageUploader fieldKey="welcomeDrFidImgUrl" label="Welcome Photo Source" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -765,7 +841,7 @@ export function AdminTeamPartnerTab() {
             value={content.partnersDefaultHeadline || ""}
             onChange={(e) => updateContentField("partnersDefaultHeadline", e.target.value)}
             className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs" 
-            placeholder="Pioneering verified clinical education & holistic therapeutic models for private lifestyle sanctuaries."
+            placeholder="Pioneering verified clinical education & holistic therapeutic models for private lifestyle communities."
           />
           <p className="text-[10px] text-white/40 italic">This headline is shown in the media spotlight when the selected source does not specify a unique headline.</p>
         </div>
@@ -1052,7 +1128,7 @@ export function AdminContactTab() {
       <h3 className="text-base font-black uppercase tracking-[0.2em] text-brand-gold flex items-center gap-1.5 border-b border-white/5 pb-2 mt-8">📞 Communication Coordinates</h3>
       
       <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Physical Sanctuary Clinic Address</label>
+        <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Physical Community Clinic Address</label>
         <input 
           type="text" 
           value={content.contactAddress || ""}
@@ -1199,6 +1275,56 @@ export function AdminContactTab() {
             onChange={(e) => updateContentField("contactPartnerWithUsBtnText", e.target.value)}
             placeholder="e.g. Learn More"
             className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs" 
+          />
+        </div>
+      </div>
+
+      <h3 className="text-base font-black uppercase tracking-[0.2em] text-brand-gold flex items-center gap-1.5 border-b border-white/5 pb-2 mt-8">🎉 Thank You Page & Telegram CTA</h3>
+
+      <div className="border border-white/5 p-4 rounded-none bg-white/[0.02] space-y-6">
+        <p className="text-xs text-white/50 font-light">Configure the custom separate Thank You page that displays to community members after they submit the contact form.</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Thank You Page Heading</label>
+            <input 
+              type="text" 
+              value={content.contactThankYouHeading || ""}
+              onChange={(e) => updateContentField("contactThankYouHeading", e.target.value)}
+              placeholder="e.g. THANK YOU FOR REACHING OUT"
+              className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs" 
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Telegram CTA Button Text</label>
+            <input 
+              type="text" 
+              value={content.contactThankYouCtaText || ""}
+              onChange={(e) => updateContentField("contactThankYouCtaText", e.target.value)}
+              placeholder="e.g. Join Our Free Telegram Community"
+              className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs" 
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Telegram Group Invite Link</label>
+          <input 
+            type="text" 
+            value={content.contactThankYouTelegramLink || ""}
+            onChange={(e) => updateContentField("contactThankYouTelegramLink", e.target.value)}
+            placeholder="e.g. https://t.me/yourgroup"
+            className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs font-mono" 
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Thank You Description Message</label>
+          <textarea 
+            value={content.contactThankYouMessage || ""}
+            onChange={(e) => updateContentField("contactThankYouMessage", e.target.value)}
+            placeholder="e.g. Your message has been logged securely... our team will get in touch shortly."
+            className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs h-20" 
           />
         </div>
       </div>
@@ -1667,7 +1793,7 @@ export function AdminJoinCommunityTab() {
 
   const DEFAULT_WHAT_YOU_GET = [
     "Bi-weekly wellness masterclasses with Dr. FID",
-    "Access to our private discussion sanctuary",
+    "Access to our private discussion forum",
     "Digital intimacy wellness library & resources",
     "Priority booking for retreats and workshops",
     "Exclusive discounts on curated healing products",
@@ -1686,7 +1812,7 @@ export function AdminJoinCommunityTab() {
             value={content.joinCommunityTitle || ""}
             onChange={(e) => updateContentField("joinCommunityTitle", e.target.value)}
             className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
-            placeholder="e.g. Join The Sanctuary"
+            placeholder="e.g. Join The Community"
           />
         </div>
         <div className="space-y-2">
@@ -1765,6 +1891,1090 @@ export function AdminJoinCommunityTab() {
           itemType="Deliverable"
           fallbackData={DEFAULT_WHAT_YOU_GET}
         />
+
+        <div className="border-t border-white/5 pt-6 space-y-4">
+          <h4 className="text-xs font-black uppercase text-brand-gold tracking-widest border-b border-white/5 pb-1">👤 Member Onboarding / Registration Screen</h4>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Registration Main Header (with HTML Support)</label>
+              <input 
+                type="text" 
+                value={content.registerHeading || ""}
+                onChange={(e) => updateContentField("registerHeading", e.target.value)}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                placeholder="e.g. Enter the Community"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Registration Subtitle Description</label>
+              <textarea 
+                value={content.registerSub || ""}
+                onChange={(e) => updateContentField("registerSub", e.target.value)}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold h-16 text-xs font-sans leading-relaxed" 
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-white/5 pt-6 space-y-4">
+          <h4 className="text-xs font-black uppercase text-brand-gold tracking-widest border-b border-white/5 pb-1">🏆 Community Badges and Achievements</h4>
+          <ArrayJSONEditor
+            label="Master Badges Configuration & Award Criteria"
+            fieldKey="badgesConfigJson"
+            value={content.badgesConfigJson || ""}
+            onChange={updateContentField}
+            defaultStructure={{ id: "", title: "", desc: "", criteria: "" }}
+            itemType="Badge"
+            fallbackData={[
+              { "id": "womb_listener", "title": "🌸 Womb Listener", "desc": "Active Thread Starter", "criteria": "Draft 1+ post onto the global Community Timeline." },
+              { "id": "somatic_helper", "title": "💬 Somatic Helper", "desc": "Sisterhood Guidance", "criteria": "Write 1+ helpful reply or thread comment inside discussion circles." },
+              { "id": "luminous_beacon", "title": "🌟 Luminous Beacon", "desc": "Atmospheric Support", "criteria": "Glow 3+ support hearts to sisters across timeline feeds." },
+              { "id": "circle_guardian", "title": "👥 Circle Guardian", "desc": "Circle Pioneer", "criteria": "Be an active sibling inside 2+ specialized discussion groups." },
+              { "id": "community_pillar", "title": "👑 Community Pillar", "desc": "Steward-Mentor Rank", "criteria": "Accumulate a total of 50+ holistic contribution points." }
+            ]}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function AdminTelegramCommunityTab() {
+  const { content, updateContentField } = useContent();
+  const [activeSection, setActiveSection] = React.useState<string>("hero");
+
+  // Parse current page data
+  let rawJson = content.telegramLandingPageJson || "{}";
+  let tData: any = {};
+  try {
+    tData = JSON.parse(rawJson);
+  } catch (err) {
+    // If invalid JSON, try to recover
+  }
+
+  // Update helper
+  const handleFieldChange = (key: string, val: any) => {
+    const updated = { ...tData, [key]: val };
+    updateContentField("telegramLandingPageJson", JSON.stringify(updated, null, 2));
+  };
+
+  // List field helpers
+  const handleListItemChange = (key: string, index: number, value: any) => {
+    const list = [...(tData[key] || [])];
+    list[index] = value;
+    handleFieldChange(key, list);
+  };
+
+  const handleAddListItem = (key: string, defaultValue: any) => {
+    const list = [...(tData[key] || [])];
+    list.push(defaultValue);
+    handleFieldChange(key, list);
+  };
+
+  const handleRemoveListItem = (key: string, index: number) => {
+    const list = [...(tData[key] || [])];
+    list.splice(index, 1);
+    handleFieldChange(key, list);
+  };
+
+  const toggleSection = (section: string) => {
+    setActiveSection(activeSection === section ? "" : section);
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="bg-white/5 border border-brand-gold/20 p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h4 className="text-sm font-black text-brand-gold uppercase tracking-[0.2em]">Telegram Landing Page Editor</h4>
+            <p className="text-xs text-white/50 mt-1">Manage sections, update display texts, and edit lists visually without writing JSON.</p>
+          </div>
+          <span className="text-[10px] font-mono uppercase bg-[#0088cc]/10 border border-[#0088cc]/30 text-[#0088cc] px-3 py-1 font-bold">
+            Active Community Source
+          </span>
+        </div>
+
+        <div className="space-y-4">
+          
+          {/* Section 1: Hero Banner */}
+          <div className="border border-white/5 bg-white/[0.01]">
+            <button 
+              type="button"
+              onClick={() => toggleSection("hero")}
+              className="w-full flex justify-between items-center px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left font-bold cursor-pointer"
+            >
+              <span className="text-xs font-black uppercase text-white flex items-center gap-2">
+                <span className="text-brand-gold font-mono">01.</span> Hero Banner Section
+              </span>
+              {activeSection === "hero" ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+            </button>
+            {activeSection === "hero" && (
+              <div className="p-4 space-y-4 border-t border-white/5 bg-black/20 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="border border-white/5 bg-black/10 p-4">
+                     <ImageUploader 
+                        fieldKey="headerLogoUrl" 
+                        label="Upload Telegram Landing Page Logo" 
+                        currentValue={tData.logoUrl || ""}
+                        onUploadSuccess={(url) => handleFieldChange("logoUrl", url)}
+                     />
+                  </div>
+                  <div className="border border-white/5 bg-black/10 p-4">
+                     <ImageUploader 
+                        fieldKey="telegramHeroBgUrl" 
+                        label="Upload Hero Background Image" 
+                     />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Badge Text / Label</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-gold/50"
+                      value={tData.heroBadge || "THE SAFE SPACE"}
+                      onChange={(e) => handleFieldChange("heroBadge", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Primary Button Text</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-gold/50"
+                      value={tData.heroBtnText || "Join Our Free Community"}
+                      onChange={(e) => handleFieldChange("heroBtnText", e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Hero Title (Support HTML/Shine styled tags)</label>
+                  <input 
+                    type="text"
+                    className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-gold/50 font-serif"
+                    placeholder="e.g. Welcome To <br/><span class='text-transparent bg-clip-text bg-gradient-to-r ...'>The Vagina Room</span>"
+                    value={tData.heroTitle || ""}
+                    onChange={(e) => handleFieldChange("heroTitle", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Hero Subtitle / Description</label>
+                  <textarea 
+                    rows={3}
+                    className="w-full bg-black/40 border border-white/15 p-3 text-xs text-zinc-300 focus:outline-none focus:border-brand-gold/50 font-sans"
+                    value={tData.heroSubtitle || ""}
+                    onChange={(e) => handleFieldChange("heroSubtitle", e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section 2: Purpose & Pain Points */}
+          <div className="border border-white/5 bg-white/[0.01]">
+            <button 
+              type="button"
+              onClick={() => toggleSection("purpose")}
+              className="w-full flex justify-between items-center px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left font-bold cursor-pointer"
+            >
+              <span className="text-xs font-black uppercase text-white flex items-center gap-2">
+                <span className="text-brand-gold font-mono">02.</span> Purpose & Common Pain Points
+              </span>
+              {activeSection === "purpose" ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+            </button>
+            {activeSection === "purpose" && (
+              <div className="p-4 space-y-4 border-t border-white/5 bg-black/20 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Purpose Label</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.purposeLabel || "Our Purpose"}
+                      onChange={(e) => handleFieldChange("purposeLabel", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Purpose Header / Title</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.purposeTitle || ""}
+                      onChange={(e) => handleFieldChange("purposeTitle", e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Paragraph 1 (Hook Text)</label>
+                  <textarea 
+                    rows={2}
+                    className="w-full bg-black/40 border border-white/15 p-3 text-xs text-zinc-300 focus:outline-none"
+                    value={tData.purposeP1 || ""}
+                    onChange={(e) => handleFieldChange("purposeP1", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Paragraph 2 (In-Depth Explanation)</label>
+                  <textarea 
+                    rows={3}
+                    className="w-full bg-black/40 border border-white/15 p-3 text-xs text-zinc-300 focus:outline-none"
+                    value={tData.purposeP2 || ""}
+                    onChange={(e) => handleFieldChange("purposeP2", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Paragraph 3 (Closing Vision)</label>
+                  <textarea 
+                    rows={3}
+                    className="w-full bg-black/40 border border-white/15 p-3 text-xs text-zinc-300 focus:outline-none"
+                    value={tData.purposeP3 || ""}
+                    onChange={(e) => handleFieldChange("purposeP3", e.target.value)}
+                  />
+                </div>
+
+                <div className="border-t border-white/10 pt-4 mt-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Pain Points Section Heading</label>
+                      <input 
+                        type="text"
+                        className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                        value={tData.painLabel || "Are You Experiencing Any of These?"}
+                        onChange={(e) => handleFieldChange("painLabel", e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Bottom Footer Reassurance</label>
+                      <input 
+                        type="text"
+                        className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                        value={tData.painFooter || "If any of these sound familiar, you are not alone."}
+                        onChange={(e) => handleFieldChange("painFooter", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-[10px] font-black uppercase text-brand-gold font-bold">Specific Pain Points List ({ (tData.painItems || []).length })</label>
+                      <button
+                        type="button"
+                        onClick={() => handleAddListItem("painItems", "Specify reproductive health or support concern")}
+                        className="inline-flex items-center gap-1 text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 px-2.5 py-1 transition-all cursor-pointer"
+                      >
+                        <Plus size={10} /> Add Concern
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {(tData.painItems || []).map((item: string, i: number) => (
+                        <div key={i} className="flex gap-2">
+                          <input 
+                            type="text"
+                            className="flex-grow bg-black/40 border border-white/10 px-3 py-2 text-xs text-zinc-200 focus:outline-none"
+                            value={item}
+                            onChange={(e) => handleListItemChange("painItems", i, e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveListItem("painItems", i)}
+                            className="p-2 border border-brand-red/20 bg-brand-red/5 hover:bg-brand-red hover:text-white transition-colors text-brand-red text-xs cursor-pointer rounded-none"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))}
+                      {(!tData.painItems || tData.painItems.length === 0) && (
+                        <p className="text-[11px] text-zinc-500 italic">No pain list items defined. Default fallback values will stand.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section 3: Bento Grid */}
+          <div className="border border-white/5 bg-white/[0.01]">
+            <button 
+              type="button"
+              onClick={() => toggleSection("bento")}
+              className="w-full flex justify-between items-center px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left font-bold cursor-pointer"
+            >
+              <span className="text-xs font-black uppercase text-white flex items-center gap-2">
+                <span className="text-brand-gold font-mono">03.</span> Bento Mission & Healing Box
+              </span>
+              {activeSection === "bento" ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+            </button>
+            {activeSection === "bento" && (
+              <div className="p-4 space-y-4 border-t border-white/5 bg-black/20 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Bento Big Title</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.bentoTitle || "What is The Vagina Room?"}
+                      onChange={(e) => handleFieldChange("bentoTitle", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Bento Subtitle Tagline</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.bentoSubtitle || "The Vagina Room is more than a community."}
+                      onChange={(e) => handleFieldChange("bentoSubtitle", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Bento Narrative Paragraph 1</label>
+                  <textarea 
+                    rows={2}
+                    className="w-full bg-black/40 border border-white/15 p-3 text-xs text-zinc-300 focus:outline-none font-light"
+                    value={tData.bentoText1 || ""}
+                    onChange={(e) => handleFieldChange("bentoText1", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Bento Narrative Paragraph 2</label>
+                  <textarea 
+                    rows={2}
+                    className="w-full bg-black/40 border border-white/15 p-3 text-xs text-zinc-300 focus:outline-none font-light"
+                    value={tData.bentoText2 || ""}
+                    onChange={(e) => handleFieldChange("bentoText2", e.target.value)}
+                  />
+                </div>
+
+                <div className="border-t border-white/10 pt-4 mt-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Differentiators Head Title</label>
+                      <input 
+                        type="text"
+                        className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                        value={tData.bentoDiffTitle || "What Makes Us Different?"}
+                        onChange={(e) => handleFieldChange("bentoDiffTitle", e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Differentiators Mini Preface</label>
+                      <input 
+                        type="text"
+                        className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                        value={tData.bentoDiffDesc || "Unlike random social media advice or unverified online discussions, we provide:"}
+                        onChange={(e) => handleFieldChange("bentoDiffDesc", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-[10px] font-black uppercase text-brand-gold font-bold">Bullet Differentiators ({ (tData.bentoDiffItems || []).length })</label>
+                      <button
+                        type="button"
+                        onClick={() => handleAddListItem("bentoDiffItems", "New verified wellness approach item")}
+                        className="inline-flex items-center gap-1 text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 px-2.5 py-1 transition-all cursor-pointer"
+                      >
+                        <Plus size={10} /> Add Item
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {(tData.bentoDiffItems || [
+                        "Structured wellness education",
+                        "Evidence-informed insights",
+                        "Expert-led discussions",
+                        "Safe & respectful environment",
+                        "Holistic wellness approaches"
+                      ]).map((item: string, i: number) => (
+                        <div key={i} className="flex gap-2">
+                          <input 
+                            type="text"
+                            className="flex-grow bg-black/40 border border-white/10 px-3 py-2 text-xs text-zinc-200 focus:outline-none font-sans"
+                            value={item}
+                            onChange={(e) => handleListItemChange("bentoDiffItems", i, e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveListItem("bentoDiffItems", i)}
+                            className="p-2 border border-brand-red/20 bg-brand-red/5 hover:bg-brand-red hover:text-white transition-colors text-brand-red text-xs cursor-pointer rounded-none"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+          </div>
+
+          {/* Section 4: Chat Showcase Headings */}
+          <div className="border border-white/5 bg-white/[0.01]">
+            <button 
+              type="button"
+              onClick={() => toggleSection("showcase")}
+              className="w-full flex justify-between items-center px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left font-bold cursor-pointer"
+            >
+              <span className="text-xs font-black uppercase text-white flex items-center gap-2">
+                <span className="text-brand-gold font-mono">04.</span> Chat Showcase Headings
+              </span>
+              {activeSection === "showcase" ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+            </button>
+            {activeSection === "showcase" && (
+              <div className="p-4 space-y-4 border-t border-white/5 bg-black/20 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Showcase Heading</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.showcaseTitle || "Inside The Community"}
+                      onChange={(e) => handleFieldChange("showcaseTitle", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Showcase Subtitle</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.showcaseSubtitle || "Everything you need to learn, heal, and thrive."}
+                      onChange={(e) => handleFieldChange("showcaseSubtitle", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section 5: Benefits Perks List */}
+          <div className="border border-white/5 bg-white/[0.01]">
+            <button 
+              type="button"
+              onClick={() => toggleSection("benefits")}
+              className="w-full flex justify-between items-center px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left font-bold cursor-pointer"
+            >
+              <span className="text-xs font-black uppercase text-white flex items-center gap-2">
+                <span className="text-brand-gold font-mono">05.</span> Community Benefits & Perks
+              </span>
+              {activeSection === "benefits" ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+            </button>
+            {activeSection === "benefits" && (
+              <div className="p-4 space-y-4 border-t border-white/5 bg-black/20 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Benefits Main Title</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.benefitsTitle || "What You Get When You Join"}
+                      onChange={(e) => handleFieldChange("benefitsTitle", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Benefits Invitation Subtitle</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.benefitsSubtitle || "As a member of our free Telegram community, you will receive:"}
+                      onChange={(e) => handleFieldChange("benefitsSubtitle", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-[10px] font-black uppercase text-brand-gold font-bold">Perk Cards ({ (tData.benefitsItems || []).length })</label>
+                    <button
+                      type="button"
+                      onClick={() => handleAddListItem("benefitsItems", { title: "Specialist Support", desc: "Access verified reproductive health support", icon: "Sparkles", color: "text-rose-400" })}
+                      className="inline-flex items-center gap-1 text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 px-2.5 py-1 transition-all cursor-pointer"
+                    >
+                      <Plus size={10} /> Add Perk
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {(tData.benefitsItems || []).map((item: any, i: number) => (
+                      <div key={i} className="flex gap-2 items-start border border-white/5 bg-white/[0.01] p-3 animate-fade-in text-sans">
+                        <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-3 text-sans">
+                          <div>
+                            <label className="block text-[8px] font-mono uppercase text-white/30 mb-0.5">Perk Title</label>
+                            <input 
+                              type="text"
+                              className="w-full bg-black/40 border border-white/10 px-3 py-1.5 text-xs text-zinc-200 focus:outline-none font-sans"
+                              value={item.title || ""}
+                              onChange={(e) => {
+                                const copy = { ...item, title: e.target.value };
+                                handleListItemChange("benefitsItems", i, copy);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[8px] font-mono uppercase text-white/30 mb-0.5">Lucide Icon (e.g. Heart, BookOpen, Activity, Users, Sparkles, Brain)</label>
+                            <input 
+                              type="text"
+                              className="w-full bg-black/40 border border-white/10 px-3 py-1.5 text-xs text-zinc-200 focus:outline-none font-mono"
+                              value={item.icon || "Heart"}
+                              onChange={(e) => {
+                                const copy = { ...item, icon: e.target.value };
+                                handleListItemChange("benefitsItems", i, copy);
+                              }}
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-[8px] font-mono uppercase text-white/30 mb-0.5">Short Descriptive Detail</label>
+                            <input 
+                              type="text"
+                              className="w-full bg-black/40 border border-white/10 px-3 py-1.5 text-xs text-zinc-200 focus:outline-none font-sans"
+                              value={item.desc || ""}
+                              onChange={(e) => {
+                                const copy = { ...item, desc: e.target.value };
+                                handleListItemChange("benefitsItems", i, copy);
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveListItem("benefitsItems", i)}
+                          className="p-2 border border-brand-red/20 bg-brand-red/5 hover:bg-brand-red hover:text-white transition-colors text-brand-red text-xs shrink-0 self-center"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section 6: Target Audiences (Criteria) */}
+          <div className="border border-white/5 bg-white/[0.01]">
+            <button 
+              type="button"
+              onClick={() => toggleSection("audiences")}
+              className="w-full flex justify-between items-center px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left font-bold cursor-pointer"
+            >
+              <span className="text-xs font-black uppercase text-white flex items-center gap-2">
+                <span className="text-brand-gold font-mono">06.</span> Target Audiences ("Who Should Join?")
+              </span>
+              {activeSection === "audiences" ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+            </button>
+            {activeSection === "audiences" && (
+              <div className="p-4 space-y-4 border-t border-white/5 bg-black/20 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Who Should Join Title</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.whoJoinTitle || "Who Should Join?"}
+                      onChange={(e) => handleFieldChange("whoJoinTitle", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Brief Side Tagline Label</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.whoJoinSubtitle || "This community is for:"}
+                      onChange={(e) => handleFieldChange("whoJoinSubtitle", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-[10px] font-black uppercase text-brand-gold font-bold">Audience Attributes List ({ (tData.whoJoinItems || []).length })</label>
+                    <button
+                      type="button"
+                      onClick={() => handleAddListItem("whoJoinItems", "New target audience type description")}
+                      className="inline-flex items-center gap-1 text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 px-2.5 py-1 transition-all cursor-pointer"
+                    >
+                      <Plus size={10} /> Add Criterion
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {(tData.whoJoinItems || []).map((item: string, i: number) => (
+                      <div key={i} className="flex gap-2">
+                        <input 
+                          type="text"
+                          className="flex-grow bg-black/40 border border-white/10 px-3 py-2 text-xs text-zinc-200 focus:outline-none font-sans"
+                          value={item}
+                          onChange={(e) => handleListItemChange("whoJoinItems", i, e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveListItem("whoJoinItems", i)}
+                          className="p-2 border border-brand-red/20 bg-brand-red/5 hover:bg-brand-red hover:text-white transition-colors text-brand-red text-xs cursor-pointer rounded-none"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section 7: Founder Biographical Column */}
+          <div className="border border-white/5 bg-white/[0.01]">
+            <button 
+              type="button"
+              onClick={() => toggleSection("founder")}
+              className="w-full flex justify-between items-center px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left font-bold cursor-pointer"
+            >
+              <span className="text-xs font-black uppercase text-white flex items-center gap-2">
+                <span className="text-brand-gold font-mono">07.</span> Dr. FID Biography & Highlights
+              </span>
+              {activeSection === "founder" ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+            </button>
+            {activeSection === "founder" && (
+              <div className="p-4 space-y-4 border-t border-white/5 bg-black/20 animate-fade-in font-sans">
+                <div className="border border-white/5 bg-black/10 p-4 mb-4">
+                  <ImageUploader 
+                    fieldKey="telegramFounderImageUrl" 
+                    label="Upload Founder Biography Portrait" 
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold font-sans">Biographical Section Title</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none font-sans"
+                      value={tData.founderTitle || "Meet Your Community Founder"}
+                      onChange={(e) => handleFieldChange("founderTitle", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Founder Side-Badge Label</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.founderBadge || "Our Founder"}
+                      onChange={(e) => handleFieldChange("founderBadge", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Founder Display Name</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.founderName || "Ambassador Dr. Damilola Awoyemi (Dr. FID)"}
+                      onChange={(e) => handleFieldChange("founderName", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Narrative Paragraph segment 1</label>
+                  <textarea 
+                    rows={3}
+                    className="w-full bg-black/40 border border-white/15 p-3 text-xs text-zinc-300 focus:outline-none font-sans"
+                    value={tData.founderText1 || ""}
+                    onChange={(e) => handleFieldChange("founderText1", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Narrative Paragraph segment 2</label>
+                  <textarea 
+                    rows={3}
+                    className="w-full bg-black/40 border border-white/15 p-3 text-xs text-zinc-300 focus:outline-none font-sans"
+                    value={tData.founderText2 || ""}
+                    onChange={(e) => handleFieldChange("founderText2", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Inspirational Highlight Quote Box</label>
+                  <input 
+                    type="text"
+                    className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none font-serif italic"
+                    value={tData.founderQuote || ""}
+                    onChange={(e) => handleFieldChange("founderQuote", e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section 8: Faith & Promises */}
+          <div className="border border-white/5 bg-white/[0.01]">
+            <button 
+              type="button"
+              onClick={() => toggleSection("promise")}
+              className="w-full flex justify-between items-center px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left font-bold cursor-pointer"
+            >
+              <span className="text-xs font-black uppercase text-white flex items-center gap-2">
+                <span className="text-brand-gold font-mono">08.</span> Core Promises & Vows
+              </span>
+              {activeSection === "promise" ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+            </button>
+            {activeSection === "promise" && (
+              <div className="p-4 space-y-4 border-t border-white/5 bg-black/20 animate-fade-in font-sans">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Badge Label</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.promiseLabel || "Our Commitment"}
+                      onChange={(e) => handleFieldChange("promiseLabel", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Commitment Title Header</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none font-sans"
+                      value={tData.promiseTitle || ""}
+                      onChange={(e) => handleFieldChange("promiseTitle", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Promise Intro Letter / Preamble</label>
+                  <textarea 
+                    rows={2}
+                    className="w-full bg-black/40 border border-white/15 p-3 text-xs text-zinc-300 focus:outline-none font-sans"
+                    value={tData.promiseP1 || ""}
+                    onChange={(e) => handleFieldChange("promiseP1", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-[10px] font-black uppercase text-brand-gold font-bold">Specific Vows List ({ (tData.promiseItems || []).length })</label>
+                    <button
+                      type="button"
+                      onClick={() => handleAddListItem("promiseItems", { text: "Learn without limitations.", icon: "BookOpen" })}
+                      className="inline-flex items-center gap-1 text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 px-2.5 py-1 transition-all cursor-pointer animate-fade-in"
+                    >
+                      <Plus size={10} /> Add Vow
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {(tData.promiseItems || []).map((item: any, i: number) => (
+                      <div key={i} className="flex gap-2 items-start border border-white/5 bg-white/[0.01] p-3 animate-fade-in text-sans">
+                        <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-3 text-sans">
+                          <div>
+                            <label className="block text-[8px] font-mono uppercase text-white/30 mb-0.5">Commitment Vow Statement</label>
+                            <input 
+                              type="text"
+                              className="w-full bg-black/40 border border-white/10 px-3 py-1.5 text-xs text-zinc-200 focus:outline-none font-sans"
+                              value={item.text || ""}
+                              onChange={(e) => {
+                                const copy = { ...item, text: e.target.value };
+                                handleListItemChange("promiseItems", i, copy);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[8px] font-mono uppercase text-white/30 mb-0.5">Lucide Icon Key (e.g. Heart, BookOpen, Users, Sparkles, MessageCircleHeart)</label>
+                            <input 
+                              type="text"
+                              className="w-full bg-black/40 border border-white/10 px-3 py-1.5 text-xs text-zinc-200 focus:outline-none font-mono"
+                              value={item.icon || "Heart"}
+                              onChange={(e) => {
+                                const copy = { ...item, icon: e.target.value };
+                                handleListItemChange("promiseItems", i, copy);
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveListItem("promiseItems", i)}
+                          className="p-2 border border-brand-red/20 bg-brand-red/5 hover:bg-brand-red hover:text-white transition-colors text-brand-red text-xs shrink-0 self-center"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    ))}
+                    {(!tData.promiseItems || tData.promiseItems.length === 0) && (
+                      <p className="text-[11px] text-zinc-500 italic">No vow list items defined. Default fallback values will stand.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section 9: Sisterhood & Community Grid */}
+          <div className="border border-white/5 bg-white/[0.01]">
+            <button 
+              type="button"
+              onClick={() => toggleSection("community")}
+              className="w-full flex justify-between items-center px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left font-bold cursor-pointer"
+            >
+              <span className="text-xs font-black uppercase text-white flex items-center gap-2">
+                <span className="text-brand-gold font-mono">09.</span> Sisterhood & Growing Community
+              </span>
+              {activeSection === "community" ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+            </button>
+            {activeSection === "community" && (
+              <div className="p-4 space-y-4 border-t border-white/5 bg-black/20 animate-fade-in font-sans">
+                <div className="border border-white/5 bg-black/10 p-4 mb-4">
+                  <ImageUploader 
+                    fieldKey="telegramCommunityImgUrl" 
+                    label="Upload Sisterhood & Growing Community Image" 
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Collective Highlight Label</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+                      value={tData.ctaCommunityLabel || "Our Community"}
+                      onChange={(e) => handleFieldChange("ctaCommunityLabel", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold font-sans">Highlights Panel Header</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none font-serif"
+                      value={tData.ctaCommunityTitle || ""}
+                      onChange={(e) => handleFieldChange("ctaCommunityTitle", e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold font-sans">Benefit Descriptives P1 (Bold first line)</label>
+                  <textarea 
+                    rows={2}
+                    className="w-full bg-black/40 border border-white/15 p-3 text-xs text-zinc-300 focus:outline-none font-light font-sans"
+                    value={tData.ctaCommunityP1 || ""}
+                    onChange={(e) => handleFieldChange("ctaCommunityP1", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold font-sans">Benefit Descriptives P2</label>
+                  <textarea 
+                    rows={2}
+                    className="w-full bg-black/40 border border-white/15 p-3 text-xs text-zinc-300 focus:outline-none font-light font-sans"
+                    value={tData.ctaCommunityP2 || ""}
+                    onChange={(e) => handleFieldChange("ctaCommunityP2", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold font-sans">Benefit Descriptives P3</label>
+                  <textarea 
+                    rows={2}
+                    className="w-full bg-black/40 border border-white/15 p-3 text-xs text-zinc-300 focus:outline-none font-light font-sans"
+                    value={tData.ctaCommunityP3 || ""}
+                    onChange={(e) => handleFieldChange("ctaCommunityP3", e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section 10: Final CTA elements */}
+          <div className="border border-white/5 bg-white/[0.01]">
+            <button 
+              type="button"
+              onClick={() => toggleSection("final")}
+              className="w-full flex justify-between items-center px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left font-bold cursor-pointer"
+            >
+              <span className="text-xs font-black uppercase text-white flex items-center gap-2">
+                <span className="text-brand-gold font-mono">10.</span> Concluding Join CTAs
+              </span>
+              {activeSection === "final" ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+            </button>
+            {activeSection === "final" && (
+              <div className="p-4 space-y-4 border-t border-white/5 bg-black/20 animate-fade-in font-sans">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Final Section Label</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-gold/50"
+                      value={tData.ctaFinalLabel || "Your Next Step"}
+                      onChange={(e) => handleFieldChange("ctaFinalLabel", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold font-sans">Final Dispatch Heading</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-gold/50 font-serif"
+                      value={tData.ctaFinalTitle || ""}
+                      onChange={(e) => handleFieldChange("ctaFinalTitle", e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-sans font-light">Brief Descriptive Invitation</label>
+                  <textarea 
+                    rows={2}
+                    className="w-full bg-black/40 border border-white/15 p-3 text-xs text-zinc-300 focus:outline-none font-light font-sans"
+                    value={tData.ctaFinalDesc || ""}
+                    onChange={(e) => handleFieldChange("ctaFinalDesc", e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-sans">Main CTA Submit Button Text</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none font-sans"
+                      value={tData.ctaFinalBtnText || "Join Telegram Group"}
+                      onChange={(e) => handleFieldChange("ctaFinalBtnText", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-sans">Bottom Trust Footer Text</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none font-sans"
+                      value={tData.ctaFinalFooterText || "Learn. Heal. Thrive."}
+                      onChange={(e) => handleFieldChange("ctaFinalFooterText", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+
+        {/* Expandable RAW JSON structure in case they need to configure/reset it */}
+        <details className="mt-8 border border-white/5 bg-zinc-950/40 p-4 font-sans text-xs">
+          <summary className="text-[10px] uppercase font-mono tracking-widest text-brand-gold cursor-pointer hover:text-white select-none">
+            🛠️ Advanced: Edit Raw Telegram Page Configuration JSON
+          </summary>
+          <div className="mt-4 space-y-2">
+            <p className="text-[10px] text-white/40 font-light">
+              This raw JSON configuration contains nested lists, elements, and styles. Make direct edits with care.
+            </p>
+            <textarea
+              className="w-full bg-black/80 border border-white/10 rounded p-4 text-xs font-mono text-zinc-300 min-h-[350px]"
+              value={content.telegramLandingPageJson || "{}"}
+              onChange={(e) => updateContentField("telegramLandingPageJson", e.target.value)}
+            />
+          </div>
+        </details>
+      </div>
+    </div>
+  );
+}
+
+interface SectionHeaderProps {
+  icon: any;
+  title: string;
+}
+
+function SectionHeader({ icon: Icon, title }: SectionHeaderProps) {
+  return (
+    <div className="flex items-center gap-2 border-b border-white/5 pb-3">
+      <Icon className="text-brand-gold shrink-0" size={14} />
+      <h3 className="text-xs font-black uppercase text-white tracking-widest">{title}</h3>
+    </div>
+  );
+}
+
+interface InputGroupProps {
+  label: string;
+  children: React.ReactNode;
+}
+
+function InputGroup({ label, children }: InputGroupProps) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-[10px] font-black uppercase text-white/50 tracking-widest">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+/* 15. AFFILIATE PROGRAM PAGE EDITOR */
+export function AdminAffiliateProgramTab() {
+  const { content, updateContentField } = useContent();
+
+  const parseJSON = (str: string, fallback: any) => {
+    try {
+      return JSON.parse(str);
+    } catch (e) {
+      return fallback;
+    }
+  };
+
+  const tData = parseJSON(content.affiliatePageJson, {
+    heroTitle: "Join Our Affiliate Program",
+    heroSubtitle: "",
+    heroBtnText: "Become an Affiliate",
+    introTitle: "Why Partner With Us?",
+    introDesc: "",
+    benefits: [],
+    howItWorksTitle: "How It Works",
+    howItWorksSteps: [],
+    ctaTitle: "",
+    ctaBtnText: ""
+  });
+
+  const updateTData = (key: string, val: any) => {
+    updateContentField("affiliatePageJson", JSON.stringify({ ...tData, [key]: val }));
+  };
+
+  return (
+    <div className="space-y-10">
+      <div>
+         <h2 className="text-[10px] font-black uppercase text-brand-gold tracking-[0.2em]">Affiliate Program Setup</h2>
+         <p className="text-white/40 text-[10px] mt-1 font-mono uppercase">Configure the Affiliate landing page</p>
+      </div>
+
+      <div className="bg-black/40 border border-white/5 p-6 rounded space-y-6">
+        <SectionHeader icon={Info} title="Hero Banner Configuration" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InputGroup label="Hero Main Title">
+            <input type="text" value={tData.heroTitle || ""} onChange={(e) => updateTData("heroTitle", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs outline-none focus:border-brand-gold" />
+          </InputGroup>
+          <InputGroup label="Hero Subtitle">
+            <input type="text" value={tData.heroSubtitle || ""} onChange={(e) => updateTData("heroSubtitle", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs outline-none focus:border-brand-gold" />
+          </InputGroup>
+          <InputGroup label="Hero Button Text">
+            <input type="text" value={tData.heroBtnText || ""} onChange={(e) => updateTData("heroBtnText", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs outline-none focus:border-brand-gold" />
+          </InputGroup>
+        </div>
+      </div>
+
+      <div className="bg-black/40 border border-white/5 p-6 rounded space-y-6">
+        <SectionHeader icon={Info} title="Intro Configuration" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InputGroup label="Intro Title">
+            <input type="text" value={tData.introTitle || ""} onChange={(e) => updateTData("introTitle", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs outline-none focus:border-brand-gold" />
+          </InputGroup>
+          <InputGroup label="Intro Description">
+            <textarea value={tData.introDesc || ""} onChange={(e) => updateTData("introDesc", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs outline-none focus:border-brand-gold h-24" />
+          </InputGroup>
+        </div>
+      </div>
+
+      <div className="bg-black/40 border border-white/5 p-6 rounded space-y-6">
+        <SectionHeader icon={Info} title="Call to Action (CTA) Box" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InputGroup label="Bottom CTA Title">
+             <input type="text" value={tData.ctaTitle || ""} onChange={(e) => updateTData("ctaTitle", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs outline-none focus:border-brand-gold" />
+          </InputGroup>
+          <InputGroup label="Bottom CTA Button">
+             <input type="text" value={tData.ctaBtnText || ""} onChange={(e) => updateTData("ctaBtnText", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs outline-none focus:border-brand-gold" />
+          </InputGroup>
+        </div>
       </div>
     </div>
   );

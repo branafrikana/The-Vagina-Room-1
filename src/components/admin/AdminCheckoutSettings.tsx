@@ -6,7 +6,8 @@ import {
   Plus, 
   Trash2, 
   Save,
-  CheckCircle2
+  CheckCircle2,
+  Info
 } from 'lucide-react';
 
 export default function AdminCheckoutSettings() {
@@ -27,6 +28,10 @@ export default function AdminCheckoutSettings() {
 
   const updateConfig = (newConfig: any) => {
     updateContentField("checkoutSettingsJson", JSON.stringify(newConfig, null, 2));
+  };
+
+  const updateBankDetails = (details: string) => {
+    updateConfig({ ...checkoutConfig, bankDetails: details });
   };
 
   const addShippingLocation = () => {
@@ -157,6 +162,16 @@ export default function AdminCheckoutSettings() {
 
           {/* Payment Methods */}
           <Section title="Payment Gateways & Methods" icon={CreditCard} onAdd={addPaymentMethod}>
+            <div className="bg-brand-gold/5 border-l-2 border-brand-gold p-3 mb-4">
+               <p className="text-[10px] text-brand-gold font-black uppercase tracking-widest flex items-center gap-2">
+                 <Info size={12} /> Integration Note
+               </p>
+               <p className="text-[9px] text-white/50 uppercase leading-relaxed mt-1">
+                 Payment methods defined here (e.g. "Card", "Bank Transfer") will appear on the Member Registration page. 
+                 If no methods are defined, the system defaults to "Credit / Debit Card". 
+                 Ensure at least one method is "Enabled" to be visible to sisters during onboarding.
+               </p>
+            </div>
             <div className="grid grid-cols-1 gap-3">
               {paymentMethods.map((method: any, idx: number) => (
                 <div key={idx} className={`flex gap-4 items-center bg-brand-black/40 border p-4 transition-colors ${method.enabled ? 'border-white/5' : 'border-brand-red/20 opacity-50'}`}>
@@ -185,6 +200,15 @@ export default function AdminCheckoutSettings() {
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="mt-6 space-y-2">
+              <label className="text-[9px] font-black uppercase text-white/30 tracking-widest">Bank Transfer Details</label>
+              <textarea 
+                value={checkoutConfig.bankDetails || ''}
+                onChange={e => updateBankDetails(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 focus:border-brand-gold outline-none text-xs p-4 min-h-[100px]"
+                placeholder="Enter bank transfer instructions (e.g. Bank: XYZ, Account: 123456...)"
+              />
             </div>
           </Section>
        </div>

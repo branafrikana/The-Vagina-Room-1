@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useContent } from '../context/ContentContext';
 import EditableText from './EditableText';
 
-export default function Promise() {
+export default function TheRoomPromise() {
   const { content } = useContent();
 
   const fallbackPromises = [

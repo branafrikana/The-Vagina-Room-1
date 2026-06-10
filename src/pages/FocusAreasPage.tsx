@@ -231,9 +231,6 @@ export default function FocusAreasPage() {
         <Navigation />
         
         <main className="pt-28 pb-12">
-          <div className="max-w-7xl mx-auto px-6 md:px-12 pt-8">
-            <Breadcrumbs items={[{ label: 'The Framework' }]} />
-          </div>
           {/* Majestic Atmospheric Hero Banner */}
           <section className="py-24 px-6 md:px-12 relative overflow-hidden flex flex-col justify-center min-h-[70vh]">
             <div className="absolute inset-0 z-0">

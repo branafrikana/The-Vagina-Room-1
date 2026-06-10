@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useContent } from '../../context/ContentContext';
-import { ImageUploader } from '../../pages/AdminPage';
+import { ImageUploader } from './ImageUploader';
 import { Eye, EyeOff } from 'lucide-react';
 
 interface AdminSettingsTabProps {
@@ -10,7 +10,7 @@ interface AdminSettingsTabProps {
 export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
   const { content, updateContentField } = useContent();
   const [showPassword, setShowPassword] = useState(false);
-
+  
   const parseJSON = (jsonString: string, fallback: any) => {
     try {
       return JSON.parse(jsonString || '{}');
@@ -18,6 +18,124 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
       return fallback;
     }
   };
+
+  const [systemStatus, setSystemStatus] = useState<any>(() => {
+    try {
+      // Synchronously check configuration on mount to prevent layout/status flickering
+      const mediaConf = JSON.parse(content.mediaSettingsJson || "{}");
+      const payConf = JSON.parse(content.paymentSettingsJson || "{}");
+      const smtpConf = JSON.parse(content.smtpSettingsJson || "{}");
+      
+      const hasCloudinary = !!(
+        mediaConf?.cloudinaryCloudName || 
+        mediaConf?.cloudinaryApiKey || 
+        mediaConf?.cloudinaryApiSecret ||
+        localStorage.getItem("cloudinary_config")
+      );
+      
+      const hasPaystack = !!(
+        payConf?.storePaystackPublicKey || 
+        payConf?.storePaystackSecretKey || 
+        payConf?.membershipPaystackPublicKey || 
+        payConf?.membershipPaystackSecretKey
+      );
+
+      const hasFlutterwave = !!(
+        payConf?.storeFlutterwaveSecretKey || 
+        payConf?.membershipFlutterwaveSecretKey
+      );
+
+      const hasSmtp = !!(
+        smtpConf?.host || 
+        smtpConf?.user || 
+        smtpConf?.pass
+      );
+
+      return {
+        status: 'online',
+        database: 'connected (client-side)',
+        firestore: true,
+        cloudinary: hasCloudinary,
+        paystack: hasPaystack,
+        flutterwave: hasFlutterwave,
+        smtp: hasSmtp
+      };
+    } catch {
+      return {
+        status: 'online',
+        database: 'connected (client-side)',
+        firestore: true,
+        cloudinary: false,
+        paystack: false,
+        flutterwave: false,
+        smtp: false
+      };
+    }
+  });
+  const [statusLoading, setStatusLoading] = useState(false);
+
+  const refreshStatus = React.useCallback(async () => {
+    setStatusLoading(true);
+    try {
+      const mediaConf = parseJSON(content.mediaSettingsJson, {});
+      const payConf = parseJSON(content.paymentSettingsJson, {});
+      const smtpConf = parseJSON(content.smtpSettingsJson, {});
+
+      // 1. Check Cloudinary Configured
+      const hasCloudinary = !!(
+        mediaConf?.cloudinaryCloudName || 
+        mediaConf?.cloudinaryApiKey || 
+        mediaConf?.cloudinaryApiSecret ||
+        localStorage.getItem("cloudinary_config")
+      );
+
+      // 2. Check Database Connected (Firestore)
+      // Since the admin dashboard relies on Firestore to save config/content, firestore is connected.
+      const hasFirestore = true;
+
+      // 3. Check Paystack Configured
+      const hasPaystack = !!(
+        payConf?.storePaystackPublicKey || 
+        payConf?.storePaystackSecretKey || 
+        payConf?.membershipPaystackPublicKey || 
+        payConf?.membershipPaystackSecretKey
+      );
+
+      // 4. Check Flutterwave Configured
+      const hasFlutterwave = !!(
+        payConf?.storeFlutterwaveSecretKey || 
+        payConf?.membershipFlutterwaveSecretKey
+      );
+
+      // 5. Check SMTP Configured
+      const hasSmtp = !!(
+        smtpConf?.host || 
+        smtpConf?.user || 
+        smtpConf?.pass
+      );
+
+      setSystemStatus({
+        status: 'online',
+        database: 'connected (client-side)',
+        storage: hasCloudinary ? 'configured' : 'not-configured',
+        cloudinary: hasCloudinary,
+        firestore: hasFirestore,
+        paystack: hasPaystack,
+        flutterwave: hasFlutterwave,
+        smtp: hasSmtp
+      });
+    } catch (err) {
+      console.error("Failed to fetch system status", err);
+    } finally {
+      setStatusLoading(false);
+    }
+  }, [content.mediaSettingsJson, content.paymentSettingsJson, content.smtpSettingsJson]);
+
+  React.useEffect(() => {
+    if (activeTab === 'integrations') {
+      refreshStatus();
+    }
+  }, [activeTab, content.mediaSettingsJson, content.paymentSettingsJson, content.smtpSettingsJson, refreshStatus]);
 
   const updateJSONField = (configKey: string, field: string, value: any) => {
     const current = parseJSON((content as any)[configKey], {});
@@ -70,12 +188,70 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
               className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
             />
           </div>
+          <div className="flex justify-between items-center bg-black/40 p-3 border border-white/5 mt-2">
+              <div>
+                <p className="text-[10px] font-black uppercase text-white">Enable User Signups</p>
+                <p className="text-[8px] text-white/30 uppercase tracking-tighter">Allow new members to register on the website</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => updateJSONField("generalSettingsJson", "signupsEnabled", config.signupsEnabled !== false ? false : true)}
+                className={`w-10 h-5 relative rounded-full transition-colors ${config.signupsEnabled !== false ? 'bg-brand-gold' : 'bg-white/10'}`}
+              >
+                <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${config.signupsEnabled !== false ? 'right-1' : 'left-1'}`} />
+              </button>
+            </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="border-t border-white/5 pt-6 mt-6">
+          <h3 className="text-sm font-black uppercase text-brand-gold mb-4">Membership Pricing</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Gold Plan Price (₦ - NGN)</label>
+              <input 
+                type="text" 
+                value={content.membershipPriceGoldNGN || "25000"}
+                onChange={(e) => updateContentField("membershipPriceGoldNGN", e.target.value)}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                placeholder="25000"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Gold Plan Price ($ - USD)</label>
+              <input 
+                type="text" 
+                value={content.membershipPriceGoldUSD || "45"}
+                onChange={(e) => updateContentField("membershipPriceGoldUSD", e.target.value)}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                placeholder="45"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Diamond Plan Price (₦ - NGN)</label>
+              <input 
+                type="text" 
+                value={content.membershipPriceDiamondNGN || "85000"}
+                onChange={(e) => updateContentField("membershipPriceDiamondNGN", e.target.value)}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                placeholder="85000"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Diamond Plan Price ($ - USD)</label>
+              <input 
+                type="text" 
+                value={content.membershipPriceDiamondUSD || "150"}
+                onChange={(e) => updateContentField("membershipPriceDiamondUSD", e.target.value)}
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                placeholder="150"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Support Phone</label>
             <input 
-              type="text" 
+              type="text"
               value={config.supportPhone || ""}
               onChange={(e) => updateJSONField("generalSettingsJson", "supportPhone", e.target.value)}
               className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
@@ -88,7 +264,9 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
               value={config.whatsappPhone || ""}
               onChange={(e) => updateJSONField("generalSettingsJson", "whatsappPhone", e.target.value)}
               className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+              placeholder="e.g. +2348012345678"
             />
+            <p className="text-[8px] text-brand-gold/50 uppercase tracking-widest leading-relaxed">Ensure full international format starting with '+' for global sync.</p>
           </div>
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">WhatsApp Method</label>
@@ -135,6 +313,153 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
               <option value="EST">EST</option>
               <option value="PST">PST</option>
             </select>
+          </div>
+        </div>
+
+        {/* E-commerce & Member Benefits */}
+        <div className="border border-white/5 bg-white/[0.01] p-5 space-y-4">
+          <div>
+            <h4 className="text-xs font-black text-brand-gold uppercase tracking-[0.2em]">E-commerce & Member Benefits</h4>
+            <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5">Control automated discounts and digital fulfillment policies</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center bg-black/40 p-3 border border-white/5">
+                <div>
+                  <p className="text-[10px] font-black uppercase text-white">Enable Member Discounts</p>
+                  <p className="text-[8px] text-white/30 uppercase tracking-tighter">Automatic price reduction for verified sisters</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateJSONField("generalSettingsJson", "memberDiscountEnabled", config.memberDiscountEnabled === false)}
+                  className={`w-10 h-5 relative rounded-full transition-colors ${config.memberDiscountEnabled !== false ? 'bg-brand-gold' : 'bg-white/10'}`}
+                >
+                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${config.memberDiscountEnabled !== false ? 'right-1' : 'left-1'}`} />
+                </button>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Member Discount Percentage (%)</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="range" min="0" max="50" step="1"
+                    value={config.memberDiscountPercent || 10}
+                    onChange={(e) => updateJSONField("generalSettingsJson", "memberDiscountPercent", parseInt(e.target.value))}
+                    className="flex-grow accent-brand-gold h-1 bg-white/10 rounded-lg appearance-none cursor-pointer mt-3"
+                  />
+                  <span className="text-brand-gold font-mono text-[11px] w-8 text-right self-center">{config.memberDiscountPercent || 10}%</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center bg-black/40 p-3 border border-white/5">
+                <div>
+                  <p className="text-[10px] font-black uppercase text-white">Direct E-book Redirect</p>
+                  <p className="text-[8px] text-white/30 uppercase tracking-tighter">Redirect to download page immediately after payment success</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateJSONField("generalSettingsJson", "autoRedirectDigital", config.autoRedirectDigital === false)}
+                  className={`w-10 h-5 relative rounded-full transition-colors ${config.autoRedirectDigital !== false ? 'bg-brand-gold' : 'bg-white/10'}`}
+                >
+                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${config.autoRedirectDigital !== false ? 'right-1' : 'left-1'}`} />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Digital Receipt Greeting</label>
+                <textarea 
+                  value={config.digitalReceiptNote || "Thank you for supporting the community. Your digital resources are linked below for immediate use."}
+                  onChange={(e) => updateJSONField("generalSettingsJson", "digitalReceiptNote", e.target.value)}
+                  rows={2}
+                  className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-[10px] italic font-sans" 
+                  placeholder="Greeting included in the digital delivery email..."
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Manual Payment / Bank Transfer Settings */}
+        <div className="border border-white/5 bg-white/[0.01] p-5 space-y-6">
+          <div className="flex justify-between items-center border-b border-white/5 pb-3">
+            <div>
+              <h4 className="text-xs font-black text-brand-gold uppercase tracking-[0.2em]">Bank Transfer Configuration</h4>
+              <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5">Separate disbursement endpoints for memberships and products</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <p className="text-[9px] font-black uppercase tracking-widest text-white/50">A. Membership Subscriptions</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Bank Name</label>
+                <input 
+                  type="text" 
+                  value={config.membershipBankName || config.bankName || ""}
+                  onChange={(e) => updateJSONField("generalSettingsJson", "membershipBankName", e.target.value)}
+                  placeholder="e.g. Access Bank"
+                  className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Account Name</label>
+                <input 
+                  type="text" 
+                  value={config.membershipAccountName || config.accountName || ""}
+                  onChange={(e) => updateJSONField("generalSettingsJson", "membershipAccountName", e.target.value)}
+                  placeholder="e.g. TVR Community"
+                  className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Account Number</label>
+                <input 
+                  type="text" 
+                  value={config.membershipAccountNumber || config.accountNumber || ""}
+                  onChange={(e) => updateJSONField("generalSettingsJson", "membershipAccountNumber", e.target.value)}
+                  placeholder="e.g. 0123456789"
+                  className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-4 border-t border-white/5">
+            <p className="text-[9px] font-black uppercase tracking-widest text-white/50">B. Product Store (Digital & Physical)</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Bank Name</label>
+                <input 
+                  type="text" 
+                  value={config.storeBankName || config.bankName || ""}
+                  onChange={(e) => updateJSONField("generalSettingsJson", "storeBankName", e.target.value)}
+                  placeholder="e.g. Zenith Bank"
+                  className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Account Name</label>
+                <input 
+                  type="text" 
+                  value={config.storeAccountName || config.accountName || ""}
+                  onChange={(e) => updateJSONField("generalSettingsJson", "storeAccountName", e.target.value)}
+                  placeholder="e.g. TVR Micro-Shop"
+                  className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Account Number</label>
+                <input 
+                  type="text" 
+                  value={config.storeAccountNumber || config.accountNumber || ""}
+                  onChange={(e) => updateJSONField("generalSettingsJson", "storeAccountNumber", e.target.value)}
+                  placeholder="e.g. 9876543210"
+                  className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -345,6 +670,77 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
                 currentValue={parseJSON(content.pwaSettingsJson, {}).iconUrl || ""}
               />
             </div>
+          </div>
+        </div>
+
+        {/* Member Dashboard Features Toggle Control Center */}
+        <div className="pt-6 border-t border-white/10">
+          <div>
+            <h4 className="text-xs font-black text-brand-gold uppercase tracking-[0.2em]">Member Dashboard Features Control Center</h4>
+            <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5 mb-4">Enable or disable specific tabs globally on all community members' dashboards</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 bg-white/[0.01] border border-white/5 p-5">
+            {(() => {
+              let enabledFeatures: Record<string, boolean> = {
+                profile: true,
+                resources: true,
+                programs: true,
+                events: true,
+                community: true,
+                shop: true,
+                id_card: true,
+                referral: true,
+                support: true
+              };
+              try {
+                if (content.memberDashboardFeaturesJson) {
+                  enabledFeatures = { ...enabledFeatures, ...JSON.parse(content.memberDashboardFeaturesJson) };
+                }
+              } catch (e) {}
+
+              const toggleFeature = (key: string) => {
+                const nextState = { ...enabledFeatures, [key]: !enabledFeatures[key] };
+                updateContentField("memberDashboardFeaturesJson", JSON.stringify(nextState));
+              };
+
+              const featureMetaData = [
+                { id: 'profile', name: 'My Profile', emoji: '👤', desc: 'Personal details & preferences' },
+                { id: 'resources', name: 'Resource Library', emoji: '📚', desc: 'Expert guides, videos & audio' },
+                { id: 'programs', name: 'Programs & Courses', emoji: '🎓', desc: 'Enrolled courses & progress' },
+                { id: 'events', name: 'Events Calendar', emoji: '📅', desc: 'Circle RSVPs & live sessions' },
+                { id: 'community', name: 'Community Feed', emoji: '💬', desc: 'Lounge feed & private audio' },
+                { id: 'shop', name: 'Member Shop', emoji: '🛍️', desc: 'Curated botanicals & tools' },
+                { id: 'id_card', name: 'Membership Card', emoji: '💳', desc: 'Digital pass & QR credentials' },
+                { id: 'referral', name: 'Refer & Earn', emoji: '🤝', desc: 'Ambassador ledger & payouts' },
+                { id: 'support', name: 'Support System', emoji: '🛠️', desc: 'Helpdesk tickets & WhatsApp sync' },
+              ];
+
+              return featureMetaData.map((feat) => {
+                const isEnabled = enabledFeatures[feat.id] !== false;
+                return (
+                  <div key={feat.id} className="flex items-center justify-between p-3 border border-white/5 bg-black/40 hover:bg-black/60 transition-colors">
+                    <div className="text-left max-w-[70%]">
+                      <p className="text-[10px] font-black uppercase text-white flex items-center gap-1.5 leading-none">
+                        <span>{feat.emoji}</span> {feat.name}
+                      </p>
+                      <p className="text-[9px] text-white/35 font-light font-sans mt-1">{feat.desc}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleFeature(feat.id)}
+                      className={`px-2.5 py-1 text-[8px] font-bold tracking-widest uppercase border transition-all cursor-pointer ${
+                        isEnabled 
+                          ? "bg-brand-gold/10 border-brand-gold/30 text-brand-gold font-extrabold shadow-sm" 
+                          : "bg-transparent border-white/10 text-white/30"
+                      }`}
+                    >
+                      {isEnabled ? "ACTIVE" : "OFFLINE"}
+                    </button>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       </div>
@@ -794,15 +1190,68 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
             />
           </div>
         </div>
-        <div className="space-y-4">
-           <p className="text-[10px] font-black uppercase tracking-widest text-brand-gold border-b border-white/5 pb-2">Social Sharing Card</p>
-           <ImageUploader 
-              fieldKey="ogImage" 
-              label="OG Graph Preview Image" 
-              currentValue={config.ogImage}
-              onUploadSuccess={(url: string) => updateJSONField("seoSettingsJson", "ogImage", url)}
-           />
-           <p className="text-[9px] text-white/30 italic">Recommended size: 1200x630px for optimal social sharing previews.</p>
+
+        <div className="border border-white/5 bg-white/[0.01] p-5 space-y-4">
+          <div>
+            <h4 className="text-xs font-black text-brand-gold uppercase tracking-[0.2em]">Analytics & Performance</h4>
+            <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5">Integrate tracking pixels for conversion monitoring and traffic analysis</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Google Analytics ID (G-XXXXX)</label>
+              <input 
+                type="text" 
+                value={config.gaTrackingId || ""}
+                onChange={(e) => updateJSONField("seoSettingsJson", "gaTrackingId", e.target.value)}
+                placeholder="G-XXXXXXXXXX"
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Meta Pixel ID (Facebook)</label>
+              <input 
+                type="text" 
+                value={config.fbPixelId || ""}
+                onChange={(e) => updateJSONField("seoSettingsJson", "fbPixelId", e.target.value)}
+                placeholder="123456789012345"
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Digital Product Redirect URL (Success Page)</label>
+              <input 
+                type="text" 
+                value={config.digitalSuccessRedirect || "/member-dashboard?tab=resources"}
+                onChange={(e) => updateJSONField("seoSettingsJson", "digitalSuccessRedirect", e.target.value)}
+                placeholder="e.g. /download-success"
+                className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="border border-white/5 bg-white/[0.01] p-5 space-y-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-brand-gold border-b border-white/5 pb-2">Browser Presence & Branding</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+               <ImageUploader 
+                  fieldKey="faviconUrl"
+                  label="Site Favicon (Browser Tab Icon)"
+                  currentValue={content.faviconUrl}
+                  onUploadSuccess={(url) => updateContentField("faviconUrl", url)}
+               />
+               <p className="text-[9px] text-white/30 italic">Best as a square .ico or .png file (e.g., 32x32 or 192x192).</p>
+            </div>
+            <div className="space-y-4">
+               <ImageUploader 
+                  fieldKey="ogImage" 
+                  label="OG Graph Preview Image (Social Sharing)" 
+                  currentValue={config.ogImage}
+                  onUploadSuccess={(url: string) => updateJSONField("seoSettingsJson", "ogImage", url)}
+               />
+               <p className="text-[9px] text-white/30 italic">Recommended size: 1200x630px for optimal social sharing previews.</p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -880,7 +1329,7 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Main Heading Title</label>
-                <input type="text" value={content.socialSectionTitle || ""} onChange={(e) => updateContentField("socialSectionTitle", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" placeholder="e.g. JOIN THE SANCTUARY" />
+                <input type="text" value={content.socialSectionTitle || ""} onChange={(e) => updateContentField("socialSectionTitle", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" placeholder="e.g. JOIN THE COMMUNITY" />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Sub-Title / Slogan</label>
@@ -923,32 +1372,15 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
     const mediaConfig = parseJSON(content.mediaSettingsJson, {});
     const paymentConfig = parseJSON(content.paymentSettingsJson, {});
     const smtpConfig = parseJSON(content.smtpSettingsJson, {});
-    
-    const [systemStatus, setSystemStatus] = useState<any>(null);
-    const [statusLoading, setStatusLoading] = useState(false);
 
-    const refreshStatus = React.useCallback(async () => {
-      setStatusLoading(true);
-      try {
-        const res = await fetch(`/api/admin/system-status?password=${content.adminPassword}`);
-        const data = await res.json();
-        setSystemStatus(data);
-      } catch (err) {
-        console.error("Failed to fetch system status", err);
-      } finally {
-        setStatusLoading(false);
-      }
-    }, [content.adminPassword]);
-
-    React.useEffect(() => {
-      refreshStatus();
-    }, [refreshStatus]);
-
-    const StatusIndicator = ({ isActive }: { isActive: boolean }) => (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-widest ${isActive ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-brand-red"}`}>
-        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-emerald-500" : "bg-brand-red"}`} />
-        {isActive ? "Configured & Active" : "Not Configured / Inactive"}
-      </span>
+    const StatusIndicator = ({ isActive, error }: { isActive: boolean, error?: string }) => (
+      <div className="flex flex-col items-end gap-1">
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-widest ${isActive ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-brand-red"}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-emerald-500" : "bg-brand-red"}`} />
+          {isActive ? "Configured & Active" : "Not Configured / Inactive"}
+        </span>
+        {error && <span className="text-[8px] text-brand-red font-mono lowercase max-w-[200px] text-right truncate" title={error}>{error}</span>}
+      </div>
     );
 
     return (
@@ -974,7 +1406,7 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
               <p className="text-xs font-black uppercase tracking-widest text-brand-gold">Cloudinary (Media Storage)</p>
               <p className="text-[10px] text-white/40 mt-1">Replaces local /uploads with persistent cloud storage.</p>
             </div>
-            <StatusIndicator isActive={systemStatus?.cloudinary === true} />
+            <StatusIndicator isActive={systemStatus?.cloudinary === true} error={systemStatus?.cloudinaryError} />
           </div>
           <div className="grid grid-cols-1 gap-4 pt-2">
             <div className="space-y-2">
@@ -989,6 +1421,10 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
               <label className="text-[10px] font-bold uppercase tracking-wider text-white/30 block">API Secret</label>
               <input type="password" value={mediaConfig.cloudinaryApiSecret || ""} onChange={(e) => updateJSONField("mediaSettingsJson", "cloudinaryApiSecret", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
             </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-white/30 block">Unsigned Upload Preset</label>
+              <input type="text" value={mediaConfig.cloudinaryUploadPreset || ""} onChange={(e) => updateJSONField("mediaSettingsJson", "cloudinaryUploadPreset", e.target.value)} placeholder="e.g. ml_default" className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+            </div>
           </div>
         </div>
 
@@ -999,7 +1435,7 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
               <p className="text-xs font-black uppercase tracking-widest text-[#FFCA28]">Firebase (Database)</p>
               <p className="text-[10px] text-white/40 mt-1">Saves configuration to firebase-applet-config.json</p>
             </div>
-            <StatusIndicator isActive={systemStatus?.firestore === true} />
+            <StatusIndicator isActive={systemStatus?.firestore === true} error={systemStatus?.firestoreError} />
           </div>
           <div className="pt-2 space-y-4">
             <p className="text-[10px] text-white/50 leading-relaxed italic">
@@ -1018,36 +1454,59 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
         </div>
 
         {/* Payment Gateways */}
-        <div className="bg-brand-black border border-white/10 p-6 space-y-4">
+        <div className="bg-brand-black border border-white/10 p-6 space-y-6">
           <div className="flex justify-between items-center border-b border-white/5 pb-4">
             <div>
               <p className="text-xs font-black uppercase tracking-widest text-[#0ea5e9]">Payment Gateways</p>
-              <p className="text-[10px] text-white/40 mt-1">Keys for online checkout payments.</p>
+              <p className="text-[10px] text-white/40 mt-1">Configure separate API keys for membership subscriptions and store orders.</p>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-            {/* Paystack */}
-            <div className="space-y-4 p-4 border border-white/5">
-              <div className="flex justify-between items-center mb-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Paystack</p>
-                <StatusIndicator isActive={systemStatus?.paystack === true} />
+
+          {/* Paystack Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <p className="text-[11px] font-black uppercase tracking-widest text-white">Paystack Integration</p>
+              <StatusIndicator isActive={systemStatus?.paystack === true} />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 p-4 bg-white/[0.02] border border-white/5">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Store Secret Key</label>
+                <input type="password" value={paymentConfig.storePaystackSecretKey || paymentConfig.paystackSecretKey || ""} onChange={(e) => updateJSONField("paymentSettingsJson", "storePaystackSecretKey", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30 block">Secret Key</label>
-                <input type="password" value={paymentConfig.paystackSecretKey || ""} onChange={(e) => updateJSONField("paymentSettingsJson", "paystackSecretKey", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+              <div className="space-y-2 p-4 bg-white/[0.02] border border-white/5">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Store Public Key</label>
+                <input type="text" value={paymentConfig.storePaystackPublicKey || ""} onChange={(e) => updateJSONField("paymentSettingsJson", "storePaystackPublicKey", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+              </div>
+              <div className="space-y-2 p-4 bg-white/[0.02] border border-white/5">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Membership Secret Key</label>
+                <input type="password" value={paymentConfig.membershipPaystackSecretKey || paymentConfig.paystackSecretKey || ""} onChange={(e) => updateJSONField("paymentSettingsJson", "membershipPaystackSecretKey", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+              </div>
+              <div className="space-y-2 p-4 bg-white/[0.02] border border-white/5">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Membership Public Key</label>
+                <input type="text" value={paymentConfig.membershipPaystackPublicKey || ""} onChange={(e) => updateJSONField("paymentSettingsJson", "membershipPaystackPublicKey", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
               </div>
             </div>
+          </div>
 
-            {/* Flutterwave */}
-            <div className="space-y-4 p-4 border border-white/5">
-              <div className="flex justify-between items-center mb-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Flutterwave</p>
-                <StatusIndicator isActive={systemStatus?.flutterwave === true} />
+          {/* Flutterwave Section */}
+          <div className="space-y-4 pt-4 border-t border-white/5">
+            <div className="flex items-center gap-2">
+              <p className="text-[11px] font-black uppercase tracking-widest text-white">Flutterwave Integration</p>
+              <StatusIndicator isActive={systemStatus?.flutterwave === true} />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 p-4 bg-white/[0.02] border border-white/5">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Store Secret Key</label>
+                <input type="password" value={paymentConfig.storeFlutterwaveSecretKey || paymentConfig.flutterwaveSecretKey || ""} onChange={(e) => updateJSONField("paymentSettingsJson", "storeFlutterwaveSecretKey", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30 block">Secret Key</label>
-                <input type="password" value={paymentConfig.flutterwaveSecretKey || ""} onChange={(e) => updateJSONField("paymentSettingsJson", "flutterwaveSecretKey", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
+              <div className="space-y-2 p-4 bg-white/[0.02] border border-white/5">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Membership Secret Key</label>
+                <input type="password" value={paymentConfig.membershipFlutterwaveSecretKey || paymentConfig.flutterwaveSecretKey || ""} onChange={(e) => updateJSONField("paymentSettingsJson", "membershipFlutterwaveSecretKey", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
               </div>
+            </div>
+            <div className="space-y-2 p-4 bg-white/[0.02] border border-white/5 md:col-span-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">FLW Webhook Encryption Hash</label>
+                <input type="password" value={paymentConfig.flutterwaveWebhookSecretHash || ""} onChange={(e) => updateJSONField("paymentSettingsJson", "flutterwaveWebhookSecretHash", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
             </div>
           </div>
         </div>

@@ -1,12 +1,17 @@
 import React, { createContext, useContext, useState, useMemo } from "react";
+import { useAuth } from "./AuthContext";
+import { useContent } from "./ContentContext";
 
 export interface CartItem {
   id: string;
   title: string;
   price: string;
+  memberDiscountPrice?: string; // Optional specific member price
   currency: string;
   imageUrl: string;
   quantity: number;
+  isDigital?: boolean;
+  downloadUrl?: string;
 }
 
 interface CartContextType {
@@ -17,11 +22,18 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  originalTotalPrice: number;
+  discountAmount: number;
+  memberDiscountApplied: boolean;
+  discountPercentage: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { userData } = useAuth();
+  const { content } = useContent();
+
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem("tvr_cart");
     if (saved) {
@@ -33,6 +45,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
     return [];
   });
+
+  // Get discount settings from content
+  const discountConfig = useMemo(() => {
+    try {
+      const config = JSON.parse(content.generalSettingsJson || "{}");
+      return {
+        enabled: config.memberDiscountEnabled !== false,
+        percentage: parseInt(config.memberDiscountPercent || "10")
+      };
+    } catch {
+      return { enabled: true, percentage: 10 };
+    }
+  }, [content.generalSettingsJson]);
+
+  // Check if member discount should be applied (user logged in and feature enabled)
+  // Note: Assuming userData exists and has a role/status. For now, any logged-in user who is not an admin is a "member"
+  // or we can check for a specific field like `userData.membershipStatus === 'active'`
+  const isMember = !!userData;
+  const memberDiscountApplied = isMember && discountConfig.enabled;
 
   // Persist cart to localStorage
   React.useEffect(() => {
@@ -67,14 +98,38 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = () => setCartItems([]);
 
-  const { totalItems, totalPrice } = useMemo(() => {
-    const items = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-    const price = cartItems.reduce(
-      (acc, item) => acc + parseFloat(String(item.price).replace(/[^0-9.]/g, '') || "0") * item.quantity,
-      0
-    );
-    return { totalItems: items, totalPrice: price };
-  }, [cartItems]);
+  const { totalItems, totalPrice, originalTotalPrice, discountAmount } = useMemo(() => {
+    const itemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+    
+    let total = 0;
+    let originalTotal = 0;
+
+    cartItems.forEach(item => {
+      const basePrice = parseFloat(String(item.price).replace(/[^0-9.]/g, '') || "0");
+      const subtotal = basePrice * item.quantity;
+      originalTotal += subtotal;
+
+      if (memberDiscountApplied) {
+        // Use specific member price if available, otherwise apply global percentage
+        if (item.memberDiscountPrice) {
+          const mPrice = parseFloat(String(item.memberDiscountPrice).replace(/[^0-9.]/g, '') || "0");
+          total += mPrice * item.quantity;
+        } else {
+          const discountedPrice = basePrice * (1 - discountConfig.percentage / 100);
+          total += discountedPrice * item.quantity;
+        }
+      } else {
+        total += subtotal;
+      }
+    });
+
+    return { 
+      totalItems: itemsCount, 
+      totalPrice: total, 
+      originalTotalPrice: originalTotal,
+      discountAmount: originalTotal - total
+    };
+  }, [cartItems, memberDiscountApplied, discountConfig]);
 
   return (
     <CartContext.Provider
@@ -86,6 +141,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         clearCart,
         totalItems,
         totalPrice,
+        originalTotalPrice,
+        discountAmount,
+        memberDiscountApplied,
+        discountPercentage: discountConfig.percentage
       }}
     >
       {children}

@@ -8,6 +8,8 @@ interface SEOProps {
   ogImage?: string;
   ogType?: 'website' | 'article' | 'product';
   keywords?: string;
+  ogTitle?: string;
+  ogDescription?: string;
 }
 
 export default function SEO({ 
@@ -15,7 +17,9 @@ export default function SEO({
   description, 
   ogImage, 
   ogType = 'website',
-  keywords 
+  keywords,
+  ogTitle,
+  ogDescription
 }: SEOProps) {
   const { content } = useContent();
 
@@ -24,7 +28,7 @@ export default function SEO({
       return JSON.parse(content.seoSettingsJson);
     } catch (e) {
       return {
-        metaDescription: "A safe sanctuary and global supportive community providing trusted clinical education, restorative therapy, and guidance.",
+        metaDescription: "A safe and global supportive community providing trusted clinical education, restorative therapy, and guidance.",
         metaKeywords: "women's health, reproductive health, vaginal health, Dr. FID, intimate wellness",
         ogImage: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80",
         authorName: "Dr. FID"
@@ -48,6 +52,11 @@ export default function SEO({
   const finalDescription = description || seoData.metaDescription;
   const finalKeywords = keywords || seoData.metaKeywords;
   const finalOgImage = ogImage || seoData.ogImage;
+  const finalOgTitle = ogTitle ? `${ogTitle} | ${siteName}` : fullTitle;
+  const finalOgDescription = ogDescription || finalDescription;
+
+  const gaTrackingId = seoData.gaTrackingId;
+  const fbPixelId = seoData.fbPixelId;
 
   return (
     <Helmet>
@@ -57,17 +66,55 @@ export default function SEO({
       <meta name="keywords" content={finalKeywords} />
       <meta name="author" content={seoData.authorName || "Dr. FID"} />
 
+      {/* Analytics: Google Analytics 4 */}
+      {gaTrackingId && (
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaTrackingId}`} />
+      )}
+      {gaTrackingId && (
+        <script>
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${gaTrackingId}');
+          `}
+        </script>
+      )}
+
+      {/* Analytics: Meta Pixel (Facebook) */}
+      {fbPixelId && (
+        <script>
+          {`
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '${fbPixelId}');
+            fbq('track', 'PageView');
+          `}
+        </script>
+      )}
+      {fbPixelId && (
+        <noscript>
+          {`<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${fbPixelId}&ev=PageView&noscript=1" />`}
+        </noscript>
+      )}
+
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={ogType} />
-      <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={finalDescription} />
+      <meta property="og:title" content={finalOgTitle} />
+      <meta property="og:description" content={finalOgDescription} />
       <meta property="og:image" content={finalOgImage} />
       <meta property="og:site_name" content={siteName} />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={finalDescription} />
+      <meta name="twitter:title" content={finalOgTitle} />
+      <meta name="twitter:description" content={finalOgDescription} />
       <meta name="twitter:image" content={finalOgImage} />
 
       {/* Additional SEO */}

@@ -310,6 +310,7 @@ export default function PartnerPage() {
                             >
                               <option value="Professional/Healthcare" className="bg-brand-black">Professional/Healthcare</option>
                               <option value="Corporate Sponsorship" className="bg-brand-black">Corporate Sponsorship</option>
+                              <option value="Affiliate Partnership" className="bg-brand-black">Affiliate Partnership</option>
                               <option value="Community/NGO" className="bg-brand-black">Community/NGO</option>
                               <option value="Media Partnership" className="bg-brand-black">Media Partnership</option>
                             </select>

@@ -4,14 +4,28 @@ import { Eye, Edit3, Save, Compass, LogOut, Check, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
+import { useAuth } from "../context/AuthContext";
+
 export default function AdminBar() {
   const { isAdmin, isEditMode, setEditMode, saveContentChanges } = useContent();
+  const { user, userData } = useAuth();
   const location = useLocation();
   const [saving, setSaving] = useState(false);
   const [outcome, setOutcome] = useState<string | null>(null);
 
+  const userEmail = user?.email?.toLowerCase();
+  const userDataEmail = userData?.email?.toLowerCase();
+  const adminEmails = ['branafrikana@gmail.com', 'admin@thevaginaroom.com'];
+
+  const isSystemAdmin = 
+    isAdmin || 
+    userData?.role === 'admin' || 
+    userData?.isAdmin === true ||
+    (userDataEmail && adminEmails.includes(userDataEmail)) ||
+    (userEmail && adminEmails.includes(userEmail));
+
   // If the user isn't logged in as admin, or is currently visiting the admin page, do not render this toolbar
-  if (!isAdmin || location.pathname === "/admin") {
+  if (!isSystemAdmin || location.pathname === "/admin") {
     return null;
   }
 

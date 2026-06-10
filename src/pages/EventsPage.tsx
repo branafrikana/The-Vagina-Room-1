@@ -28,7 +28,7 @@ export default function EventsPage() {
       title: "Healing & Wholeness Retreat",
       date: "July 22, 2026",
       time: "Full Day Experience",
-      location: "Private Sanctuary, Delta State",
+      location: "Private Community, Delta State",
       type: "Retreat",
       category: "Retreat",
       price: "Exclusive Invite",
@@ -54,7 +54,7 @@ export default function EventsPage() {
   if (content.eventsListJson) {
     try {
       const parsed = JSON.parse(content.eventsListJson);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         events = parsed;
       }
     } catch (e) {
@@ -124,6 +124,11 @@ export default function EventsPage() {
         <section className="py-32 px-6 min-h-[400px]">
           <div className="max-w-7xl mx-auto">
             <div className="space-y-12">
+              {filteredEvents.length === 0 && (
+                <div className="py-24 text-center border border-dashed border-white/10 rounded-xl bg-white/[0.01]">
+                  <p className="text-[11px] font-black uppercase tracking-widest text-white/30">There are no upcoming scheduled gatherings at this time</p>
+                </div>
+              )}
               <AnimatePresence mode='popLayout'>
                 {filteredEvents.map((event, i) => (
                   <motion.div

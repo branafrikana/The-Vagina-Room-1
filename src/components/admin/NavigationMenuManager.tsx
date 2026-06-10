@@ -190,7 +190,7 @@ export default function NavigationMenuManager() {
   });
 
   const seo = getParsedValue("seoSettingsJson", {
-    metaDescription: "A safe sanctuary and global supportive community providing trusted clinical education, restorative therapy, and guidance.",
+    metaDescription: "A safe haven and global supportive community providing trusted clinical education, restorative therapy, and guidance.",
     metaKeywords: "women's health, reproductive health, vaginal health, Dr. FID, intimate wellness",
     ogImage: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80",
     authorName: "Dr. FID"
@@ -760,6 +760,32 @@ export default function NavigationMenuManager() {
                           />
                         </div>
                         <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              const newSections = [...sidebar.sections];
+                              if (secIdx > 0) {
+                                [newSections[secIdx - 1], newSections[secIdx]] = [newSections[secIdx], newSections[secIdx - 1]];
+                                updateSidebar({ ...sidebar, sections: newSections });
+                              }
+                            }}
+                            disabled={secIdx === 0}
+                            className="text-white/30 hover:text-brand-gold disabled:opacity-20"
+                          >
+                            <ChevronUp size={14} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              const newSections = [...sidebar.sections];
+                              if (secIdx < newSections.length - 1) {
+                                [newSections[secIdx + 1], newSections[secIdx]] = [newSections[secIdx], newSections[secIdx + 1]];
+                                updateSidebar({ ...sidebar, sections: newSections });
+                              }
+                            }}
+                            disabled={secIdx === sidebar.sections.length - 1}
+                            className="text-white/30 hover:text-brand-gold disabled:opacity-20"
+                          >
+                            <ChevronDown size={14} />
+                          </button>
                           <button
                             onClick={() => handleAddSectionItem(secIdx)}
                             className="px-2 py-1 bg-white/5 hover:bg-white/10 text-[9px] font-mono border border-white/10 text-white/70 hover:text-white cursor-pointer"

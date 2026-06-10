@@ -23,7 +23,8 @@ import {
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useContent } from '../context/ContentContext';
-import { fetchWithApiBase } from '../lib/api';
+import { db } from '../lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 const bookingTypes = [
   { id: 'speaking', label: 'Speaking Engagement', icon: <Mic2 size={16} /> },
@@ -108,13 +109,13 @@ export default function DrFidBookingPage() {
     setIsSubmitting(true);
     
     try {
-      const response = await fetchWithApiBase('/api/book-dr-fid', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) throw new Error('Submission failed');
+      const payload = {
+        ...formData,
+        type: 'booking',
+        createdAt: new Date().toISOString()
+      };
+      
+      await addDoc(collection(db, "submissions"), payload);
       
       setIsSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -166,19 +167,24 @@ export default function DrFidBookingPage() {
       <div className="bg-brand-black min-h-screen text-white selection:bg-brand-red selection:text-white">
         <Navigation />
         
-        <main className="pt-32 relative">
-          {/* Blurred Background Image */}
-          <div 
-            className="fixed inset-0 z-[-1] opacity-20 filter blur-3xl pointer-events-none"
-            style={{ 
-              backgroundImage: `url(${content.bookingBgUrl || "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&q=80&w=1600"})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }}
-          />
+        <main className="pt-32 relative overflow-hidden">
+          {/* Elegant Faded Hero Background Image */}
+          <div className="absolute top-0 inset-x-0 h-[650px] overflow-hidden pointer-events-none z-0">
+            <div 
+              className="absolute inset-0 opacity-25 transition-opacity duration-1000"
+              style={{ 
+                backgroundImage: `url(${content.bookingBgUrl || "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=1600"})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
+            />
+            {/* Cosmic Obsidian Gradient Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-b from-brand-black/20 via-brand-black/70 to-brand-black" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(5,5,5,0.95)_100%)]" />
+          </div>
 
           {/* Hero Header */}
-          <section className="py-24 px-6 relative overflow-hidden text-center">
+          <section className="py-24 px-6 relative overflow-hidden text-center z-10">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.05)_0%,transparent_70%)] pointer-events-none" />
             <motion.div 
               initial={{ opacity: 0, y: 30 }}

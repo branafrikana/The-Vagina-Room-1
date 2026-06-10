@@ -10,12 +10,11 @@ const apiClient = axios.create({
 });
 
 export const uploadImage = (file: File) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  return apiClient.post("/api/upload", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+  return new Promise<{ data: { url: string } }>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve({ data: { url: reader.result as string } });
+    reader.onerror = error => reject(error);
   });
 };
 

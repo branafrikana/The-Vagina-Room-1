@@ -14,7 +14,7 @@ import CommunitySection from '../components/CommunitySection';
 import TrustSafety from '../components/TrustSafety';
 import Testimonials from '../components/Testimonials';
 import FAQ from '../components/FAQ';
-import Promise from '../components/Promise';
+import TheRoomPromise from '../components/TheRoomPromise';
 import SocialGrid from '../components/SocialGrid';
 import FeaturedProducts from '../components/FeaturedProducts';
 import Footer from '../components/Footer';
@@ -40,8 +40,8 @@ export default function HomePage() {
         return <IdentityGrid key="identity_grid" />;
       case 'partners':
         return <PartnersSlider key="partners" />;
-      case 'about_sanctuary':
-        return <About key="about_sanctuary" />;
+      case 'about_section':
+        return <About key="about_section" />;
       case 'why_we_exist':
         return <WhyWeExist key="why_we_exist" />;
       case 'focus_areas':
@@ -59,7 +59,7 @@ export default function HomePage() {
       case 'testimonials':
         return <Testimonials key="testimonials" />;
       case 'promise':
-        return <Promise key="promise" />;
+        return <TheRoomPromise key="promise" />;
       case 'faq':
         return <FAQ key="faq" />;
       case 'products':
@@ -76,7 +76,7 @@ export default function HomePage() {
     "about_the_room",
     "identity_grid",
     "partners",
-    "about_sanctuary",
+    "about_section",
     "why_we_exist",
     "focus_areas",
     "who_we_serve",

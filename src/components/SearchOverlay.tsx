@@ -12,7 +12,7 @@ interface SearchOverlayProps {
 
 const PAGES = [
   { title: 'Home', path: '/', description: 'Welcome to The Vagina Room. Where Women Heal, Learn & Thrive' },
-  { title: 'About Us', path: '/about', description: 'Our Mission, Vision & Core Values. A Sanctuary for Every Woman\'s Health Journey' },
+  { title: 'About Us', path: '/about', description: 'Our Mission, Vision & Core Values. A Community for Every Woman\'s Health Journey' },
   { title: 'Focus Areas', path: '/focus-areas', description: 'Vaginal & Reproductive Wellness, Sexual Wellness & Relationship Support, Holistic Healing & Empowerment' },
   { title: 'Meet Dr. FID', path: '/dr-fid', description: 'Holistic Wellness Expert, women’s wellness advocate and visionary entrepreneur' },
   { title: 'Events', path: '/events', description: 'Upcoming events, masterclasses, and workshops designed for women\'s wellness' },

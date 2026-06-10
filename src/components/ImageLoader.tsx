@@ -6,9 +6,10 @@ export function ImageLoader({
   alt, 
   className = '', 
   style, 
+  priority = false,
   ...props 
-}: React.ComponentPropsWithoutRef<'img'> & { fallbackSrc?: string }) {
-  const [isInView, setIsInView] = useState(false);
+}: React.ComponentPropsWithoutRef<'img'> & { fallbackSrc?: string; priority?: boolean }) {
+  const [isInView, setIsInView] = useState(priority);
   const [highResLoaded, setHighResLoaded] = useState(false);
   const [error, setError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -17,6 +18,11 @@ export function ImageLoader({
   const defaultFallback = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
   useEffect(() => {
+    if (priority) {
+      setIsInView(true);
+      return;
+    }
+
     if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
       setIsInView(true);
       return;
@@ -44,7 +50,7 @@ export function ImageLoader({
         observer.unobserve(currentRef);
       }
     };
-  }, []);
+  }, [priority]);
 
   const getLowResSrc = (url: string | undefined): string | undefined => {
     if (!url) return undefined;
@@ -82,11 +88,13 @@ export function ImageLoader({
       )}
 
       {/* 2. Low Resolution Blurry Placeholder (loaded instantly) */}
-      {lowResSrc && !highResLoaded && (
+      {lowResSrc && (
         <img
           src={lowResSrc}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover filter blur-[20px] scale-110 transition-opacity duration-1000 ease-out"
+          className={`absolute inset-0 w-full h-full object-cover filter blur-[20px] scale-110 transition-opacity duration-1000 ease-out pointer-events-none ${
+            highResLoaded ? 'opacity-0' : 'opacity-100'
+          }`}
           referrerPolicy="no-referrer"
         />
       )}

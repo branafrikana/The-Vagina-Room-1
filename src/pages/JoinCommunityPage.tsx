@@ -1,10 +1,11 @@
 import { motion } from 'motion/react';
 import SEO from '../components/SEO';
-import { ShieldCheck, BookOpen, Users, Heart, ArrowRight, CheckCircle2, Star } from 'lucide-react';
+import { ShieldCheck, BookOpen, Users, Heart, ArrowRight, CheckCircle2, Star, Check } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useContent } from '../context/ContentContext';
 import EditableText from '../components/EditableText';
+import { Link } from 'react-router-dom';
 
 export default function JoinCommunityPage() {
   const { content } = useContent();
@@ -36,7 +37,7 @@ export default function JoinCommunityPage() {
   return (
     <>
       <SEO 
-        title={content.joinCommunityTitle || "Join The Sanctuary"} 
+        title={content.joinCommunityTitle || "Join The Community"} 
         description={content.joinCommunitySubheading}
       />
       
@@ -78,17 +79,12 @@ export default function JoinCommunityPage() {
                   className="flex flex-col items-center gap-6"
                 >
                   <a 
-                    href={content.joinCommunityCtaUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="#pricing"
                     className="bg-brand-gold text-brand-black px-12 py-5 rounded-none text-xs font-black tracking-[0.4em] uppercase hover:bg-white transition-all duration-500 shadow-2xl flex items-center group"
                   >
                     <EditableText field="joinCommunityCtaText" />
                     <ArrowRight className="ml-4 group-hover:translate-x-1.5 transition-transform" size={14} />
                   </a>
-                  <p className="text-brand-gold/60 text-[11px] font-black uppercase tracking-widest">
-                    <EditableText field="joinCommunityRegistrationCost" />
-                  </p>
                 </motion.div>
               </motion.div>
             </div>
@@ -115,6 +111,45 @@ export default function JoinCommunityPage() {
                   </motion.div>
                 ))}
               </EditableText>
+            </div>
+          </section>
+
+          {/* Pricing Section */}
+          <section id="pricing" className="py-32 px-6 bg-white/[0.01]">
+            <div className="max-w-5xl mx-auto">
+              <h2 className="text-3xl font-black uppercase tracking-widest text-center text-white mb-16">Membership Plans</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="p-8 bg-black border border-white/10 flex flex-col">
+                  <h3 className="text-xl font-black uppercase text-brand-gold mb-2">Gold Plan</h3>
+                  <p className="text-[10px] text-white/40 uppercase font-mono tracking-wider mb-4">Three Months Subscription (Quarterly)</p>
+                  <div className="mb-4">
+                    <p className="text-4xl font-black text-white">₦{Number(content.membershipPriceGoldNGN || "25000").toLocaleString()}</p>
+                    <p className="text-2xl font-black text-white/40">${Number(content.membershipPriceGoldUSD || "45").toLocaleString()}</p>
+                  </div>
+                  <ul className="text-sm text-white/60 space-y-4 mb-8 flex-grow">
+                    <li className="flex items-center gap-2"><Check size={16} className="text-brand-gold"/> 3 months access</li>
+                    <li className="flex items-center gap-2"><Check size={16} className="text-brand-gold"/> Live workshop access</li>
+                    <li className="flex items-center gap-2"><Check size={16} className="text-brand-gold"/> Community lounge</li>
+                  </ul>
+                  <Link to="/register?plan=gold" className="w-full bg-white/10 text-white text-center py-4 font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all">Select Gold Plan</Link>
+                </div>
+                <div className="p-8 bg-brand-gold text-brand-black flex flex-col relative">
+                  <div className="absolute top-4 right-4 bg-black text-brand-gold text-[10px] font-black px-2 py-1 uppercase">Best Value</div>
+                  <h3 className="text-xl font-black uppercase mb-2">Diamond Plan</h3>
+                  <p className="text-[10px] opacity-60 uppercase font-mono tracking-wider mb-4">One Year Subscription (Annual)</p>
+                  <div className="mb-4">
+                    <p className="text-4xl font-black">₦{Number(content.membershipPriceDiamondNGN || "85000").toLocaleString()}</p>
+                    <p className="text-2xl font-black opacity-40">${Number(content.membershipPriceDiamondUSD || "150").toLocaleString()}</p>
+                  </div>
+                  <ul className="text-sm opacity-80 space-y-4 mb-8 flex-grow">
+                    <li className="flex items-center gap-2 font-bold"><Check size={16} /> 12 months access</li>
+                    <li className="flex items-center gap-2 font-bold"><Check size={16} /> Live workshop access</li>
+                    <li className="flex items-center gap-2 font-bold"><Check size={16} /> Priority support</li>
+                    <li className="flex items-center gap-2 font-bold"><Check size={16} /> Community lounge</li>
+                  </ul>
+                  <Link to="/register?plan=diamond" className="w-full bg-black text-brand-gold text-center py-4 font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all">Select Diamond Plan</Link>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -167,16 +202,14 @@ export default function JoinCommunityPage() {
                   </div>
 
                   <a 
-                    href={content.joinCommunityCtaUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full bg-brand-black border border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-black transition-all duration-500 py-6 text-xs font-black tracking-[0.5em] uppercase relative z-10"
+                    href="#pricing"
+                    className="w-full bg-brand-black border border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-black transition-all duration-500 py-6 text-xs font-black tracking-[0.5em] uppercase relative z-10 text-center"
                   >
                     <EditableText field="joinCommunityUnlockBtnText" />
                   </a>
                   
                   <p className="text-[10px] text-white/20 font-mono tracking-widest uppercase italic">
-                    <EditableText field="joinCommunitySecureLabel" />
+                    {/* Secure Registration */}
                   </p>
                 </div>
               </motion.div>

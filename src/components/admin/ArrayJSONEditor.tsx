@@ -15,7 +15,15 @@ interface ArrayJSONEditorProps {
 
 export default function ArrayJSONEditor({ label, fieldKey, value, onChange, defaultStructure, itemType, fallbackData, categoriesKey }: ArrayJSONEditorProps) {
   const { content, updateContentField, uploadImage } = useContent();
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>(() => {
+    if (!value) return fallbackData || [];
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : (fallbackData || []);
+    } catch {
+      return fallbackData || [];
+    }
+  });
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   
   // Master categories derived from content context
@@ -49,35 +57,48 @@ export default function ArrayJSONEditor({ label, fieldKey, value, onChange, defa
   const [uploadStatus, setUploadStatus] = useState<{ [id: string]: 'idle' | 'uploading' | 'success' | 'error' }>({});
   const [uploadError, setUploadError] = useState<{ [id: string]: string }>({});
 
-  useEffect(() => {
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     if (!value) {
       setItems(fallbackData || []);
-      return;
-    }
-    try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        setItems(parsed);
-      } else if (fallbackData) {
-        setItems(fallbackData);
-      } else {
-        setItems([]);
+    } else {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          setItems(parsed);
+        } else if (fallbackData) {
+          setItems(fallbackData);
+        } else {
+          setItems([]);
+        }
+      } catch {
+        setItems(fallbackData || []);
       }
-    } catch {
-      setItems(fallbackData || []);
     }
-  }, [value, fallbackData]);
+  }
 
   const save = (newItems: any[]) => {
     onChange(fieldKey, JSON.stringify(newItems, null, 2));
   };
 
   const addItem = () => {
-    const newItem = typeof defaultStructure === 'function' ? defaultStructure() : { ...defaultStructure };
+    const newItem = typeof defaultStructure === 'function' 
+      ? defaultStructure() 
+      : typeof defaultStructure === 'string' 
+        ? "" 
+        : { ...defaultStructure };
     const newItems = [...items, newItem];
     setItems(newItems);
     save(newItems);
     setExpandedIndex(newItems.length - 1);
+  };
+
+  const updatePrimitiveItem = (index: number, val: string) => {
+    const newItems = [...items];
+    newItems[index] = val;
+    setItems(newItems);
+    save(newItems);
   };
 
   const removeItem = (index: number) => {
@@ -388,7 +409,7 @@ export default function ArrayJSONEditor({ label, fieldKey, value, onChange, defa
             >
               <div className="flex items-center gap-4">
                 <GripVertical size={16} className="text-white/20" />
-                <span className="text-sm font-bold truncate max-w-xs">{item.title || item.question || item.name || `${itemType} ${index + 1}`}</span>
+                <span className="text-sm font-bold truncate max-w-xs">{typeof item === 'string' ? item : (item.title || item.question || item.name || `${itemType} ${index + 1}`)}</span>
               </div>
               <div className="flex items-center gap-4">
                 <button 
@@ -404,7 +425,19 @@ export default function ArrayJSONEditor({ label, fieldKey, value, onChange, defa
 
             {expandedIndex === index && (
               <div className="p-6 border-t border-white/10 space-y-6 bg-white/[0.02]">
-                {Object.keys(defaultStructure).filter(k => k !== 'icon').map(key => renderField(item, key, index))}
+                {typeof defaultStructure === 'string' ? (
+                  <div className="space-y-4 font-sans">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-white/50 block">{itemType} Value</label>
+                    <input
+                      type="text"
+                      value={typeof item === 'string' ? item : ''}
+                      onChange={(e) => updatePrimitiveItem(index, e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs"
+                    />
+                  </div>
+                ) : (
+                  Object.keys(defaultStructure).filter(k => k !== 'icon').map(key => renderField(item, key, index))
+                )}
               </div>
             )}
           </div>

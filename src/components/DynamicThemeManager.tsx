@@ -17,7 +17,7 @@ export default function DynamicThemeManager() {
         root.style.setProperty('--color-brand-red', branding.primaryGradStart);
       } else if (branding.primaryColor) {
         root.style.setProperty('--color-brand-red', branding.primaryColor);
-        root.style.setProperty('--brand-primary-gradient', branding.primaryColor); // Fallback to flat color
+        root.style.setProperty('--brand-primary-gradient', `linear-gradient(0deg, ${branding.primaryColor} 0%, ${branding.primaryColor} 100%)`); // Fallback to flat color gradient
       }
 
       if (branding.secondaryMode === 'gradient' && branding.secondaryGradStart && branding.secondaryGradEnd) {
@@ -26,7 +26,7 @@ export default function DynamicThemeManager() {
         root.style.setProperty('--color-brand-gold', branding.secondaryGradStart);
       } else if (branding.secondaryColor) {
         root.style.setProperty('--color-brand-gold', branding.secondaryColor);
-        root.style.setProperty('--brand-secondary-gradient', branding.secondaryColor);
+        root.style.setProperty('--brand-secondary-gradient', `linear-gradient(0deg, ${branding.secondaryColor} 0%, ${branding.secondaryColor} 100%)`);
       }
       if (branding.fontFamily) {
         root.style.setProperty('--font-sans', `"${branding.fontFamily}", ui-sans-serif, system-ui, sans-serif`);

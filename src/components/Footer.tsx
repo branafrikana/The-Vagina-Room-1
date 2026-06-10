@@ -117,30 +117,75 @@ export default function Footer() {
             <h4 className="font-black mb-10 uppercase text-[10px] tracking-[0.5em] text-brand-red text-center">Quick Links</h4>
             
             {(() => {
-              const links = (JSON.parse(content.footerMenuJson || '[]') as { name: string; href: string }[]);
+              const rawLinks = (JSON.parse(content.footerMenuJson || '[]') as { name: string; href: string }[]);
+              
+              let disabledPageSet: Record<string, boolean> = {};
+              if (content?.disabledPagesJson) {
+                try {
+                  disabledPageSet = JSON.parse(content.disabledPagesJson);
+                } catch (e) {}
+              }
+
+              const links = rawLinks.filter(link => {
+                const href = link.href;
+                if (!href || href === "#") return true;
+                return !disabledPageSet[href];
+              });
+
               const midpoint = Math.ceil(links.length / 2);
               const firstHalf = links.slice(0, midpoint);
               const secondHalf = links.slice(midpoint);
 
+              function formatHref(url: string) {
+                if (!url) return "/";
+                if (url.startsWith("/") || url.startsWith("#") || url.startsWith("mailto:") || url.startsWith("tel:")) {
+                  return url;
+                }
+                if (!/^https?:\/\//i.test(url) && !url.startsWith("//")) {
+                  return `https://${url}`;
+                }
+                return url;
+              }
+
               return (
                 <div className="flex flex-col gap-6">
-                  <ul className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-[10px] font-black uppercase tracking-widest text-white/40">
-                    {firstHalf.map((link, i) => (
-                      <li key={i}>
-                        <Link to={link.href} className="hover:text-brand-gold transition-colors italic">
-                          {link.name}
-                        </Link>
-                      </li>
-                    ))}
+                  <ul className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-[10px] font-black uppercase tracking-widest text-white/60">
+                    {firstHalf.map((link, i) => {
+                      const formatted = formatHref(link.href);
+                      const isExt = formatted.startsWith("http") || formatted.startsWith("//");
+                      return (
+                        <li key={i}>
+                          {isExt ? (
+                            <a href={formatted} target="_blank" rel="noopener noreferrer" className="hover:text-brand-gold transition-colors italic">
+                              {link.name}
+                            </a>
+                          ) : (
+                            <Link to={formatted} className="hover:text-brand-gold transition-colors italic">
+                              {link.name}
+                            </Link>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
-                  <ul className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-[10px] font-black uppercase tracking-widest text-white/40">
-                    {secondHalf.map((link, i) => (
-                      <li key={i}>
-                        <Link to={link.href} className="hover:text-brand-gold transition-colors italic">
-                          {link.name}
-                        </Link>
-                      </li>
-                    ))}
+                  <ul className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-[10px] font-black uppercase tracking-widest text-white/60">
+                    {secondHalf.map((link, i) => {
+                      const formatted = formatHref(link.href);
+                      const isExt = formatted.startsWith("http") || formatted.startsWith("//");
+                      return (
+                        <li key={i}>
+                          {isExt ? (
+                            <a href={formatted} target="_blank" rel="noopener noreferrer" className="hover:text-brand-gold transition-colors italic">
+                              {link.name}
+                            </a>
+                          ) : (
+                            <Link to={formatted} className="hover:text-brand-gold transition-colors italic">
+                              {link.name}
+                            </Link>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               );
@@ -170,7 +215,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-24 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-[10px] font-black tracking-[0.5em] uppercase text-white/20 text-center md:text-left gap-8">
+        <div className="mt-24 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-[10px] font-black tracking-[0.5em] uppercase text-white/40 text-center md:text-left gap-8">
           <div className="flex flex-col md:flex-row items-center gap-6">
             {branding.footerLogo2Type === 'image' && branding.footerLogo2Url && (
               <img 

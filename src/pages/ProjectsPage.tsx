@@ -44,7 +44,7 @@ export default function ProjectsPage() {
       impact: "Target: 1000 Women"
     },
     {
-      title: "The Digital Sanctuary",
+      title: "The Digital Community",
       category: "Digital",
       status: "In Development",
       location: "Global / Online",
@@ -59,7 +59,7 @@ export default function ProjectsPage() {
   if (content.projectsListJson) {
     try {
       const parsed = JSON.parse(content.projectsListJson);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         projects = parsed;
       }
     } catch (e) {
@@ -129,6 +129,11 @@ export default function ProjectsPage() {
         <section className="py-32 px-6 min-h-[400px]">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+              {filteredProjects.length === 0 && (
+                <div className="col-span-1 md:col-span-2 py-24 text-center border border-dashed border-white/10 bg-white/[0.01]">
+                  <p className="text-[11px] font-black uppercase tracking-widest text-white/30">There are no active projects listed at this time</p>
+                </div>
+              )}
               <AnimatePresence mode='popLayout'>
                 {filteredProjects.map((project, i) => (
                   <motion.div

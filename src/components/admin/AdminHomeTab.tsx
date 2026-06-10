@@ -23,7 +23,7 @@ import {
   Heart,
   GripVertical
 } from 'lucide-react';
-import { ImageUploader } from '../../pages/AdminPage';
+import { ImageUploader } from './ImageUploader';
 import ArrayJSONEditor from './ArrayJSONEditor';
 import { FOCUS_AREAS, CORE_VALUES, DIFFERENTIATORS } from '../../constants';
 
@@ -359,23 +359,23 @@ export default function AdminHomeTab() {
             </div>
 
             {/* STRATEGIC ABOUT */}
-            <div className="bg-white/[0.01] border border-white/5 p-8 rounded-lg space-y-8">
-               <SectionHeader icon={Info} title="6. Sanctuary DNA: Purpose & Vision" id="about_sanctuary" />
+             <div className="bg-white/[0.01] border border-white/5 p-8 rounded-lg space-y-8">
+               <SectionHeader icon={Info} title="6. Community DNA: Purpose & Vision" id="about_section" />
                
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-6">
                     <InputGroup label="Mission Directive Headline">
                       <input 
                         type="text" 
-                        value={content.aboutUsMissionTitle || ""}
-                        onChange={(e) => updateContentField("aboutUsMissionTitle", e.target.value)}
+                        value={content.homeAboutUsMissionTitle || ""}
+                        onChange={(e) => updateContentField("homeAboutUsMissionTitle", e.target.value)}
                         className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs focus:border-brand-gold outline-none" 
                       />
                     </InputGroup>
                     <InputGroup label="Mission Statement Narrative">
                       <textarea 
-                        value={content.aboutUsMissionDesc || ""}
-                        onChange={(e) => updateContentField("aboutUsMissionDesc", e.target.value)}
+                        value={content.homeAboutUsMissionDesc || ""}
+                        onChange={(e) => updateContentField("homeAboutUsMissionDesc", e.target.value)}
                         className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs h-32 leading-relaxed" 
                       />
                     </InputGroup>
@@ -384,15 +384,15 @@ export default function AdminHomeTab() {
                     <InputGroup label="Visionary Blueprint Headline">
                       <input 
                         type="text" 
-                        value={content.aboutUsVisionTitle || ""}
-                        onChange={(e) => updateContentField("aboutUsVisionTitle", e.target.value)}
+                        value={content.homeAboutUsVisionTitle || ""}
+                        onChange={(e) => updateContentField("homeAboutUsVisionTitle", e.target.value)}
                         className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs focus:border-brand-gold outline-none" 
                       />
                     </InputGroup>
                     <InputGroup label="Vision Statement Narrative">
                       <textarea 
-                        value={content.aboutUsVisionDesc || ""}
-                        onChange={(e) => updateContentField("aboutUsVisionDesc", e.target.value)}
+                        value={content.homeAboutUsVisionDesc || ""}
+                        onChange={(e) => updateContentField("homeAboutUsVisionDesc", e.target.value)}
                         className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs h-32 leading-relaxed" 
                       />
                     </InputGroup>
@@ -664,7 +664,7 @@ export default function AdminHomeTab() {
                 </InputGroup>
               </div>
 
-              <InputGroup label="Sanctuary Commitment (Description)">
+              <InputGroup label="Community Commitment (Description)">
                 <textarea 
                   value={content.tsDesc || ""}
                   onChange={(e) => updateContentField("tsDesc", e.target.value)}
@@ -948,7 +948,7 @@ export default function AdminHomeTab() {
                     value={content.socialSectionTitle || ""}
                     onChange={(e) => updateContentField("socialSectionTitle", e.target.value)}
                     className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs focus:border-brand-gold outline-none" 
-                    placeholder="e.g. JOIN THE SANCTUARY"
+                    placeholder="e.g. JOIN THE COMMUNITY"
                   />
                 </InputGroup>
                 <InputGroup label="Stay In Touch / Subtitle Text">

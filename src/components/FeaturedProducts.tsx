@@ -82,7 +82,7 @@ export default function FeaturedProducts() {
             </a>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="flex overflow-x-auto gap-6 pb-6 scrollbar-hide snap-x">
           {products.map((p, idx) => {
             const isAffiliateMode = p.orderMethod === 'affiliate' || (!!p.externalLink);
             const isWhatsAppMode = p.orderMethod === 'whatsapp';
@@ -93,12 +93,12 @@ export default function FeaturedProducts() {
 
             return (
               <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
                 key={p.id}
-                className="group flex flex-col bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all duration-300 relative overflow-hidden"
+                className="group flex flex-col flex-shrink-0 w-[280px] md:w-[350px] bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all duration-300 relative overflow-hidden snap-start"
               >
                 <div className="h-60 w-full overflow-hidden bg-white/5">
                   <img 
@@ -130,28 +130,28 @@ export default function FeaturedProducts() {
                         href={activeOrderLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 bg-white/5 hover:bg-brand-gold hover:text-brand-black transition-colors"
+                        className="px-4 py-2 bg-brand-gold text-brand-black text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors"
                         title="View marketplace"
                       >
-                        <ExternalLink size={14} />
+                        PURCHASE NOW
                       </a>
                     ) : isWhatsAppMode ? (
                       <a
                         href={generateDynamicWhatsAppLink(p)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-colors"
+                        className="px-4 py-2 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-colors"
                         title="Order via WhatsApp"
                       >
-                        <MessageCircle size={14} />
+                        PURCHASE NOW
                       </a>
                     ) : (
                       <button
                         onClick={() => addToCart({ id: p.id, title: p.title, price: p.price, currency: p.currency, imageUrl: p.imageUrl })}
-                        className="p-2 bg-white/5 hover:bg-brand-gold hover:text-brand-black transition-colors"
+                        className="px-4 py-2 bg-brand-gold text-brand-black text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors"
                         title="Add to Cart"
                       >
-                        <ShoppingCart size={14} />
+                        BUY NOW
                       </button>
                     )}
                   </div>

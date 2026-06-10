@@ -9,7 +9,7 @@ export default function PwaPopup() {
   const brandingSettings = JSON.parse(content.brandingSettingsJson || '{}');
   const isEnabledInBackend = pwaSettings.pwaEnabled !== false;
   
-  const appLogoUrl = brandingSettings.headerLogoUrl || "/icon-512.png";
+  const appLogoUrl = pwaSettings.iconUrl || brandingSettings.headerLogoUrl || "/icon-512.png";
 
   const [isVisible, setIsVisible] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);

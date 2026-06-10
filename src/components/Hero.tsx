@@ -1,6 +1,5 @@
 import { motion } from 'motion/react';
 import { Play, ArrowRight, Sparkles } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { useContent } from '../context/ContentContext';
 import EditableText from './EditableText';
 import { ImageLoader } from './ImageLoader';
@@ -112,8 +111,7 @@ export default function Hero() {
                     <p key={i} className="text-sm font-black tracking-[0.4em] uppercase text-white last:mb-2 leading-relaxed">{line}</p>
                   ))}
                 </EditableText>
-                
-                <div className="flex flex-col sm:flex-row gap-6">
+                                <div className="flex flex-col sm:flex-row gap-6">
                    <a 
                      href={content.kyvYoutubeUrl || "https://www.youtube.com"}
                      target="_blank"
@@ -123,13 +121,6 @@ export default function Hero() {
                      <EditableText field="kyvBtnText" />
                      <ArrowRight className="ml-3 group-hover:translate-x-1.5 transition-transform" size={16} />
                   </a>
-                  <Link 
-                     to="/join-community"
-                     className="bg-transparent border border-brand-gold text-brand-gold px-10 py-5 rounded-none text-xs font-black tracking-widest uppercase hover:bg-brand-gold hover:text-brand-black transition-all duration-300 shadow-2xl flex items-center justify-center group"
-                   >
-                     JOIN THE SANCTUARY
-                     <ArrowRight className="ml-3 group-hover:translate-x-1.5 transition-transform" size={16} />
-                  </Link>
                 </div>
               </motion.div>
 
