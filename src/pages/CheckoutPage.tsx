@@ -89,7 +89,12 @@ export default function CheckoutPage() {
   const digitalItems = cartItems.filter(item => item.isDigital && item.downloadUrl);
   const hasDigital = digitalItems.length > 0;
   
-  const paystackKey = generalConfig.paystackPublicKeyStore || "";
+  // Enhanced Paystack key lookup to support multiple possible schema locations in ContentContext
+  const paystackKey = 
+    paymentConfig.gateways?.paystack?.store?.pub || 
+    paymentConfig.storePaystackPublicKey || 
+    generalConfig.storePaystackPublicKey || 
+    generalConfig.paystackPublicKeyStore || "";
 
   // Handle setting-based redirection for digital products
   React.useEffect(() => {

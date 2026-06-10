@@ -38,7 +38,7 @@ export default function RegisterPage() {
     if (paymentConfig && paymentConfig.manual?.membership) {
       paymentConfig.manual.membership.forEach((m: any) => methods.push(m.name));
     }
-    // If no methods are enabled, fallback to Card for Paystack (if key exists) or Bank Transfer
+    // If no methods are enabled, fallback to Bank Transfer
     if (methods.length === 0) {
       methods.push("Bank Transfer");
     }
@@ -46,7 +46,12 @@ export default function RegisterPage() {
   };
   const paymentMethods = getEnabledMethods();
   
-  const paystackKey = paymentConfig.gateways?.paystack?.membership?.pub || "";
+  // Enhanced Paystack key lookup to support multiple possible schema locations in ContentContext
+  const paystackKey = 
+    paymentConfig.gateways?.paystack?.membership?.pub || 
+    paymentConfig.membershipPaystackPublicKey || 
+    generalSettings.membershipPaystackPublicKey || 
+    generalSettings.paystackPublicKeyMembership || "";
   
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -58,7 +63,7 @@ export default function RegisterPage() {
   const [continent, setContinent] = useState('');
   const [country, setCountry] = useState('');
   const [plan, setPlan] = useState('gold');
-  const [paymentGateway, setPaymentGateway] = useState('card');
+  const [paymentGateway, setPaymentGateway] = useState(paymentMethods[0] || 'Bank Transfer');
   const [stateProvince, setStateProvince] = useState('');
   const [city, setCity] = useState('');
   const [isCompetitor, setIsCompetitor] = useState(false);
@@ -73,6 +78,14 @@ export default function RegisterPage() {
         setPlan('diamond');
     }
   }, [searchParams]);
+
+  // Sync payment gateway if it's currently invalid or not set correctly
+  useEffect(() => {
+    if ((paymentGateway === 'card' || !paymentGateway) && paymentMethods.length > 0) {
+      setPaymentGateway(paymentMethods[0]);
+    }
+  }, [paymentMethods]);
+
   const [refCode, setRefCode] = useState<string | null>(null);
 
   useEffect(() => {
@@ -92,7 +105,13 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
     
-    if (paymentGateway === 'card' && !paystackKey) {
+    const isPaystack = 
+      paymentGateway === 'card' || 
+      paymentGateway === 'Paystack' || 
+      paymentGateway.toLowerCase().includes('card') || 
+      paymentGateway.toLowerCase().includes('paystack');
+    
+    if (isPaystack && !paystackKey) {
       setError("Payment gateway is currently unavailable. Please use Bank Transfer or contact support.");
       return;
     }
@@ -144,8 +163,8 @@ export default function RegisterPage() {
           membershipType: plan,
           membershipExpiration: expiration.toISOString(),
           role: 'member',
-          isMember: paymentGateway === 'card',
-          paymentStatus: paymentGateway === 'card' ? 'approved' : 'pending',
+          isMember: isPaystack,
+          paymentStatus: isPaystack ? 'approved' : 'pending',
           referredBy: refCode || null,
           referralCode: userCredential.user.uid.substring(0, 8).toUpperCase(),
           totalReferrals: 0,
@@ -184,7 +203,7 @@ export default function RegisterPage() {
         // (Removed /api/send-welcome-email sending as no backend is configured)
         
         localStorage.removeItem('tvr_ref');
-        if (paymentGateway === 'card') {
+        if (isPaystack) {
           navigate('/welcome');
         } else {
           navigate('/payment-review');
@@ -195,7 +214,7 @@ export default function RegisterPage() {
       }
     };
 
-    if (paymentGateway === 'card') {
+    if (isPaystack) {
       const config = {
         reference: (new Date()).getTime().toString(),
         email: email,
