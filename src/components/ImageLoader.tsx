@@ -74,6 +74,7 @@ export function ImageLoader({
   };
 
   const activeSrc = error ? (fallbackSrc || defaultFallback) : src;
+  if (!activeSrc) return null;
   const lowResSrc = getLowResSrc(activeSrc);
 
   return (
@@ -92,7 +93,7 @@ export function ImageLoader({
         <img
           src={lowResSrc}
           alt=""
-          className={`absolute inset-0 w-full h-full object-cover filter blur-[20px] scale-110 transition-opacity duration-1000 ease-out pointer-events-none ${
+          className={`absolute inset-0 w-full h-full object-cover filter blur-[5px] scale-105 transition-opacity duration-300 ease-out pointer-events-none ${
             highResLoaded ? 'opacity-0' : 'opacity-100'
           }`}
           referrerPolicy="no-referrer"
@@ -107,10 +108,10 @@ export function ImageLoader({
           alt={alt}
           onLoad={() => setHighResLoaded(true)}
           onError={() => setError(true)}
-          className={`w-full h-full transition-all duration-1000 ease-out ${
+          className={`w-full h-full transition-all duration-300 ease-out ${
             highResLoaded 
               ? 'opacity-100 scale-100' 
-              : 'opacity-0 scale-105'
+              : 'opacity-0 scale-102'
           }`}
         />
       )}

@@ -1109,6 +1109,61 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
                )}
              </div>
 
+             {/* Telegram Landing Page Branding */}
+             <div className="bg-white/5 p-4 border border-white/5 space-y-4">
+               <div className="flex justify-between items-center">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Telegram Page Header Logo</p>
+                 <div className="flex gap-2 p-1 bg-black/40 rounded">
+                   {['text', 'image'].map((m) => (
+                     <button
+                       key={m}
+                       onClick={() => updateContentField("telegramHeaderLogoType", m)}
+                       className={`px-3 py-1 text-[9px] uppercase font-bold transition-all ${
+                         (content.telegramHeaderLogoType || 'text') === m 
+                           ? "bg-brand-gold text-brand-black" 
+                           : "text-white/40 hover:text-white"
+                       }`}
+                     >
+                       {m}
+                     </button>
+                   ))}
+                 </div>
+               </div>
+               
+               {(content.telegramHeaderLogoType || 'text') === 'image' ? (
+                 <div className="space-y-4">
+                   <ImageUploader 
+                      fieldKey="telegramHeaderLogoUrl" 
+                      label="Telegram Page Header Logo" 
+                      currentValue={content.telegramHeaderLogoUrl} 
+                      onUploadSuccess={(url: string) => updateContentField("telegramHeaderLogoUrl", url)}
+                   />
+                   <div className="space-y-2 border-t border-white/5 pt-2">
+                     <div className="flex justify-between items-center">
+                       <label className="text-[9px] font-bold uppercase tracking-wider text-white/40">Logo Height</label>
+                       <span className="text-white/60 font-mono text-[10px]">{content.telegramHeaderLogoHeight || 44}px</span>
+                     </div>
+                     <input 
+                       type="range" min="16" max="150" step="1"
+                       value={content.telegramHeaderLogoHeight || 44}
+                       onChange={(e) => updateContentField("telegramHeaderLogoHeight", parseInt(e.target.value))}
+                       className="w-full accent-brand-gold h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                     />
+                   </div>
+                 </div>
+               ) : (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-white/30 block">Text Logo</label>
+                    <input 
+                       type="text" 
+                       value={content.telegramHeaderTextLogo || ""}
+                       onChange={(e) => updateContentField("telegramHeaderTextLogo", e.target.value)}
+                       className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                    />
+                  </div>
+               )}
+             </div>
+
              {/* Favicon */}
              <div className="bg-white/5 p-4 border border-white/5 space-y-4">
                <div>

@@ -2011,15 +2011,67 @@ export function AdminTelegramCommunityTab() {
             {activeSection === "hero" && (
               <div className="p-4 space-y-4 border-t border-white/5 bg-black/20 animate-fade-in">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="border border-white/5 bg-black/10 p-4">
-                     <ImageUploader 
-                        fieldKey="headerLogoUrl" 
-                        label="Upload Telegram Landing Page Logo" 
-                        currentValue={tData.logoUrl || ""}
-                        onUploadSuccess={(url) => handleFieldChange("logoUrl", url)}
-                     />
+                  <div className="border border-white/5 bg-black/10 p-4 space-y-4">
+                     <div className="flex justify-between items-center">
+                        <label className="text-[9px] font-mono uppercase text-white/40 font-bold">Logo Configuration</label>
+                        <div className="flex gap-4">
+                          <label className="flex items-center gap-1.5 cursor-pointer">
+                            <input 
+                              type="radio" 
+                              checked={tData.logoType === 'image'}
+                              onChange={() => handleFieldChange("logoType", "image")}
+                              className="accent-brand-gold w-3 h-3"
+                            />
+                            <span className="text-[10px] text-white/60">Image</span>
+                          </label>
+                          <label className="flex items-center gap-1.5 cursor-pointer">
+                            <input 
+                              type="radio" 
+                              checked={tData.logoType !== 'image'}
+                              onChange={() => handleFieldChange("logoType", "text")}
+                              className="accent-brand-gold w-3 h-3"
+                            />
+                            <span className="text-[10px] text-white/60">Text</span>
+                          </label>
+                        </div>
+                     </div>
+
+                     {tData.logoType === 'image' ? (
+                       <div className="space-y-4 animate-fade-in">
+                        <ImageUploader 
+                            fieldKey="telegramHeroLogoUrl" 
+                            label="Upload Hero Logo Asset" 
+                            currentValue={tData.logoUrl || ""}
+                            onUploadSuccess={(url) => handleFieldChange("logoUrl", url)}
+                        />
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                              <label className="block text-[9px] font-mono uppercase text-white/40 font-bold">Logo Display Height</label>
+                              <span className="text-white/60 font-mono text-[9px]">{tData.logoHeight || 150}px</span>
+                          </div>
+                          <input 
+                            type="range" min="50" max="400" step="1"
+                            value={tData.logoHeight || 150}
+                            onChange={(e) => handleFieldChange("logoHeight", parseInt(e.target.value))}
+                            className="w-full accent-brand-gold h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                          />
+                        </div>
+                       </div>
+                     ) : (
+                       <div className="space-y-2 animate-fade-in">
+                          <label className="block text-[9px] font-mono uppercase text-white/40 mb-1 font-bold">Logo Text Content</label>
+                          <input 
+                            type="text"
+                            className="w-full bg-black/40 border border-white/15 px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-gold/50"
+                            placeholder="e.g. The Vagina Room"
+                            value={tData.heroHeaderTextLogo || ""}
+                            onChange={(e) => handleFieldChange("heroHeaderTextLogo", e.target.value)}
+                          />
+                       </div>
+                     )}
                   </div>
-                  <div className="border border-white/5 bg-black/10 p-4">
+                  <div className="border border-white/5 bg-black/10 p-4 space-y-4">
+                     <label className="text-[9px] font-mono uppercase text-white/40 font-bold block mb-2">Hero Section Background</label>
                      <ImageUploader 
                         fieldKey="telegramHeroBgUrl" 
                         label="Upload Hero Background Image" 

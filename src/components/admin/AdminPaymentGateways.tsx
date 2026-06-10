@@ -41,43 +41,77 @@ export default function AdminPaymentGateways({ orders }: AdminPaymentGatewaysPro
     }
   });
 
+  // Ensure default structures exist even after parsing to prevent crashes
+  const defaultGateways = {
+    paystack: { store: { enabled: true, pub: "", sec: "" }, membership: { enabled: true, pub: "", sec: "" } },
+    flutterwave: { store: { enabled: false, pub: "", sec: "" }, membership: { enabled: false, pub: "", sec: "" }, webhookHash: "" },
+    stripe: { store: { enabled: false, pub: "", sec: "" }, membership: { enabled: false, pub: "", sec: "" }, webhookSecret: "" },
+    paypal: { store: { enabled: false, cid: "", sec: "" }, membership: { enabled: false, cid: "", sec: "" }, webhookId: "" }
+  };
+
+  if (!paymentConfig.gateways) {
+    paymentConfig.gateways = defaultGateways;
+  } else {
+    // Fill in missing providers
+    Object.keys(defaultGateways).forEach(provider => {
+      if (!paymentConfig.gateways[provider]) {
+        paymentConfig.gateways[provider] = (defaultGateways as any)[provider];
+      } else {
+        // Fill in missing types (store/membership)
+        if (!paymentConfig.gateways[provider].store) paymentConfig.gateways[provider].store = { enabled: false, pub: "", sec: "" };
+        if (!paymentConfig.gateways[provider].membership) paymentConfig.gateways[provider].membership = { enabled: false, pub: "", sec: "" };
+      }
+    });
+  }
+
+  if (!paymentConfig.manual) {
+    paymentConfig.manual = { store: [], membership: [] };
+  }
+  if (!paymentConfig.manual.store || !Array.isArray(paymentConfig.manual.store)) paymentConfig.manual.store = [];
+  if (!paymentConfig.manual.membership || !Array.isArray(paymentConfig.manual.membership)) paymentConfig.manual.membership = [];
+
   const exportBookkeepingCSV = () => {
-    // Orders Data
-    const orderRows = orders.map(o => [
-      o.orderNo,
-      o.createdAt?.toDate ? o.createdAt.toDate().toISOString() : 'N/A',
-      o.customer?.fullName || 'N/A',
-      o.grandTotal || 0,
-      o.status || 'pending'
-    ]);
-    const orderHeader = ["Order No", "Date", "Customer", "Total", "Status"];
+    try {
+      // Orders Data
+      const orderRows = (orders || []).map(o => [
+        o.orderNo || 'N/A',
+        o.createdAt?.toDate ? o.createdAt.toDate().toISOString() : 'N/A',
+        o.customer?.fullName || 'N/A',
+        o.grandTotal || 0,
+        o.status || 'pending'
+      ]);
+      const orderHeader = ["Order No", "Date", "Customer", "Total", "Status"];
 
-    // Gateways Data
-    const gatewayRows = Object.entries(paymentConfig.gateways).map(([name, config]: [string, any]) => [
-      name,
-      config.store.enabled ? "Active" : "Inactive",
-      config.membership.enabled ? "Active" : "Inactive"
-    ]);
-    const gatewayHeader = ["Gateway", "Store Status", "Membership Status"];
+      // Gateways Data
+      const gatewayRows = Object.entries(paymentConfig.gateways).map(([name, config]: [string, any]) => [
+        name,
+        config?.store?.enabled ? "Active" : "Inactive",
+        config?.membership?.enabled ? "Active" : "Inactive"
+      ]);
+      const gatewayHeader = ["Gateway", "Store Status", "Membership Status"];
 
-    const csvContent = [
-      "TRANSACTIONS",
-      orderHeader.join(","),
-      ...orderRows.map(row => row.join(",")),
-      "",
-      "PAYMENT METHODS",
-      gatewayHeader.join(","),
-      ...gatewayRows.map(row => row.join(","))
-    ].join("\n");
+      const csvContent = [
+        "TRANSACTIONS",
+        orderHeader.join(","),
+        ...orderRows.map(row => row.join(",")),
+        "",
+        "PAYMENT METHODS",
+        gatewayHeader.join(","),
+        ...gatewayRows.map(row => row.join(","))
+      ].join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `bookkeeping_data_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `bookkeeping_data_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error("CSV Export error", err);
+      alert("Failed to export CSV. See console for details.");
+    }
   };
 
   const updateConfig = (newConfig: any) => {
@@ -86,6 +120,9 @@ export default function AdminPaymentGateways({ orders }: AdminPaymentGatewaysPro
 
   const toggleGateway = (provider: string, type: 'store' | 'membership') => {
     const newConfig = { ...paymentConfig };
+    if (!newConfig.gateways[provider]) newConfig.gateways[provider] = {};
+    if (!newConfig.gateways[provider][type]) newConfig.gateways[provider][type] = { enabled: false };
+    
     newConfig.gateways[provider][type].enabled = !newConfig.gateways[provider][type].enabled;
     updateConfig(newConfig);
   };

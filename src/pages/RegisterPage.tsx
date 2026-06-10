@@ -30,13 +30,17 @@ export default function RegisterPage() {
   
   const getEnabledMethods = () => {
     const methods = [];
-    if (paymentConfig.gateways) {
+    if (paymentConfig && paymentConfig.gateways) {
       for (const [key, val] of Object.entries(paymentConfig.gateways)) {
         if ((val as any).membership?.enabled) methods.push(key.charAt(0).toUpperCase() + key.slice(1));
       }
     }
-    if (paymentConfig.manual?.membership) {
+    if (paymentConfig && paymentConfig.manual?.membership) {
       paymentConfig.manual.membership.forEach((m: any) => methods.push(m.name));
+    }
+    // If no methods are enabled, fallback to Card for Paystack (if key exists) or Bank Transfer
+    if (methods.length === 0) {
+      methods.push("Bank Transfer");
     }
     return methods;
   };
@@ -546,11 +550,19 @@ export default function RegisterPage() {
                     </select>
                 </div>
 
-                {(paymentConfig.manual?.membership || []).some((m: any) => m.name === paymentGateway) && (
+                {(paymentGateway === 'Bank Transfer' || (paymentConfig.manual?.membership || []).some((m: any) => m.name === paymentGateway)) && (
                   <div className="p-4 bg-brand-gold/10 border border-brand-gold/20 text-xs text-white space-y-2">
                     <p className="font-bold uppercase tracking-widest text-[9px] text-brand-gold">Payment Details:</p>
                     <div className="font-mono text-white/80 space-y-1">
-                      <p>{paymentConfig.manual.membership.find((m: any) => m.name === paymentGateway)?.details}</p>
+                      {paymentGateway === 'Bank Transfer' ? (
+                        <>
+                          <p><span className="text-white/40">Bank:</span> {generalSettings.membershipBankName || generalSettings.bankName || "N/A"}</p>
+                          <p><span className="text-white/40">Name:</span> {generalSettings.membershipAccountName || generalSettings.accountName || "N/A"}</p>
+                          <p><span className="text-white/40">Number:</span> {generalSettings.membershipAccountNumber || generalSettings.accountNumber || "N/A"}</p>
+                        </>
+                      ) : (
+                        <p>{paymentConfig.manual.membership.find((m: any) => m.name === paymentGateway)?.details}</p>
+                      )}
                     </div>
                   </div>
                 )}

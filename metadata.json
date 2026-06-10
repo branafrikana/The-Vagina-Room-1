@@ -2,5 +2,5 @@
   "name": "The Vagina Room Platform",
   "description": "A comprehensive holistic wellness and reproductive education platform for women, featuring community connections, expert guidance, and curated healing products.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

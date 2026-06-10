@@ -21,32 +21,32 @@ export const FALLBACK_DEFAULTS = {
   heroSub: "Where Women Heal, Learn & Thrive...",
   heroBtnText: "👉 Join The Community",
   heroBtnUrl: "/join-community",
-  heroBgUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80",
+  heroBgUrl: "",
 
   drFidHeading: "MEET DR. FID",
   drFidBio1: "Ambassador Dr. Damilola Awoyemi, popularly known as Dr. FID, is a seasoned SPA Business Consultant, Holistic Wellness Expert, women’s wellness advocate and visionary entrepreneur committed to transforming lives through integrative healthcare, restorative therapy, and sustainable wellness enterprise development.",
   drFidBio2: "Through The Vagina Room, she is building a safe and empowering platform where women can access trusted education, emotional support, and holistic wellness guidance for their intimate and reproductive health journey.",
   drFidBio3: "Combining clinical expertise with compassionate care, she creates confidential spaces that help women gain clarity, confidence, healing, and a deeper understanding of their bodies and overall wellbeing.",
   drFidQuote: '"Restoring wellness, empowering women, and transforming lives through holistic healing and education."',
-  drFidImageUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=1200",
-  drFidPageImageUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=1200",
+  drFidImageUrl: "",
+  drFidPageImageUrl: "",
 
   aboutTitle: "OUR MISSION & GROUNDWORK",
   aboutHeading: "A COMMUNITY FOR EVERY WOMAN'S HEALTH JOURNEY",
   aboutParagraph1: "We believe that women's reproductive and sexual wellness is a crucial aspect of healthcare. For far too long, conversations surrounding intimate anatomy, hormonal transitions, fertility, and sexual satisfaction have been shrouded in shame, silence, or clinical detachment.",
   aboutParagraph2: "The Vagina Room is building a community where biology meets compassion. We dismantle stigmas by providing accurate, science-backed education that empowers you to trust your body, navigate transitions, and find holistic restoration.",
-  aboutImageUrl: "https://images.unsplash.com/photo-1518608046882-94d3fed0ae24?auto=format&fit=crop&q=80&w=1200",
+  aboutImageUrl: "",
 
   // Identity Grid & Scrolling Ticker
   tickerText: "TRUSTED EDUCATION • EXPERT GUIDANCE • EMOTIONAL SUPPORT • HOLISTIC WELLNESS • THE VAGINA ROOM GLOBAL • ",
   identityLabel1: "Speaker",
-  identityImg1: "https://images.unsplash.com/photo-1576089234411-497c62ca621e?auto=format&fit=crop&q=80&w=800",
+  identityImg1: "",
   identityLabel2: "Trainer",
-  identityImg2: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800",
+  identityImg2: "",
   identityLabel3: "Coach",
-  identityImg3: "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&q=80&w=800",
+  identityImg3: "",
   identityLabel4: "Therapist",
-  identityImg4: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=800",
+  identityImg4: "",
 
   // Homepage About Us Detailed Section
   aboutUsSub: "Who We Are",
@@ -69,8 +69,16 @@ export const FALLBACK_DEFAULTS = {
   homeAboutUsVisionDesc: "To become a globally trusted women’s wellness ecosystem where every woman feels informed, supported, confident, safe, and empowered in her intimate health journey.",
 
   telegramHeroBgUrl: "",
+  telegramHeroLogoUrl: "",
   telegramCommunityImgUrl: "",
   telegramFounderImageUrl: "",
+  telegramHeaderLogoType: "text",
+  telegramHeaderLogoUrl: "",
+  telegramHeaderTextLogo: "The Vagina Room",
+  telegramHeroHeaderTextLogo: "The Vagina Room",
+  telegramHeaderLogoHeight: "44",
+  telegramHeroLogoType: "text",
+  telegramHeroLogoHeight: "150",
 
   // Why We Exist Section
   whyWeExistCatalyst: "THE CATALYST",
@@ -305,7 +313,7 @@ export const FALLBACK_DEFAULTS = {
   supportPaystackUrl: "https://paystack.com/pay/thevaginaroom",
   supportImpactStatsJson: "[\n  { \"label\": \"Community Outreach\", \"desc\": \"Reaching underserved rural areas with health education.\" },\n  { \"label\": \"Clinic Support\", \"desc\": \"Subsidizing restorative care for women in need.\" },\n  { \"label\": \"Education Mastery\", \"desc\": \"Funding masterclasses and digital health resources.\" },\n  { \"label\": \"Safe Space Expansion\", \"desc\": \"Growing our local and digital support communities.\" }\n]",
 
-  footerCopyright: "© 2026 THE VAGINA ROOM. ALL RIGHTS RESERVED.",
+  footerCopyright: `© ${new Date().getFullYear()} THE VAGINA ROOM. ALL RIGHTS RESERVED.`,
   footerSlogan: "Where Women Heal, Learn & Thrive...",
   footerCoreValuesTitle: "OUR CORE VALUES",
   footerCoreValuesList: "Empowerment • Confidentiality • Healing • Respect • Clinical Synergy • Restorative Care • Sisterhood",
@@ -315,7 +323,7 @@ export const FALLBACK_DEFAULTS = {
   // Policy & Terms
   policyHeading: "Privacy Policy",
   policyIntro: "At The Vagina Room, your privacy is our sacred trust. We recognize the profound sensitivity surrounding women's health, reproductive well-being, and intimate wellness. We are committed to safeguarding your personal indices, interactive communications, and clinical wellness records with the highest grade of security. This Privacy Policy details how we aggregate, preserve, and protect information when you log into our virtual portal, participate in professional member forums, register for wellness subscriptions, utilize our affiliate program, or shop our aggregated reproductive products.",
-  policySectionsJson: '[\n  { "title": "1. Holistic Information We Safeguard", "content": "To provide you with a customized and secure environment, we process:\\n- Personal Registration Data: Email address, chosen passwords, and platform avatars.\\n- Community & Social Data: Public profile indicators, collaborative discussion forum posts, and secure peer-to-peer Direct Messages (DMs).\\n- Affiliate & Payout Profiles: Financial referral statistics, banking clearance metrics, and tracking coordinates.\\n- Direct E-Commerce Indices: Items in your local shopping cart (\'tvr_cart\'), product preference logs, and synchronized ordering messages." },\n  { "title": "2. Data Storage, Local Cart, and Cloudinary Sync", "content": "To ensure lightning-fast performance and data integrity, we structure our storage dynamically:\\n- Shopping Cart Persistence: Your selected wellness items are persisted in your local viewport via browser storage (\'tvr_cart\') so they remain intact across sessions.\\n- Cloudinary Media Acceleration: Profile pictures, botanical logs, and health catalog images are safely processed, optimized, and synced via global Cloudinary networks to avoid local ephemeral data loss.\\n- Database Isolation: Secure cloud-hosted Firestore database architectures protect all membership logs, encrypted under rigorous rules ensuring other standard users cannot query your private data." },\n  { "title": "3. The Integrity of Direct Messaging & Sharing", "content": "Our platform\'s peer-to-peer and professional inbox threads are engineered to be private and confidential. Your direct communications with other advocates, members, or Dr. FID are stored securely in dedicated Firestore collections isolated from general public retrieval hooks. When you circulate insights or article gazettes across social media using our sharing mechanisms (WhatsApp, Twitter, Facebook, or LinkedIn), only the public metadata of the article is transmitted; your personal browsing footprint remains entirely confidential." },\n  { "title": "4. Third-Party Integrations & CORS Proxies", "content": "Our curated storefront aggregates high-quality wellness items from multiple trusted external botanical and reproductive suppliers. To bypass cross-origin restrictions, product retrieval is safely proxied through our secure backend API (/api/proxy-products) so that external vendors never gain direct tracking visibility into your browser or IP address. Affiliate commissions and referrals are processed automatically without exposing your personal registration details to third parties." }\n]',
+  policySectionsJson: '[\n  { "title": "1. Holistic Information We Safeguard", "content": "To provide you with a customized and secure environment, we process:\\n- Personal Registration Data: Email address, chosen passwords, and platform avatars.\\n- Community & Social Data: Public profile indicators, collaborative discussion forum posts, and secure peer-to-peer Direct Messages (DMs).\\n- Affiliate & Payout Profiles: Financial referral statistics, banking clearance metrics, and tracking coordinates.\\n- Direct E-Commerce Indices: Items in your local shopping cart (\'tvr_cart\'), product preference logs, and synchronized ordering messages." },\n  { "title": "2. Data Storage, Local Cart, and Cloudinary Sync", "content": "To ensure lightning-fast performance and data integrity, we structure our storage dynamically:\\n- Shopping Cart Persistence: Your selected wellness items are persisted in your local viewport via browser storage (\'tvr_cart\') so they remain intact across sessions.\\n- Cloudinary Media Acceleration: Profile pictures, botanical logs, and health catalog images are safely processed, optimized, and synced via global Cloudinary networks to avoid local ephemeral data loss.\\n- Database Isolation: Secure cloud-hosted Firestore database architectures protect all membership logs, encrypted under rigorous rules ensuring other standard users cannot query your private data." },\n  { "title": "3. The Integrity of Direct Messaging & Sharing", "content": "Our platform\'s peer-to-peer and professional inbox threads are engineered to be private and confidential. Your direct communications with other advocates, members, or Dr. FID are stored securely in dedicated Firestore collections isolated from general public retrieval hooks. When you circulate insights or article gazettes across social media using our sharing mechanisms (WhatsApp, Twitter, Facebook, or LinkedIn), only the public metadata of the article is transmitted; your personal browsing footprint remains entirely confidential." },\n  { "title": "4. Third-Party Integrations & Verified Partners", "content": "Our curated storefront aggregates high-quality wellness items from multiple trusted external botanical and reproductive suppliers. Product retrieval is performed directly from verified partner endpoints to ensure you receive the most accurate availability and pricing. Affiliate commissions and referrals are processed securely without exposing your personal registration details to third parties." }\n]',
   
   termsHeading: "Terms of Engagement",
   termsIntro: "Welcome to The Vagina Room. These Terms of Engagement constitute a legal agreement between you (\'the Member\', \'the Affiliate\', or \'the Visitor\') and The Vagina Room. By registering a profile, ordering restorative products, propagating knowledge through our Affiliate Program, or engaging with our interactive community threads, you accept and pledge compliance with these regulations. Our services are dedicated to raising awareness, establishing clinical hygiene synergy, and providing robust women\'s wellness advocacy.",
@@ -410,7 +418,7 @@ export const FALLBACK_DEFAULTS = {
   homePageSectionsOrder: '["primary_hero", "about_the_room", "identity_grid", "partners", "about_section", "why_we_exist", "focus_areas", "who_we_serve", "know_your_vagina", "values", "community", "trust_safety", "testimonials", "promise", "faq", "products", "social_grid"]',
   drFidPageSectionsOrder: '["profile_hero", "career_expertise", "education_certifications", "ancp_framework", "vagina_room_context", "personal_life", "closing_cta"]',
   aboutPageSectionsOrder: '["about_hero", "manifesto", "mission_vision", "who_we_serve", "differentiators", "core_values", "promise"]',
-  paymentSettingsJson: '{\n  "paystackSecretKey": "",\n  "flutterwaveSecretKey": "",\n  "flutterwavePublicKey": ""\n}',
+  paymentSettingsJson: '{\n  "paystackSecretKey": "",\n  "flutterwaveSecretKey": "",\n  "flutterwavePublicKey": "",\n  "gateways": {\n    "paystack": { "store": { "enabled": true, "pub": "", "sec": "" }, "membership": { "enabled": true, "pub": "", "sec": "" } },\n    "flutterwave": { "store": { "enabled": false, "pub": "", "sec": "" }, "membership": { "enabled": false, "pub": "", "sec": "" }, "webhookHash": "" },\n    "stripe": { "store": { "enabled": false, "pub": "", "sec": "" }, "membership": { "enabled": false, "pub": "", "sec": "" }, "webhookSecret": "" },\n    "paypal": { "store": { "enabled": false, "cid": "", "sec": "" }, "membership": { "enabled": false, "cid": "", "sec": "" }, "webhookId": "" }\n  },\n  "manual": {\n    "store": [],\n    "membership": []\n  }\n}',
   mediaSettingsJson: '{\n  "cloudinaryCloudName": "",\n  "cloudinaryApiKey": "",\n  "cloudinaryApiSecret": "",\n  "cloudinaryUploadPreset": "ml_default"\n}',
   firebaseConfigRaw: "",
   adminPassword: "admin123",

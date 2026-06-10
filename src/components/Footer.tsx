@@ -226,7 +226,7 @@ export default function Footer() {
                 referrerPolicy="no-referrer"
               />
             )}
-            <p>{content.footerCopyright || "© 2026 THE VAGINA ROOM. ALL RIGHTS RESERVED."}</p>
+            <p>{content.footerCopyright ? content.footerCopyright.replace("2026", new Date().getFullYear().toString()) : `© ${new Date().getFullYear()} THE VAGINA ROOM. ALL RIGHTS RESERVED.`}</p>
           </div>
           <div className="flex items-center space-x-12">
             <div className="flex space-x-8">

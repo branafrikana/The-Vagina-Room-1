@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   X, Sparkles, Heart, Shield, Users, Star, ArrowRight, ArrowLeft, MapPin,
@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import SEO from "../components/SEO";
 import { useContent } from "../context/ContentContext";
+import { safeJsonParse } from "../lib/json";
 import heroBg from "../assets/images/wellness_bg_hero_1780780675207.png";
 import communityImg from "../assets/images/women_community_1780781882048.png";
 
@@ -88,6 +89,7 @@ const SUBDIVISIONS: Record<string, { label: string; placeholder: string; options
 
 export default function TelegramCommunityPage() {
   const { content, submitFormSubmission } = useContent();
+  const branding = safeJsonParse(content.brandingSettingsJson, {} as any);
   let tData: any = {};
   try {
     tData = JSON.parse(content.telegramLandingPageJson || "{}");
@@ -97,6 +99,12 @@ export default function TelegramCommunityPage() {
   const heroBgUrl = content.telegramHeroBgUrl || "";
   const communityImgUrl = content.telegramCommunityImgUrl || "";
   const founderImageUrl = content.telegramFounderImageUrl || content.drFidImageUrl || "";
+
+  // Preferred Logo Values from JSON or Global Config
+  const heroLogoUrl = tData.logoUrl || content.telegramHeroLogoUrl || "";
+  const heroLogoHeight = tData.logoHeight || content.telegramHeroLogoHeight || 150;
+  const heroLogoType = tData.logoType || content.telegramHeroLogoType || "text";
+  const heroLogoText = tData.heroHeaderTextLogo || content.telegramHeroHeaderTextLogo || "The Vagina Room";
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [step, setStep] = useState(1);
@@ -212,7 +220,7 @@ export default function TelegramCommunityPage() {
 
   // Section Individual Rendering Helpers
   const renderHeroSection = () => (
-    <section key="telegram_hero" className="relative px-6 pt-40 pb-24 lg:pt-48 lg:pb-32 flex flex-col items-center text-center min-h-[90vh] justify-center overflow-hidden">
+    <section key="telegram_hero" className="relative px-6 pt-40 pb-32 lg:pt-48 lg:pb-32 flex flex-col items-center text-center min-h-[90vh] justify-center overflow-hidden">
       <img src={heroBgUrl || heroBg} alt="Hero Background" referrerPolicy="no-referrer" className="absolute inset-x-0 top-0 w-full h-[120%] object-cover object-top opacity-30 select-none pointer-events-none mix-blend-screen" />
       <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/80 to-zinc-950 pointer-events-none" />
       <div className="absolute top-0 left-1/4 w-full max-w-2xl h-[500px] bg-brand-gold/10 blur-[130px] rounded-full pointer-events-none mix-blend-screen" />
@@ -224,14 +232,21 @@ export default function TelegramCommunityPage() {
         animate="visible"
         className="max-w-5xl mx-auto space-y-8 relative z-10 flex flex-col items-center"
       >
-        {tData.logoUrl && (
+        {heroLogoType === 'image' && heroLogoUrl && heroLogoUrl.trim() !== "" ? (
           <motion.div variants={itemVariants} className="mb-2">
             <img 
-              src={tData.logoUrl} 
-              alt="Logo" 
+              src={heroLogoUrl} 
+              alt="The Vagina Room Logo" 
+              style={{ height: `${heroLogoHeight}px` }}
+              className="w-auto object-contain mx-auto drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]" 
               referrerPolicy="no-referrer" 
-              className="h-16 md:h-24 w-auto object-contain mx-auto drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]" 
             />
+          </motion.div>
+        ) : (
+          <motion.div variants={itemVariants} className="mb-6 font-sans text-3xl font-black tracking-tighter text-white uppercase group flex items-center gap-2 justify-center">
+            <span className="text-3xl tracking-tighter uppercase">
+              {heroLogoText}
+            </span>
           </motion.div>
         )}
 
@@ -262,7 +277,7 @@ export default function TelegramCommunityPage() {
 
       <motion.div 
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1, duration: 1 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-zinc-500 text-xs font-mono uppercase tracking-widest"
+        className="absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-zinc-500 text-xs font-mono uppercase tracking-widest"
       >
         <span>Scroll</span>
         <div className="w-[1px] h-12 bg-gradient-to-b from-zinc-500 to-transparent" />
@@ -794,13 +809,24 @@ export default function TelegramCommunityPage() {
         className={`fixed top-0 inset-x-0 z-40 transition-all duration-300 ${scrolled ? 'bg-zinc-950/70 backdrop-blur-xl border-b border-white/5 py-3' : 'bg-transparent py-6'}`}
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <div className="font-serif text-xl font-medium tracking-wide flex items-center gap-2">
-            <Sparkles className="text-brand-gold" size={18} />
-            The Vagina Room
-          </div>
+          <Link to="/" className="font-sans text-xl font-black tracking-tighter text-white uppercase group flex items-center gap-2">
+            {content.telegramHeaderLogoType === 'image' && content.telegramHeaderLogoUrl && content.telegramHeaderLogoUrl.trim() !== "" ? (
+              <img 
+                src={content.telegramHeaderLogoUrl} 
+                alt="The Vagina Room"
+                style={{ height: `${content.telegramHeaderLogoHeight || 44}px` }}
+                className="w-auto object-contain transition-transform group-hover:scale-105" 
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span className="text-xl tracking-tighter uppercase">
+                The <span className="text-brand-gold italic font-light lowercase transition-transform group-hover:scale-110 inline-block">Vagina</span> Room
+              </span>
+            )}
+          </Link>
           <button 
             onClick={openModal}
-            className="text-sm font-semibold uppercase tracking-widest bg-white text-black px-5 py-2.5 rounded-full hover:scale-105 active:scale-95 transition-transform cursor-pointer border-none"
+            className="hidden md:block text-sm font-semibold uppercase tracking-widest bg-white text-black px-5 py-2.5 rounded-full hover:scale-105 active:scale-95 transition-transform cursor-pointer border-none"
           >
             Join Community
           </button>

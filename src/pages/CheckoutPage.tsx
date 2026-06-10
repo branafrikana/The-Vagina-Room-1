@@ -23,13 +23,18 @@ export default function CheckoutPage() {
 
   const getEnabledMethods = () => {
     const methods = [];
-    if (paymentConfig.gateways) {
+    if (paymentConfig && paymentConfig.gateways) {
       for (const [key, val] of Object.entries(paymentConfig.gateways)) {
         if ((val as any).store?.enabled) methods.push(key.charAt(0).toUpperCase() + key.slice(1));
       }
     }
-    if (paymentConfig.manual?.store) {
+    if (paymentConfig && paymentConfig.manual?.store) {
       paymentConfig.manual.store.forEach((m: any) => methods.push(m.name));
+    }
+
+    // Default fallback if nothing is enabled
+    if (methods.length === 0) {
+      methods.push("Bank Transfer");
     }
     return methods;
   };
@@ -497,11 +502,19 @@ Thank you for shopping with *The Vagina Room* 💜`;
                     </div>
                   </div>
 
-                  {(paymentConfig.manual?.store || []).some((m: any) => m.name === formData.paymentMethod) && (
+                  {(formData.paymentMethod === 'Bank Transfer' || (paymentConfig.manual?.store || []).some((m: any) => m.name === formData.paymentMethod)) && (
                     <div className="p-4 bg-brand-gold/10 border border-brand-gold/20 text-xs text-white space-y-2">
                       <p className="font-bold uppercase tracking-widest text-[9px] text-brand-gold">Payment Details:</p>
                       <div className="font-mono text-white/80 space-y-1">
-                        <p>{paymentConfig.manual.store.find((m: any) => m.name === formData.paymentMethod)?.details}</p>
+                        {formData.paymentMethod === 'Bank Transfer' ? (
+                          <>
+                            <p><span className="text-white/40">Bank:</span> {generalConfig.storeBankName || generalConfig.bankName || "N/A"}</p>
+                            <p><span className="text-white/40">Name:</span> {generalConfig.storeAccountName || generalConfig.accountName || "N/A"}</p>
+                            <p><span className="text-white/40">Number:</span> {generalConfig.storeAccountNumber || generalConfig.accountNumber || "N/A"}</p>
+                          </>
+                        ) : (
+                          <p>{paymentConfig.manual.store.find((m: any) => m.name === formData.paymentMethod)?.details}</p>
+                        )}
                       </div>
                     </div>
                   )}

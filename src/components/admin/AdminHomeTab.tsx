@@ -43,6 +43,12 @@ export default function AdminHomeTab() {
   const { content, updateContentField, saveContentChanges } = useContent();
   const [activeSubTab, setActiveSubTab] = useState<"hero" | "strategic" | "social" | "audience">("hero");
 
+  const updateJSONField = (configKey: string, field: string, value: any) => {
+    const current = JSON.parse((content as any)[configKey] || '{}');
+    const updated = { ...current, [field]: value };
+    updateContentField(configKey as any, JSON.stringify(updated, null, 2));
+  };
+
   const SectionHeader = ({ icon: Icon, title, id }: { icon: any, title: string, id: string }) => (
     <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
       <div className="flex items-center gap-2">
@@ -111,10 +117,63 @@ export default function AdminHomeTab() {
         {/* --- IDENTITY & HERO TAB --- */}
         {activeSubTab === "hero" && (
           <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {/* HER0 SECTION */}
+            {/* HEADER LOGO CONFIG */}
+            <div className="bg-white/[0.01] border border-white/5 p-8 rounded-lg space-y-8">
+              <SectionHeader icon={Info} title="1.5 Main Header Logo" id="header_logo" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <label className="text-[9px] font-black uppercase tracking-wider text-white/40 block">Logo Type</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        checked={(JSON.parse(content.brandingSettingsJson || '{}').headerLogoType || 'text') === 'text'}
+                        onChange={() => updateJSONField("brandingSettingsJson", "headerLogoType", "text")}
+                        className="accent-brand-gold"
+                      />
+                      <span className="text-xs text-white">Text</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        checked={(JSON.parse(content.brandingSettingsJson || '{}').headerLogoType) === 'image'}
+                        onChange={() => updateJSONField("brandingSettingsJson", "headerLogoType", "image")}
+                        className="accent-brand-gold"
+                      />
+                      <span className="text-xs text-white">Image</span>
+                    </label>
+                  </div>
+                </div>
+                {(JSON.parse(content.brandingSettingsJson || '{}').headerLogoType) === 'image' && (
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase tracking-wider text-white/40 block">Logo URL</label>
+                    <input 
+                      type="text" 
+                      value={JSON.parse(content.brandingSettingsJson || '{}').headerLogoUrl || ""}
+                      onChange={(e) => updateJSONField("brandingSettingsJson", "headerLogoUrl", e.target.value)}
+                      className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs focus:border-brand-gold outline-none" 
+                    />
+                    <ImageUploader fieldKey="headerLogoUrl" label="Upload Logo" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                    <label className="text-[9px] font-black uppercase tracking-wider text-white/40 block">Logo Height (px)</label>
+                    <span className="text-white/60 font-mono text-[10px]">{(JSON.parse(content.brandingSettingsJson || '{}').headerLogoHeight || 44)}px</span>
+                </div>
+                <input 
+                  type="range" min="20" max="150" step="1"
+                  value={(JSON.parse(content.brandingSettingsJson || '{}').headerLogoHeight || 44)}
+                  onChange={(e) => updateJSONField("brandingSettingsJson", "headerLogoHeight", e.target.value)}
+                  className="w-full accent-brand-gold h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* HERO SECTION */}
             <div className="bg-white/[0.01] border border-white/5 p-8 rounded-lg space-y-8">
               <SectionHeader icon={Layout} title="1. Primary Hero Landing" id="primary_hero" />
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InputGroup label="Hero Welcome Accent">
                   <input 

@@ -17,10 +17,20 @@ import {
   HeartHandshake
 } from "lucide-react";
 import SEO from "../components/SEO";
+import { safeJsonParse } from "../lib/json";
 
 export default function WelcomePage() {
   const { user, userData } = useAuth();
   const { content } = useContent();
+  interface BrandingSettings {
+    headerLogoType?: string;
+    headerLogoUrl?: string;
+    headerLogoHeight?: number;
+  }
+  const branding: BrandingSettings = safeJsonParse(content.brandingSettingsJson, {});
+  const headerLogoType = branding.headerLogoType || "text";
+  const headerLogoUrl = branding.headerLogoUrl;
+  const headerLogoHeight = branding.headerLogoHeight || 44;
   const navigate = useNavigate();
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
@@ -118,9 +128,20 @@ export default function WelcomePage() {
       {/* Header area */}
       <header className="border-b border-white/5 py-6 px-8 flex justify-between items-center bg-brand-black/90 backdrop-blur-md z-10 relative">
         <div className="flex items-center gap-2">
-          <span className="font-serif text-lg tracking-widest font-black uppercase text-brand-gold hover:opacity-90 transition-opacity">
-            THE VAGINA ROOM
-          </span>
+           {headerLogoType === 'image' && headerLogoUrl && headerLogoUrl.trim() !== "" ? (
+              <img 
+                src={headerLogoUrl} 
+                alt="The Vagina Room Logo" 
+                style={{ height: `${headerLogoHeight}px` }}
+                className="w-auto cursor-pointer object-contain"
+                onClick={() => navigate("/")}
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span className="font-serif text-lg tracking-widest font-black uppercase text-brand-gold hover:opacity-90 transition-opacity cursor-pointer" onClick={() => navigate("/")}>
+                THE VAGINA ROOM
+              </span>
+            )}
         </div>
         <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-widest bg-brand-gold/10 border border-brand-gold/20 px-3 py-1.5 rounded-full text-brand-gold">
           <ShieldCheck size={12} /> SECURE ONBOARDING

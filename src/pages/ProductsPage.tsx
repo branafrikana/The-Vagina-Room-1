@@ -83,18 +83,9 @@ export default function ProductsPage() {
       try {
         const fetchPromises = activeSources.map(async (source: any, sourceIdx: number) => {
           try {
-            // Use server-side CORS bypass API proxy, with direct fetch as automatic client-side fallback
-            const proxyUrl = `/api/proxy-products?url=${encodeURIComponent(source.url)}`;
-            let response;
-            try {
-              response = await fetch(proxyUrl);
-            } catch (proxyErr) {
-              console.warn(`Proxy fetch failed for ${source.name}, trying direct connection:`, proxyErr);
-            }
-
-            if (!response || !response.ok) {
-              response = await fetch(source.url);
-            }
+            // Direct fetch only as per client-only architecture mandate
+            // Note: External sources must support CORS for this to work in production
+            let response = await fetch(source.url);
 
             if (!response.ok) return [];
             const data = await response.json();

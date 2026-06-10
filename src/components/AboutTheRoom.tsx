@@ -16,12 +16,16 @@ export default function AboutTheRoom() {
         transition={{ duration: 1 }}
         className="w-full lg:w-2/5 aspect-square lg:aspect-auto relative bg-[#222]"
       >
-        <img 
-          src={content.drFidImageUrl} 
-          alt="Visionary Profile" 
-          className="w-full h-full object-cover transition-all duration-1000"
-          referrerPolicy="no-referrer"
-        />
+        {content.drFidImageUrl && content.drFidImageUrl.trim() !== "" ? (
+          <img 
+            src={content.drFidImageUrl} 
+            alt="Visionary Profile" 
+            className="w-full h-full object-cover transition-all duration-1000"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <div className="w-full h-full bg-[#111]" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-r from-brand-black/40 to-transparent" />
       </motion.div>
 

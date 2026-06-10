@@ -122,11 +122,15 @@ export default function PwaPopup() {
               {/* Logo Area */}
               <div className="flex items-center gap-4 flex-1 min-w-0">
                 <div className="w-16 h-16 bg-brand-black border border-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 p-2">
-                  <img
-                    src={appLogoUrl}
-                    alt="App Logo"
-                    className="w-full h-full object-contain"
-                  />
+                  {appLogoUrl && appLogoUrl.trim() !== "" ? (
+                    <img
+                      src={appLogoUrl}
+                      alt="App Logo"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#111]" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-white font-sans text-lg font-black tracking-widest uppercase leading-none">
