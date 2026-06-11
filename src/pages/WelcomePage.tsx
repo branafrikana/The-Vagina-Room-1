@@ -45,10 +45,16 @@ export default function WelcomePage() {
       return;
     }
 
-    // Non-members (pending, awaiting, declined) can't access this
-    if (
-      (userData.paymentStatus === "pending" || userData.paymentStatus === "awaiting_approval" || !userData.isMember)
-    ) {
+    // Only redirect if they EXPLICITLY don't have membership active
+    // OR if they are still strictly in the pending/unpaid state
+    const isPending = userData.paymentStatus === "pending" || userData.paymentStatus === "awaiting_approval";
+    const isActiveMember = userData.isMember || userData.isFreeMemberForLife;
+
+    if (isPending && !isActiveMember) {
+      navigate("/payment-review");
+    } else if (!isActiveMember) {
+      // If they aren't a member and not pending (maybe declined or never started), 
+      // they shouldn't be here, but let's send them to dashboard which handles restricted views.
       navigate("/member-dashboard");
     }
   }, [userData, navigate]);

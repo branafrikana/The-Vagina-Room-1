@@ -76,14 +76,14 @@ export default function AdminApprovalsPanel() {
                 <div className="flex flex-wrap gap-x-6 gap-y-1">
                   <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest">{user.email}</p>
                   <p className="text-[9px] font-mono text-brand-gold uppercase tracking-widest">Plan: {user.membershipType || 'Gold'}</p>
-                  {user.paymentProof && (
+                  {(user.paymentProof || user.proofOfPaymentUrl) && (
                     <a 
-                      href={user.paymentProof.startsWith('http') ? user.paymentProof : '#'} 
+                      href={(user.paymentProof || user.proofOfPaymentUrl).startsWith('http') ? (user.paymentProof || user.proofOfPaymentUrl) : '#'} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-[9px] font-mono text-cyan-400 underline uppercase tracking-widest hover:text-white"
                     >
-                      View Proof: {user.paymentProof.length > 20 ? 'Attachment' : user.paymentProof}
+                      View Proof: {(user.paymentProof || user.proofOfPaymentUrl).length > 20 ? 'Attachment' : (user.paymentProof || user.proofOfPaymentUrl)}
                     </a>
                   )}
                 </div>

@@ -107,7 +107,18 @@ export default function PaymentReviewPage() {
 
                   {/* Right: Upload */}
                   <div className="space-y-6">
-                    {!success ? (
+                    {userData?.paymentStatus === 'approved' ? (
+                      <div className="h-full flex flex-col items-center justify-center gap-6 py-10 transition-all border border-brand-gold/20 bg-brand-gold/5 p-8">
+                        <div className="w-20 h-20 bg-brand-gold/10 rounded-full flex items-center justify-center border border-brand-gold/30">
+                          <CheckCircle2 size={40} className="text-brand-gold" />
+                        </div>
+                        <div className="text-center space-y-2">
+                          <p className="text-lg font-black uppercase text-white tracking-widest">Access Authorized</p>
+                          <p className="text-[10px] text-white/40 uppercase tracking-widest italic leading-relaxed">Your membership has been verified and your sanctuary credentials are live.</p>
+                        </div>
+                        <button onClick={() => navigate('/member-dashboard')} className="w-full bg-brand-gold text-brand-black p-4 font-black uppercase text-xs tracking-widest hover:bg-white transition-all shadow-xl hover:shadow-brand-gold/20">Access Member Dashboard</button>
+                      </div>
+                    ) : !success ? (
                       <div className="space-y-6">
                         <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-gold">Secure Upload Portal</h3>
                         <div className="relative group">

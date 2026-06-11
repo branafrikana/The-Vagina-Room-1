@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { useContent } from '../context/ContentContext';
 import { useNotifications } from '../context/NotificationContext';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate, Link, useNavigate } from 'react-router-dom';
 import CommunityHub from '../components/CommunityHub';
 import InnerCircleContent from '../components/InnerCircleContent';
 import AffiliateTracker from '../components/AffiliateTracker';
@@ -46,6 +46,8 @@ import {
   ExternalLink,
   Award,
   ArrowRight,
+  Loader2,
+  RefreshCw,
   DollarSign,
   BarChart,
   Wind
@@ -60,6 +62,7 @@ type TabType = 'dashboard' | 'profile' | 'resources' | 'programs' | 'events' | '
 export default function MemberDashboardPage() {
   const { user, userData, isImpersonating, isSystemAdmin, hasActiveMembership, loading, realUserData } = useAuth();
   const { content, uploadImage } = useContent();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [completedLessonsMap, setCompletedLessonsMap] = useState<Record<string, boolean>>({});
   const [uploading, setUploading] = useState(false);
@@ -129,15 +132,18 @@ export default function MemberDashboardPage() {
   }
 
   // Redirect to welcome onboarding portal if paymentStatus is approved and they haven't seen it yet
-  if (
-    userData &&
-    !isSystemAdmin &&
-    userData.paymentStatus === 'approved' &&
-    userData.isMember &&
-    userData.welcomeSeen !== true
-  ) {
-    return <Navigate to="/welcome" replace />;
-  }
+  useEffect(() => {
+    if (
+      userData &&
+      !isSystemAdmin &&
+      userData.paymentStatus === 'approved' &&
+      userData.isMember &&
+      userData.welcomeSeen !== true &&
+      activeTab === 'dashboard'
+    ) {
+      navigate("/welcome", { replace: true });
+    }
+  }, [userData, isSystemAdmin, activeTab, navigate]);
 
   if (deviceRestrictionStatus === 'mismatch') {
     return (
@@ -154,6 +160,7 @@ export default function MemberDashboardPage() {
   if (deviceRestrictionStatus === 'checking') {
     return (
       <div className="min-h-screen flex items-center justify-center text-brand-gold bg-brand-black font-semibold tracking-widest font-mono uppercase text-xs">
+        <RefreshCw className="animate-spin mr-2" size={14} />
         Verifying cryptographic device sequence...
       </div>
     );
@@ -197,6 +204,16 @@ export default function MemberDashboardPage() {
   const totalCompleted = defaultPrograms.reduce((acc, p) => acc + p.lessons.filter(l => !!completedLessonsMap[l.id]).length, 0);
   const progress = totalLessons > 0 ? Math.round((totalCompleted / totalLessons) * 100) : 0;
 
+  // Final rendering safety checks
+  if (loading || !userData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-brand-gold bg-brand-black font-semibold tracking-widest font-mono uppercase text-xs">
+        <Loader2 className="animate-spin mr-2" size={14} />
+        Verifying Sanctuary Credentials...
+      </div>
+    );
+  }
+
   useEffect(() => {
     if (!userData) return;
 
@@ -217,10 +234,16 @@ export default function MemberDashboardPage() {
     setLastIsMember(userData.isMember);
   }, [userData, lastPaymentStatus, lastIsMember, showToast]);
 
-  // PAYMENT REQUIRED VIEW
-  if (!isSystemAdmin && (userData?.paymentStatus === 'pending' || userData?.paymentStatus === 'awaiting_approval')) {
-    return <Navigate to="/payment-review" replace />;
-  }
+    // PAYMENT REQUIRED VIEW
+    if (!isSystemAdmin && (userData?.paymentStatus === 'pending' || userData?.paymentStatus === 'awaiting_approval' || (userData && !userData.isMember && !userData.isFreeMemberForLife))) {
+      // If we are already headed to welcome or on welcome, don't force redirect 
+      // but let's check membership
+      if (userData?.paymentStatus === 'approved' && userData?.isMember && userData?.welcomeSeen !== true) {
+        // Allow dashboard to continue to let the welcome redirect handle it
+      } else if (userData?.paymentStatus === 'pending' || userData?.paymentStatus === 'awaiting_approval') {
+        return <Navigate to="/payment-review" replace />;
+      }
+    }
 
   // RESTRICTED USER FLOW
   if (!hasActiveMembership && !isSystemAdmin) {
@@ -744,7 +767,7 @@ export default function MemberDashboardPage() {
                   </div>
 
                   {/* Member ID Code */}
-                  <div className="p-6 bg-gradient-to-br from-zinc-950 to-zinc-900 border border-white/14 rounded flex flex-col justify-between text-left">
+                  <div className="p-6 bg-gradient-to-br from-zinc-950 to-zinc-900 border border-white/10 rounded flex flex-col justify-between text-left">
                     <div>
                       <p className="text-[8px] font-mono uppercase tracking-[0.25em] text-white/30">Secure Digital Identification</p>
                       <h4 className="text-sm font-mono text-white mt-1.5 tracking-wider select-all font-bold">
