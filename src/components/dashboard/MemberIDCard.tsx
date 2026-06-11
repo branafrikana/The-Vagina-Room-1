@@ -32,8 +32,8 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import domtoimage from 'dom-to-image-more';
 import ImageCropModal from './ImageCropModal';
 import { db } from '../../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -282,8 +282,7 @@ export default function MemberIDCard() {
       // Small delay to ensure any layout shifts are settled
       await new Promise(res => setTimeout(res, 300));
       // Capture Front Card
-      const canvasFront = await html2canvas(cardFrontRef.current, { backgroundColor: null, scale: 2 });
-      const imgDataFront = canvasFront.toDataURL('image/png');
+      const imgDataFront = await domtoimage.toPng(cardFrontRef.current, { quality: 1, scale: 2 });
 
       // Temporarily remove flip transform correctly for crisp text
       const origClass = cardBackRef.current.className;
@@ -291,8 +290,7 @@ export default function MemberIDCard() {
       await new Promise(res => setTimeout(res, 50));
       
       // Capture Back Card
-      const canvasBack = await html2canvas(cardBackRef.current, { backgroundColor: null, scale: 2 });
-      const imgDataBack = canvasBack.toDataURL('image/png');
+      const imgDataBack = await domtoimage.toPng(cardBackRef.current, { quality: 1, scale: 2 });
       
       cardBackRef.current.className = origClass;
 
