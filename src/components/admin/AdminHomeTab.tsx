@@ -557,8 +557,8 @@ export default function AdminHomeTab() {
                     <InputGroup label="Video Integration URL (YouTube)">
                       <input 
                         type="text" 
-                        value={content.kyvYoutubeUrl || ""}
-                        onChange={(e) => updateContentField("kyvYoutubeUrl", e.target.value)}
+                        value={content.socialLinkYoutube || ""}
+                        onChange={(e) => updateContentField("socialLinkYoutube", e.target.value)}
                         className="w-full bg-brand-black border border-white/10 p-3 text-white text-xs focus:border-brand-gold outline-none" 
                       />
                     </InputGroup>

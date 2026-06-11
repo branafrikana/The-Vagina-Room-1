@@ -205,12 +205,22 @@ export default function MemberDashboardPage() {
   const progress = totalLessons > 0 ? Math.round((totalCompleted / totalLessons) * 100) : 0;
 
   // Final rendering safety checks
-  if (loading || !userData) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-brand-gold bg-brand-black font-semibold tracking-widest font-mono uppercase text-xs">
         <Loader2 className="animate-spin mr-2" size={14} />
         Verifying Sanctuary Credentials...
       </div>
+    );
+  }
+
+  // If loading is finished and no userData, and not an admin, we might have a problem
+  if (!userData && !isSystemAdmin) {
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center text-brand-gold bg-brand-black font-semibold tracking-widest font-mono uppercase text-xs">
+          <p className="mb-4">Error: Sanctuary Credentials Not Found</p>
+          <button onClick={() => auth.signOut()} className="bg-brand-gold text-brand-black px-4 py-2 text-[10px]">Sign Out & Retry</button>
+        </div>
     );
   }
 
@@ -235,12 +245,10 @@ export default function MemberDashboardPage() {
   }, [userData, lastPaymentStatus, lastIsMember, showToast]);
 
     // PAYMENT REQUIRED VIEW
-    if (!isSystemAdmin && (userData?.paymentStatus === 'pending' || userData?.paymentStatus === 'awaiting_approval' || (userData && !userData.isMember && !userData.isFreeMemberForLife))) {
-      // If we are already headed to welcome or on welcome, don't force redirect 
-      // but let's check membership
-      if (userData?.paymentStatus === 'approved' && userData?.isMember && userData?.welcomeSeen !== true) {
-        // Allow dashboard to continue to let the welcome redirect handle it
-      } else if (userData?.paymentStatus === 'pending' || userData?.paymentStatus === 'awaiting_approval') {
+    if (!isSystemAdmin && !hasActiveMembership) {
+      if (userData?.paymentStatus === 'approved' && userData?.welcomeSeen !== true) {
+        // Allow dashboard to continue to let the welcome redirect handle it (which sends to /welcome)
+      } else {
         return <Navigate to="/payment-review" replace />;
       }
     }

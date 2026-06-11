@@ -20,7 +20,7 @@ import SEO from "../components/SEO";
 import { safeJsonParse } from "../lib/json";
 
 export default function WelcomePage() {
-  const { user, userData } = useAuth();
+  const { user, userData, loading } = useAuth();
   const { content } = useContent();
   interface BrandingSettings {
     headerLogoType?: string;
@@ -59,10 +59,11 @@ export default function WelcomePage() {
     }
   }, [userData, navigate]);
 
-  if (!userData) {
+  if (loading || !userData) {
     return (
-      <div className="min-h-screen bg-brand-black flex items-center justify-center">
+      <div className="min-h-screen bg-brand-black flex flex-col items-center justify-center gap-4">
         <div className="w-12 h-12 border-4 border-brand-gold border-t-transparent rounded-full animate-spin" />
+        <p className="text-brand-gold text-[10px] font-mono uppercase tracking-[0.3em]">Synching Sanctuary Nodes...</p>
       </div>
     );
   }

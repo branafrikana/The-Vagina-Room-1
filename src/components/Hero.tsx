@@ -76,7 +76,7 @@ export default function Hero() {
             variants={playButtonVariants}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 lg:left-2/3"
           >
-            <a href={content.kyvYoutubeUrl || "https://www.youtube.com"} target="_blank" rel="noopener noreferrer">
+            <a href={content.socialLinkYoutube || "https://www.youtube.com"} target="_blank" rel="noopener noreferrer">
               <div className="w-24 h-24 md:w-32 md:h-32 bg-white/10 backdrop-blur-md rounded-full border border-white/20 flex items-center justify-center cursor-pointer hover:bg-brand-red hover:border-brand-red transition-all group">
                 <Play fill="white" size={32} className="text-white ml-2 transition-transform group-hover:scale-110" />
               </div>
@@ -110,7 +110,7 @@ export default function Hero() {
                 </EditableText>
                                 <div className="flex flex-col sm:flex-row gap-6">
                    <a 
-                     href={content.kyvYoutubeUrl || "https://www.youtube.com"}
+                     href={content.socialLinkYoutube || "https://www.youtube.com"}
                      target="_blank"
                      rel="noopener noreferrer"
                      className="bg-brand-red text-white px-10 py-5 rounded-none text-xs font-black tracking-widest uppercase hover:bg-white hover:text-brand-black transition-all duration-300 shadow-2xl flex items-center justify-center group"
@@ -134,7 +134,7 @@ export default function Hero() {
                       <EditableText field="kyvBadgeTitle" />
                     </p>
                     <a 
-                      href={content.kyvYoutubeUrl || "https://www.youtube.com"}
+                      href={content.socialLinkYoutube || "https://www.youtube.com"}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-2xl font-serif font-bold italic text-white underline decoration-brand-red decoration-2 underline-offset-4 hover:text-brand-gold transition-colors"
@@ -144,7 +144,7 @@ export default function Hero() {
                   </div>
                 </div>
                 <a 
-                  href={content.kyvYoutubeUrl || "https://www.youtube.com"}
+                  href={content.socialLinkYoutube || "https://www.youtube.com"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center mt-2 group cursor-pointer"

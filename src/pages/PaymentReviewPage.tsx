@@ -11,7 +11,7 @@ import { db } from '../lib/firebase';
 import { useNavigate } from 'react-router-dom';
 
 export default function PaymentReviewPage() {
-  const { user, userData } = useAuth();
+  const { user, userData, loading } = useAuth();
   const { content, uploadImage } = useContent();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -49,7 +49,21 @@ export default function PaymentReviewPage() {
     }
   };
 
-  const config = JSON.parse(content?.generalSettingsJson || '{}');
+  if (loading || (!userData && !user)) {
+    return (
+      <div className="min-h-screen bg-brand-black flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 border-4 border-brand-gold border-t-transparent rounded-full animate-spin" />
+        <p className="text-brand-gold text-[10px] font-mono uppercase tracking-[0.3em]">Synching Sanctuary Nodes...</p>
+      </div>
+    );
+  }
+
+  let config: any = {};
+  try {
+    config = JSON.parse(content?.generalSettingsJson || '{}');
+  } catch (e) {
+    console.warn("Settings parse failed", e);
+  }
 
   return (
     <>
