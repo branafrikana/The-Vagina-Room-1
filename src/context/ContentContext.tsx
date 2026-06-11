@@ -304,6 +304,7 @@ export const FALLBACK_DEFAULTS = {
   contactThankYouMessage: "Your message has been logged securely, and our team will get in touch shortly.",
   contactThankYouCtaText: "Join Our Free Telegram Community",
   contactThankYouTelegramLink: "https://t.me/thevaginaroom",
+  contactThankYouTelegramLandingUrl: "/telegram",
 
   // Support page extra defaults
   supportFuelHeading: "FUELING THE RESTORATION",

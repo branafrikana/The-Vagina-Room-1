@@ -1307,15 +1307,27 @@ export function AdminContactTab() {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Telegram Group Invite Link</label>
-          <input 
-            type="text" 
-            value={content.contactThankYouTelegramLink || ""}
-            onChange={(e) => updateContentField("contactThankYouTelegramLink", e.target.value)}
-            placeholder="e.g. https://t.me/yourgroup"
-            className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs font-mono" 
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Telegram Group Invite Link</label>
+            <input 
+              type="text" 
+              value={content.contactThankYouTelegramLink || ""}
+              onChange={(e) => updateContentField("contactThankYouTelegramLink", e.target.value)}
+              placeholder="e.g. https://t.me/yourgroup"
+              className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs font-mono" 
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Telegram Landing Page URL</label>
+            <input 
+              type="text" 
+              value={content.contactThankYouTelegramLandingUrl || ""}
+              onChange={(e) => updateContentField("contactThankYouTelegramLandingUrl", e.target.value)}
+              placeholder="e.g. /telegram"
+              className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold text-xs font-mono" 
+            />
+          </div>
         </div>
 
         <div className="space-y-2">

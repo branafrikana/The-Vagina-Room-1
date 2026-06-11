@@ -23,6 +23,7 @@ export default function AdminCommunityTab() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<ThreadItem>({
     author: 'Admin',
@@ -97,9 +98,14 @@ export default function AdminCommunityTab() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this thread permanently? All inner replies (if stored separately) may be orphaned.")) return;
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      setTimeout(() => setConfirmDeleteId(null), 3000);
+      return;
+    }
     try {
       await deleteDoc(doc(db, 'community_threads', id));
+      setConfirmDeleteId(null);
       setThreads(threads.filter(t => t.id !== id));
     } catch (err: any) {
       setError('Failed to delete thread.');
@@ -230,7 +236,11 @@ export default function AdminCommunityTab() {
                <button onClick={() => { handleOpenForm(thread); window.scrollTo({top: 0, behavior: 'smooth'}); }} className="p-2.5 bg-white/5 hover:bg-brand-gold hover:text-black text-white transition-colors">
                   <Edit2 size={12} />
                </button>
-               <button onClick={() => handleDelete(thread.id!)} className="p-2.5 bg-white/5 hover:bg-red-500 hover:text-white text-white transition-colors">
+               <button 
+                  onClick={() => handleDelete(thread.id!)} 
+                  className={`p-2.5 transition-colors ${confirmDeleteId === thread.id ? "bg-brand-red text-white border border-brand-red animate-pulse" : "bg-white/5 hover:bg-red-500 hover:text-white text-white"}`}
+                  title={confirmDeleteId === thread.id ? "Confirm?" : "Delete"}
+               >
                   <Trash2 size={12} />
                </button>
             </div>

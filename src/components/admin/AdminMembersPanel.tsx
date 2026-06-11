@@ -14,6 +14,7 @@ export default function AdminMembersPanel() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [confirmDeleteUserId, setConfirmDeleteUserId] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     continent: '',
     country: '',
@@ -289,13 +290,18 @@ export default function AdminMembersPanel() {
   };
 
   const deleteUser = async (userId: string) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      try {
-        await deleteDoc(doc(db, "users", userId));
-        fetchUsers();
-      } catch (e) {
-        handleFirestoreError(e, OperationType.DELETE, `users/${userId}`);
-      }
+    if (confirmDeleteUserId !== userId) {
+      setConfirmDeleteUserId(userId);
+      setTimeout(() => setConfirmDeleteUserId(null), 3000);
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, "users", userId));
+      setConfirmDeleteUserId(null);
+      fetchUsers();
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `users/${userId}`);
     }
   };
 
@@ -991,9 +997,13 @@ export default function AdminMembersPanel() {
 
                       <button 
                         onClick={() => deleteUser(user.id)}
-                        className="bg-red-950/40 text-red-300 hover:text-red-200 px-2 py-1 font-black uppercase text-[9px] transition-colors"
+                        className={`px-2 py-1 font-black uppercase text-[9px] transition-colors ${
+                          confirmDeleteUserId === user.id 
+                          ? "bg-brand-red text-white animate-pulse" 
+                          : "bg-red-950/40 text-red-300 hover:text-red-200"
+                        }`}
                       >
-                        Delete
+                        {confirmDeleteUserId === user.id ? "Confirm?" : "Delete"}
                       </button>
                     </div>
                   </td>

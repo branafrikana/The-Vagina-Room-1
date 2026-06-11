@@ -29,6 +29,7 @@ export default function AdminEventsTab() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<EventItem>({
     title: '',
@@ -110,9 +111,14 @@ export default function AdminEventsTab() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this event?")) return;
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      setTimeout(() => setConfirmDeleteId(null), 3000);
+      return;
+    }
     try {
       await deleteDoc(doc(db, 'events', id));
+      setConfirmDeleteId(null);
       setEvents(events.filter(e => e.id !== id));
     } catch (err: any) {
       setError('Failed to delete event.');
@@ -280,7 +286,11 @@ export default function AdminEventsTab() {
                      <button onClick={() => { handleOpenForm(evt); window.scrollTo({top: 0, behavior: 'smooth'}); }} className="p-2 bg-white/5 hover:bg-brand-gold hover:text-black text-white transition-colors">
                         <Edit2 size={12} />
                      </button>
-                     <button onClick={() => handleDelete(evt.id!)} className="p-2 bg-white/5 hover:bg-red-500 hover:text-white text-white transition-colors">
+                     <button 
+                        onClick={() => handleDelete(evt.id!)} 
+                        className={`p-2 transition-colors ${confirmDeleteId === evt.id ? "bg-brand-red text-white border border-brand-red animate-pulse" : "bg-white/5 hover:bg-red-500 hover:text-white text-white"}`}
+                        title={confirmDeleteId === evt.id ? "Confirm?" : "Delete"}
+                     >
                         <Trash2 size={12} />
                      </button>
                   </div>

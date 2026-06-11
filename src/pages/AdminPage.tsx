@@ -53,6 +53,7 @@ import AdminContentRenderer from "../components/admin/AdminContentRenderer";
 import NavigationMenuManager from "../components/admin/NavigationMenuManager";
 import AdminSettingsTab from "../components/admin/AdminSettingsTab";
 import AdminProductsPanel from "../components/admin/AdminProductsPanel";
+import AdminLiveClassSettings from "../components/admin/AdminLiveClassSettings";
 import AdminEventsTab from "../components/admin/AdminEventsTab";
 import AdminResourcesTab from "../components/admin/AdminResourcesTab";
 import AdminCommunityTab from "../components/admin/AdminCommunityTab";
@@ -132,7 +133,7 @@ export default function AdminPage() {
       products: ['products', 'discount_codes'],
       members: ['members', 'approvals', 'partners', 'community'],
       content: ['content', 'page_manager', 'page_visibility', 'blog_manager', 'media_manager', 'events', 'resources', 'reorder_sections'],
-      settings: ['general', 'branding', 'seo', 'security', 'social', 'navigation', 'checkout_settings', 'payment_gateways', 'media_sync', 'telegram_config', 'integrations', 'permissions'],
+      settings: ['general', 'branding', 'seo', 'security', 'social', 'navigation', 'live_class', 'checkout_settings', 'payment_gateways', 'media_sync', 'telegram_config', 'integrations', 'permissions'],
       moderation: ['moderation', 'submissions']
     };
 
@@ -150,7 +151,7 @@ export default function AdminPage() {
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState({ success: false, text: "" });
-  const [activeTab, setActiveTab] = useState<"dashboard" | "submissions" | "content" | "members" | "payouts" | "partners" | "moderation" | "navigation" | "general" | "branding" | "seo" | "security" | "social" | "reorder_sections" | "products" | "orders" | "business_details" | "checkout_settings" | "payment_gateways" | "media_sync" | "telegram_config" | "approvals" | "events" | "resources" | "community" | "page_manager" | "page_visibility" | "blog_manager" | "media_manager" | "sales_trends" | "discount_codes" | "integrations" | "permissions">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "submissions" | "content" | "members" | "payouts" | "partners" | "moderation" | "navigation" | "general" | "branding" | "seo" | "security" | "social" | "reorder_sections" | "products" | "orders" | "business_details" | "checkout_settings" | "payment_gateways" | "media_sync" | "telegram_config" | "approvals" | "events" | "resources" | "community" | "page_manager" | "page_visibility" | "blog_manager" | "media_manager" | "sales_trends" | "discount_codes" | "integrations" | "permissions" | "live_class">("dashboard");
 
   useEffect(() => {
     if (userData && !hasPermission(activeTab)) {
@@ -158,7 +159,7 @@ export default function AdminPage() {
         'dashboard', 'members', 'approvals', 'payouts', 'partners', 
         'moderation', 'submissions', 'content', 'reorder_sections', 'sales_trends', 
         'discount_codes', 'navigation', 'telegram_config', 'events', 'resources', 
-        'community', 'products', 'orders', 'business_details', 'checkout_settings', 
+        'community', 'live_class', 'products', 'orders', 'business_details', 'checkout_settings', 
         'payment_gateways', 'media_sync', 'page_manager', 'page_visibility', 'blog_manager', 'media_manager', 
         'general', 'branding', 'seo', 'security', 'social', 'integrations', 'permissions'
       ];
@@ -176,6 +177,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [selectedSub, setSelectedSub] = useState<any | null>(null);
+  const [confirmDeleteSubId, setConfirmDeleteSubId] = useState<string | null>(null);
   const [submissionFilter, setSubmissionFilter] = useState<"all" | "partnership" | "contact" | "booking_dr_fid" | "telegram_community">("all");
 
   const [leadsMeta, setLeadsMeta] = useState<Record<string, { status: string; notes: string }>>(() => {
@@ -589,13 +591,19 @@ export default function AdminPage() {
 
   const handleDeleteSubmission = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm("Are you sure you want to permanently delete this submission?")) return;
+    
+    if (confirmDeleteSubId !== id) {
+      setConfirmDeleteSubId(id);
+      setTimeout(() => setConfirmDeleteSubId(null), 3000);
+      return;
+    }
 
     try {
       const { doc, deleteDoc } = await import('firebase/firestore');
       await deleteDoc(doc(db, "submissions", id));
       setSubmissions((prev) => prev.filter((s) => s.id !== id));
       if (selectedSub?.id === id) setSelectedSub(null);
+      setConfirmDeleteSubId(null);
     } catch (err) {
       console.error("Failed to delete submission", err);
     }
@@ -1202,6 +1210,20 @@ export default function AdminPage() {
                       </span>
                     </button>
                   ),
+                  live_class: () => hasPermission("settings") && (
+                    <button
+                      onClick={() => setActiveTab("live_class")}
+                      className={`w-full text-left px-5 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-between cursor-pointer ${
+                        activeTab === "live_class"
+                          ? "bg-brand-gold text-brand-black"
+                          : "bg-white/[0.02] border border-white/5 text-white/70 hover:bg-white/[0.05]"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="text-xs">🔴</span> Live Class Settings
+                      </span>
+                    </button>
+                  ),
                   products: () => hasPermission("products") && (
                     <button
                       onClick={() => setActiveTab("products")}
@@ -1460,6 +1482,7 @@ export default function AdminPage() {
                     "sales_trends",
                     "discount_codes",
                     "navigation",
+                    "live_class",
                     "telegram_config",
                     "automation",
                     "events",
@@ -2837,9 +2860,13 @@ export default function AdminPage() {
                                   <td className="py-4 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                                     <button
                                       onClick={(e) => handleDeleteSubmission(sub.id, e)}
-                                      className="p-1.5 hover:bg-brand-red/20 text-white/50 hover:text-brand-red border border-white/5 hover:border-brand-red/30 transition-all cursor-pointer inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest"
+                                      className={`p-1.5 transition-all cursor-pointer inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest border ${
+                                        confirmDeleteSubId === sub.id 
+                                        ? "bg-brand-red text-white border-brand-red animate-pulse" 
+                                        : "hover:bg-brand-red/20 text-white/50 hover:text-brand-red border-white/5 hover:border-brand-red/30"
+                                      }`}
                                     >
-                                      <Trash2 size={11} /> Delete
+                                      <Trash2 size={11} /> {confirmDeleteSubId === sub.id ? "Confirm?" : "Delete"}
                                     </button>
                                   </td>
                                 </tr>
@@ -3099,9 +3126,13 @@ export default function AdminPage() {
                               <button
                                 type="button"
                                 onClick={(e) => handleDeleteSubmission(selectedSub.id, e)}
-                                className="px-5 py-2.5 bg-brand-red/10 border border-brand-red/30 hover:bg-brand-red hover:text-white text-brand-red text-[10px] uppercase font-black tracking-wider transition-all cursor-pointer flex items-center gap-2"
+                                className={`px-5 py-2.5 border text-[10px] uppercase font-black tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
+                                  confirmDeleteSubId === selectedSub.id
+                                  ? "bg-brand-red text-white border-brand-red animate-pulse"
+                                  : "bg-brand-red/10 border-brand-red/30 hover:bg-brand-red hover:text-white text-brand-red"
+                                }`}
                               >
-                                <Trash2 size={11} /> Permanently Delete Inquiry / Contact
+                                <Trash2 size={11} /> {confirmDeleteSubId === selectedSub.id ? "Click Again to Confirm Delete" : "Permanently Delete Inquiry / Contact"}
                               </button>
                             </div>
                           </div>
@@ -3421,6 +3452,17 @@ export default function AdminPage() {
                   </div>
 
                   <AdminProductsPanel />
+                </motion.div>
+              )}
+
+              {activeTab === "live_class" && hasPermission("settings") && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-8"
+                >
+                  <AdminLiveClassSettings />
                 </motion.div>
               )}
 

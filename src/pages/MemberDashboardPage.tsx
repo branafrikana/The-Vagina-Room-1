@@ -50,14 +50,15 @@ import {
   RefreshCw,
   DollarSign,
   BarChart,
-  Wind
+  Wind,
+  VideoOff
 } from 'lucide-react';
 import { defaultPrograms } from '../lib/programs';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import SomaticBreathingPage from './SomaticBreathingPage';
 
-type TabType = 'dashboard' | 'profile' | 'resources' | 'programs' | 'events' | 'community' | 'inbox' | 'shop' | 'id_card' | 'referral' | 'support' | 'settings' | 'reflection' | 'breathing';
+type TabType = 'dashboard' | 'live_class' | 'profile' | 'resources' | 'programs' | 'events' | 'community' | 'inbox' | 'shop' | 'id_card' | 'referral' | 'support' | 'settings' | 'reflection' | 'breathing' | 'analytics' | 'bookmarks' | 'consultation';
 
 export default function MemberDashboardPage() {
   const { user, userData, isImpersonating, isSystemAdmin, hasActiveMembership, loading, realUserData } = useAuth();
@@ -68,15 +69,95 @@ export default function MemberDashboardPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [deviceRestrictionStatus, setDeviceRestrictionStatus] = useState<'checking' | 'authorized' | 'mismatch'>('checking');
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
   const [activeChat, setActiveChat] = useState<any>(null);
   const { showToast } = useNotifications();
   const [lastPaymentStatus, setLastPaymentStatus] = useState<string | null>(null);
   const [lastIsMember, setLastIsMember] = useState<boolean | null>(null);
 
+  // SIDEBAR SECTIONS AND ORDER LOGIC (Move up so hooks can use it)
+
+  const enabledFeatures: Record<string, boolean> = (() => {
+    let features: Record<string, boolean> = {
+      profile: true,
+      resources: true,
+      programs: true,
+      events: true,
+      community: true,
+      shop: true,
+      id_card: true,
+      referral: true,
+      support: true,
+      breathing: true,
+      live_class: true,
+      analytics: true,
+      bookmarks: true,
+      consultation: true
+    };
+    try {
+      if (content.memberDashboardFeaturesJson) {
+        features = { ...features, ...JSON.parse(content.memberDashboardFeaturesJson) };
+      }
+    } catch (err) {}
+    return features;
+  })();
+
+  const sidebarOrder: string[] = (() => {
+    try {
+      if (content.memberSidebarOrderJson) {
+        const parsed = JSON.parse(content.memberSidebarOrderJson);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return ["dashboard", "live_class", "reflection", "breathing", "analytics", "consultation", "profile", "resources", "bookmarks", "programs", "events", "community", "inbox", "shop", "id_card", "referral", "support", "settings"];
+  })();
+
   useEffect(() => {
     console.log("MemberDashboardPage debug:", { user, userData, loading });
   }, [user, userData, loading]);
+
+  // Redirect to welcome onboarding portal if paymentStatus is approved and they haven't seen it yet
+  useEffect(() => {
+    if (
+      userData &&
+      !isSystemAdmin &&
+      userData.paymentStatus === 'approved' &&
+      userData.isMember &&
+      userData.welcomeSeen !== true &&
+      activeTab === 'dashboard'
+    ) {
+      navigate("/welcome", { replace: true });
+    }
+  }, [userData, isSystemAdmin, activeTab, navigate]);
+
+  useEffect(() => {
+    if (!userData) return;
+
+    // Monitor payment status changes
+    if (lastPaymentStatus && lastPaymentStatus !== userData.paymentStatus) {
+      if (userData.paymentStatus === 'approved') {
+        showToast("Welcome to the Inner Circle! Your membership has been approved.", "success");
+      } else if (userData.paymentStatus === 'declined') {
+        showToast("Your membership application was declined. Please contact support.", "error");
+      }
+    }
+    setLastPaymentStatus(userData.paymentStatus);
+
+    // Monitor membership status changes
+    if (lastIsMember === false && userData.isMember === true) {
+      showToast("Access Granted: You are now a verified Community Member.", "success");
+    }
+    setLastIsMember(userData.isMember);
+  }, [userData, lastPaymentStatus, lastIsMember, showToast]);
+
+  // Guard active tab redirection
+  useEffect(() => {
+    if (activeTab !== 'dashboard' && activeTab !== 'settings') {
+      if (enabledFeatures[activeTab as keyof typeof enabledFeatures] === false) {
+        setActiveTab('dashboard');
+      }
+    }
+  }, [activeTab, enabledFeatures]);
 
   useEffect(() => {
     if (!userData && !isSystemAdmin) return;
@@ -111,60 +192,71 @@ export default function MemberDashboardPage() {
     }
   }, [userData, user]);
 
+  // 1. Initial Loading States
+  const isActuallyLoading = loading || (deviceRestrictionStatus === 'checking');
+
+  // Determine the primary view to render based on priority guards
+  let viewToRender: React.ReactNode = null;
+
   if (loading) {
-    return (
-        <div className="min-h-screen flex items-center justify-center text-brand-gold bg-brand-black font-semibold tracking-widest font-mono uppercase text-xs">
-          Loading dashboard...
-        </div>
+    viewToRender = (
+      <div className="min-h-screen flex items-center justify-center text-brand-gold bg-brand-black font-semibold tracking-widest font-mono uppercase text-xs">
+        <Loader2 className="animate-spin mr-2" size={14} />
+        Verifying Sanctuary Credentials...
+      </div>
     );
-  }
-
-  const resetDevice = async () => {
-    if (confirm("Are you sure you want to remove your current device authorisation? This will log you out from your current session to allow authorisation of another device.")) {
-        await updateDoc(doc(db, "users", user.uid), { authorizedDeviceId: null });
-        localStorage.removeItem('tvr_deviceId');
-        window.location.reload();
-    }
-  };
-
-  if (!user) {
-    return <Navigate to="/register" replace />;
-  }
-
-  // Redirect to welcome onboarding portal if paymentStatus is approved and they haven't seen it yet
-  useEffect(() => {
-    if (
-      userData &&
-      !isSystemAdmin &&
-      userData.paymentStatus === 'approved' &&
-      userData.isMember &&
-      userData.welcomeSeen !== true &&
-      activeTab === 'dashboard'
-    ) {
-      navigate("/welcome", { replace: true });
-    }
-  }, [userData, isSystemAdmin, activeTab, navigate]);
-
-  if (deviceRestrictionStatus === 'mismatch') {
-    return (
-        <div className="min-h-screen pt-20 px-6 bg-brand-black text-white flex flex-col items-center justify-center text-center">
-            <h1 className="text-3xl font-black mb-6 text-brand-gold font-sans uppercase">Access Restricted</h1>
-            <p className="mb-8 text-neutral-400 max-w-md text-sm font-light">This account is currently authorized on another device browser. Please deauthorize it via your active device settings first.</p>
-            <button onClick={resetDevice} className="bg-brand-gold text-brand-black hover:bg-white px-6 py-3 font-black uppercase text-xs tracking-widest transition-colors font-sans decoration-none">
-                Reset Authorized Device
-            </button>
-        </div>
+  } else if (!user) {
+    viewToRender = <Navigate to="/register" replace />;
+  } else if (!userData && !isSystemAdmin) {
+    viewToRender = (
+      <div className="min-h-screen flex flex-col items-center justify-center text-brand-gold bg-brand-black font-semibold tracking-widest font-mono uppercase text-xs">
+        <p className="mb-4">Error: Sanctuary Credentials Not Found</p>
+        <button onClick={() => auth.signOut()} className="bg-brand-gold text-brand-black px-4 py-2 text-[10px]">Sign Out & Retry</button>
+      </div>
     );
-  }
-
-  if (deviceRestrictionStatus === 'checking') {
-    return (
+  } else if (deviceRestrictionStatus === 'mismatch') {
+    viewToRender = (
+      <div className="min-h-screen pt-20 px-6 bg-brand-black text-white flex flex-col items-center justify-center text-center">
+        <h1 className="text-3xl font-black mb-6 text-brand-gold font-sans uppercase">Access Restricted</h1>
+        <p className="mb-8 text-neutral-400 max-w-md text-sm font-light">This account is currently authorized on another device browser. Please deauthorize it via your active device settings first.</p>
+        <button onClick={() => {
+          if (confirm("Are you sure you want to remove your current device authorisation? This will log you out from your current session to allow authorisation of another device.")) {
+            updateDoc(doc(db, "users", user.uid), { authorizedDeviceId: null })
+              .then(() => {
+                localStorage.removeItem('tvr_deviceId');
+                window.location.reload();
+              });
+          }
+        }} className="bg-brand-gold text-brand-black hover:bg-white px-6 py-3 font-black uppercase text-xs tracking-widest transition-colors font-sans decoration-none">
+          Reset Authorized Device
+        </button>
+      </div>
+    );
+  } else if (deviceRestrictionStatus === 'checking') {
+    viewToRender = (
       <div className="min-h-screen flex items-center justify-center text-brand-gold bg-brand-black font-semibold tracking-widest font-mono uppercase text-xs">
         <RefreshCw className="animate-spin mr-2" size={14} />
         Verifying cryptographic device sequence...
       </div>
     );
+  } else if (!isSystemAdmin && !hasActiveMembership) {
+    if (userData?.paymentStatus === 'approved' && userData?.welcomeSeen !== true) {
+      // Allow through to let the welcome redirect handle it
+      viewToRender = null; 
+    } else {
+      viewToRender = <Navigate to="/payment-review" replace />;
+    }
+  } else if (!hasActiveMembership && !isSystemAdmin) {
+    viewToRender = (
+      <div className="min-h-screen pt-28 px-6 bg-brand-black text-white text-center flex flex-col items-center justify-center">
+        <h1 className="text-3xl font-black mb-6 text-brand-gold font-sans uppercase">Access Restricted</h1>
+        <p className="text-neutral-400">Your membership is not yet active. Please contact support to approve your account authorization details.</p>
+      </div>
+    );
   }
+
+  // If a guard view was selected, return it immediately after all hooks
+  if (viewToRender) return viewToRender;
 
   const handleProofUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -204,84 +296,6 @@ export default function MemberDashboardPage() {
   const totalCompleted = defaultPrograms.reduce((acc, p) => acc + p.lessons.filter(l => !!completedLessonsMap[l.id]).length, 0);
   const progress = totalLessons > 0 ? Math.round((totalCompleted / totalLessons) * 100) : 0;
 
-  // Final rendering safety checks
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-brand-gold bg-brand-black font-semibold tracking-widest font-mono uppercase text-xs">
-        <Loader2 className="animate-spin mr-2" size={14} />
-        Verifying Sanctuary Credentials...
-      </div>
-    );
-  }
-
-  // If loading is finished and no userData, and not an admin, we might have a problem
-  if (!userData && !isSystemAdmin) {
-    return (
-        <div className="min-h-screen flex flex-col items-center justify-center text-brand-gold bg-brand-black font-semibold tracking-widest font-mono uppercase text-xs">
-          <p className="mb-4">Error: Sanctuary Credentials Not Found</p>
-          <button onClick={() => auth.signOut()} className="bg-brand-gold text-brand-black px-4 py-2 text-[10px]">Sign Out & Retry</button>
-        </div>
-    );
-  }
-
-  useEffect(() => {
-    if (!userData) return;
-
-    // Monitor payment status changes
-    if (lastPaymentStatus && lastPaymentStatus !== userData.paymentStatus) {
-      if (userData.paymentStatus === 'approved') {
-        showToast("Welcome to the Inner Circle! Your membership has been approved.", "success");
-      } else if (userData.paymentStatus === 'declined') {
-        showToast("Your membership application was declined. Please contact support.", "error");
-      }
-    }
-    setLastPaymentStatus(userData.paymentStatus);
-
-    // Monitor membership status changes
-    if (lastIsMember === false && userData.isMember === true) {
-      showToast("Access Granted: You are now a verified Community Member.", "success");
-    }
-    setLastIsMember(userData.isMember);
-  }, [userData, lastPaymentStatus, lastIsMember, showToast]);
-
-    // PAYMENT REQUIRED VIEW
-    if (!isSystemAdmin && !hasActiveMembership) {
-      if (userData?.paymentStatus === 'approved' && userData?.welcomeSeen !== true) {
-        // Allow dashboard to continue to let the welcome redirect handle it (which sends to /welcome)
-      } else {
-        return <Navigate to="/payment-review" replace />;
-      }
-    }
-
-  // RESTRICTED USER FLOW
-  if (!hasActiveMembership && !isSystemAdmin) {
-      return (
-          <div className="min-h-screen pt-28 px-6 bg-brand-black text-white text-center flex flex-col items-center justify-center">
-              <h1 className="text-3xl font-black mb-6 text-brand-gold font-sans uppercase">Access Restricted</h1>
-              <p className="text-neutral-400">Your membership is not yet active. Please contact support to approve your account authorization details.</p>
-          </div>
-      );
-  }
-
-  // SIDEBAR SECTIONS AND ORDER
-  let enabledFeatures: Record<string, boolean> = {
-    profile: true,
-    resources: true,
-    programs: true,
-    events: true,
-    community: true,
-    shop: true,
-    id_card: true,
-    referral: true,
-    support: true,
-    breathing: true
-  };
-  try {
-    if (content.memberDashboardFeaturesJson) {
-      enabledFeatures = { ...enabledFeatures, ...JSON.parse(content.memberDashboardFeaturesJson) };
-    }
-  } catch (err) {}
-
   const baseSidebarNavItems = [
     {
       id: 'dashboard',
@@ -289,6 +303,13 @@ export default function MemberDashboardPage() {
       icon: Home,
       desc: 'Overview of membership activity',
       meta: 'Welcome Panel, Status, Actions, Happenings'
+    },
+    {
+      id: 'live_class',
+      name: 'Live Class',
+      icon: ExternalLink,
+      desc: 'Attend live broadcast',
+      meta: 'Virtual Room, Live Event, Broadcast'
     },
     {
       id: 'reflection',
@@ -305,18 +326,39 @@ export default function MemberDashboardPage() {
       meta: 'Solfeggio frequencies, Biometric breathing, Vocal cues'
     },
     {
+      id: 'analytics',
+      name: 'My Progress',
+      icon: BarChart,
+      desc: 'Somatic tracking & wellness trends',
+      meta: 'Statistics, Health logs, Cycle maps'
+    },
+    {
+      id: 'consultation',
+      name: 'Expert Booking',
+      icon: CalendarCheck,
+      desc: '1-on-1 private advisory',
+      meta: 'Dr Fid sessions, Clinic scheduling'
+    },
+    {
       id: 'profile',
       name: 'My Profile',
       icon: User,
       desc: 'Manage personal account information',
-      meta: 'Personal Info, Membership, Security Settings'
+      meta: 'Personal Info, Membership, Security'
     },
     {
       id: 'resources',
       name: 'Resource Library',
       icon: BookOpen,
       desc: 'Access exclusive member content',
-      meta: 'Videos, Audio Resources, Guides, Restorations'
+      meta: 'Videos, Audio Resources, Guides'
+    },
+    {
+      id: 'bookmarks',
+      name: 'Saved Collections',
+      icon: BookOpen,
+      desc: 'Your bookmarked materials',
+      meta: 'Saved articles, Meditations'
     },
     {
       id: 'programs',
@@ -383,16 +425,6 @@ export default function MemberDashboardPage() {
     }
   ];
 
-  const sidebarOrder: string[] = (() => {
-    try {
-      if (content.memberSidebarOrderJson) {
-        const parsed = JSON.parse(content.memberSidebarOrderJson);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return ["dashboard", "reflection", "breathing", "profile", "resources", "programs", "events", "community", "inbox", "shop", "id_card", "referral", "support", "settings"];
-  })();
-
   const sidebarNavItems = [...baseSidebarNavItems]
     .filter(item => {
       if (item.id === 'dashboard' || item.id === 'settings') return true;
@@ -406,15 +438,6 @@ export default function MemberDashboardPage() {
       if (idxB === -1) return -1;
       return idxA - idxB;
     });
-
-  // Guard active tab redirection
-  useEffect(() => {
-    if (activeTab !== 'dashboard' && activeTab !== 'settings') {
-      if (enabledFeatures[activeTab as keyof typeof enabledFeatures] === false) {
-        setActiveTab('dashboard');
-      }
-    }
-  }, [activeTab, enabledFeatures]);
 
   const currentNav = sidebarNavItems.find(item => item.id === activeTab) || sidebarNavItems[0];
 
@@ -440,47 +463,60 @@ export default function MemberDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-black text-white pt-24 font-sans flex flex-col lg:flex-row relative">
+    <div className="min-h-[100dvh] bg-[#050505] text-white pt-[110px] pb-8 px-4 sm:px-6 lg:px-8 font-sans flex flex-col lg:flex-row gap-8 relative">
       
       {/* MOBILE BAR */}
-      <div className="lg:hidden w-full bg-zinc-950/90 border-b border-white/5 py-4 px-6 flex items-center justify-between sticky top-[60px] z-[999]">
-        <div className="flex items-center gap-2">
-          <span className="text-xs uppercase text-brand-gold">🌸 Portal /</span>
-          <span className="text-xs font-black uppercase text-white tracking-widest">{currentNav.name}</span>
+      <div className="lg:hidden w-full bg-[#111111]/90 backdrop-blur-md border border-white/10 rounded-2xl py-4 px-6 flex items-center justify-between sticky top-[90px] z-[999] shadow-2xl">
+        <div className="flex items-center gap-3">
+          <span className="text-sm">🌸</span>
+          <span className="text-xs font-black uppercase text-brand-gold tracking-widest">{currentNav.name}</span>
         </div>
         <button
-          onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+          onClick={() => setSidebarOpen(!sidebarOpen)}
           type="button"
-          className="text-brand-gold hover:text-white p-1"
+          className="text-white hover:text-brand-gold p-2 bg-white/5 rounded-full transition-colors"
         >
-          {mobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
       </div>
 
       {/* FULL-RESTRUCTURE SIDEBAR NAVIGATION */}
       <AnimatePresence>
-        {(mobileSidebarOpen || !mobileSidebarOpen) && (
-          <aside
+        {sidebarOpen && (
+          <motion.aside
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
             className={`
-              w-full lg:w-72 bg-zinc-950 border-r border-white/5 shrink-0 flex flex-col justify-between
-              fixed lg:sticky top-[110px] lg:top-24 bottom-0 left-0 z-[1000] lg:z-10 transition-transform duration-300
-              ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+              w-full lg:w-80 bg-[#111111] border border-white/5 shrink-0 flex flex-col justify-between
+              fixed lg:sticky top-[150px] lg:top-[110px] bottom-8 left-4 right-4 lg:left-auto lg:right-auto z-[1000] lg:z-10 rounded-3xl shadow-2xl overflow-hidden
             `}
-            style={{ height: 'calc(100vh - 96px)' }}
+            style={{ height: 'calc(100vh - 140px)' }}
           >
             {/* Upper: Title & Scroll Menu List */}
-            <div className="flex flex-col flex-1 min-h-0">
+            <div className="flex flex-col flex-1 min-h-0 bg-gradient-to-b from-white/[0.03] to-transparent">
               {/* Header */}
-              <div className="px-6 py-4 border-b border-white/5 flex items-center gap-2.5">
-                <span className="text-sm">🌸</span>
-                <div>
-                  <h1 className="text-xs font-medium text-brand-gold uppercase tracking-[0.2em] leading-none">The Vagina Room</h1>
-                  <span className="text-[9px] uppercase text-white/40 tracking-wider font-mono font-bold mt-1 block">Member Dashboard</span>
+              <div className="px-8 py-6 border-b border-white/[0.05] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20">
+                    <span className="text-xl">🌸</span>
+                  </div>
+                  <div>
+                    <h1 className="text-xs font-black text-brand-gold uppercase tracking-[0.2em] leading-none">The Vagina Room</h1>
+                    <span className="text-[9px] uppercase text-white/50 tracking-widest font-bold mt-1.5 block">Sanctuary Portal</span>
+                  </div>
                 </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="lg:hidden text-white/50 hover:text-white p-2"
+                >
+                  <X size={20} />
+                </button>
               </div>
 
               {/* Items List */}
-              <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-thin">
+              <div className="flex-1 overflow-y-auto py-4 px-4 space-y-1 scrollbar-thin">
                 {sidebarNavItems.map(item => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
@@ -489,27 +525,21 @@ export default function MemberDashboardPage() {
                       key={item.id}
                       onClick={() => {
                         setActiveTab(item.id);
-                        setMobileSidebarOpen(false);
+                        if (window.innerWidth < 1024) {
+                          setSidebarOpen(false);
+                        }
                       }}
                       type="button"
-                      className={`
-                        w-full flex items-start gap-3 px-4 py-2.5 rounded text-left transition-all group
-                        ${isActive 
-                          ? 'bg-brand-gold text-brand-black font-extrabold shadow-lg shadow-brand-gold/10' 
-                          : 'text-white/60 hover:text-white hover:bg-white/[0.02]'
-                        }
-                      `}
+                      className={`w-full text-left px-4 py-3.5 text-xs font-black uppercase tracking-widest transition-all rounded-2xl flex items-center justify-between cursor-pointer group ${
+                        isActive
+                          ? "bg-brand-gold text-brand-black shadow-[0_0_20px_rgba(212,175,55,0.2)]"
+                          : "text-white/60 hover:bg-white/[0.04] hover:text-white"
+                      }`}
                     >
-                      <Icon 
-                        size={15} 
-                        className={`mt-0.5 shrink-0 transition-colors ${isActive ? 'text-brand-black' : 'text-brand-gold'}`} 
-                      />
-                      <div className="leading-tight">
-                        <span className="text-[10px] uppercase font-black tracking-wider block">{item.name}</span>
-                        <span className={`text-[8px] font-normal leading-normal mt-0.5 block tracking-normal ${isActive ? 'text-brand-black/60 font-medium' : 'text-white/35 font-light'}`}>
-                          {item.desc}
-                        </span>
-                      </div>
+                      <span className="flex items-center gap-3">
+                        <Icon size={16} className={`transition-transform duration-300 ${isActive ? "text-brand-black" : "text-brand-gold group-hover:scale-110"}`} /> 
+                        {item.name}
+                      </span>
                     </button>
                   );
                 })}
@@ -517,24 +547,33 @@ export default function MemberDashboardPage() {
             </div>
 
             {/* Footer Section (MANDATORY STRUCTURE) */}
-            <div className="p-4 bg-black/60 border-t border-white/5 space-y-3 font-mono">
-              <div className="border-b border-white/5 pb-2.5/2 text-left">
-                <p className="text-[7px] text-white/30 uppercase tracking-widest leading-none">Membership</p>
-                <p className="text-[10px] font-bold text-white uppercase mt-1">
-                  {getMembershipDisplayLabel()}
-                </p>
+            <div className="p-6 bg-[#0a0a0a] border-t border-white/[0.05] space-y-4 font-sans relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-brand-gold/20 to-transparent" />
+              
+              <div className="flex items-center gap-3 mb-4 border-b border-white/[0.05] pb-4">
+                <div className="w-8 h-8 rounded-full bg-brand-gold/20 flex items-center justify-center border border-brand-gold/30">
+                  <User size={14} className="text-brand-gold" />
+                </div>
+                <div className="text-left">
+                  <p className="text-[10px] font-black text-white uppercase tracking-widest">
+                    {userData?.fullName || "Member"}
+                  </p>
+                  <p className="text-[8px] text-brand-gold uppercase mt-0.5 tracking-wider font-bold">
+                    {getMembershipDisplayLabel()}
+                  </p>
+                </div>
               </div>
 
-              <div className="flex justify-between items-center text-[9px] border-b border-white/5 pb-2">
+              <div className="flex justify-between items-center text-[9px]">
                 <div className="text-left">
-                  <p className="text-[7px] text-white/30 uppercase tracking-widest leading-none">Member ID</p>
-                  <p className="text-[9px] font-bold text-white uppercase mt-1">
+                  <p className="text-[7.5px] text-white/40 uppercase tracking-[0.2em] mb-1">Passcode ID</p>
+                  <p className="text-[9px] font-black text-white uppercase tracking-wider">
                     {userData?.membershipId || 'TVR-001'}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[7px] text-white/30 uppercase tracking-widest leading-none">Expires</p>
-                  <p className="text-[9px] font-bold text-brand-gold uppercase mt-1">
+                  <p className="text-[7.5px] text-white/40 uppercase tracking-[0.2em] mb-1">Valid Until</p>
+                  <p className="text-[9px] font-black text-emerald-400 uppercase tracking-wider">
                     {formatExpirationDate(userData?.membershipExpiration)}
                   </p>
                 </div>
@@ -543,26 +582,35 @@ export default function MemberDashboardPage() {
               <button
                 onClick={() => auth.signOut()}
                 type="button"
-                className="w-full py-1.5 bg-white/5 hover:bg-red-950/20 text-white hover:text-red-400 text-[8px] uppercase tracking-widest font-black transition-all flex items-center justify-center gap-1.5 border border-white/5 hover:border-red-950/30 font-bold"
+                className="w-full py-3 mt-2 bg-[#1a1a1a] hover:bg-brand-red text-white/70 hover:text-white rounded-xl text-[9px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 border border-white/5 hover:border-brand-red font-black"
               >
-                <LogOut size={10} /> Disconnect Account
+                <LogOut size={12} /> Terminate Session
               </button>
             </div>
-          </aside>
+          </motion.aside>
         )}
       </AnimatePresence>
 
       {/* CENTRAL AREA VIEWPORT CONTAINER */}
-      <main className="flex-1 p-6 sm:p-8 overflow-y-auto max-w-5xl mx-auto w-full space-y-8" style={{ minHeight: 'calc(100vh - 96px)' }}>
+      <main className="flex-1 bg-[#111111] rounded-3xl border border-white/5 p-6 sm:p-10 shadow-2xl overflow-y-auto relative hidden-scrollbar" style={{ height: 'calc(100vh - 140px)' }}>
         
         {/* Dynamic Nav Header Bar */}
-        <div className="flex items-center justify-between border-b border-white/5 pb-4">
-          <div className="text-left">
-            <h2 className="text-lg font-black uppercase tracking-tight text-white font-sans flex items-center gap-2">
-              <currentNav.icon size={16} className="text-brand-gold" />
-              {currentNav.name}
-            </h2>
-            <p className="text-[9px] text-white/40 italic font-mono font-light mt-0.5">{currentNav.meta}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/5 pb-4 gap-4">
+          <div className="text-left flex items-center gap-4">
+            <button 
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="hidden lg:flex items-center justify-center p-2.5 bg-white/5 hover:bg-white/10 text-brand-gold rounded-xl transition-colors border border-white/5 hover:border-brand-gold/30"
+              title="Toggle Sidebar"
+            >
+              {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
+            </button>
+            <div>
+              <h2 className="text-lg font-black uppercase tracking-tight text-white font-sans flex items-center gap-2">
+                <currentNav.icon size={16} className="text-brand-gold" />
+                {currentNav.name}
+              </h2>
+              <p className="text-[9px] text-white/40 italic font-mono font-light mt-0.5">{currentNav.meta}</p>
+            </div>
           </div>
           <span className="hidden sm:inline-block font-mono text-[8px] text-white/35 bg-white/5 border border-white/10 px-2.5 py-1 rounded">
             LEDGER_PASSPHRASE_UID: {userData?.membershipId || user.uid}
@@ -593,7 +641,7 @@ export default function MemberDashboardPage() {
                         <Sparkles size={11} className="animate-spin-slow text-brand-gold" /> Personalized Member Community
                       </span>
                       <h3 className="text-xl sm:text-2xl font-black uppercase text-white font-sans tracking-tight flex flex-wrap items-center gap-3">
-                        Welcome Back, <span className="text-brand-gold italic font-light font-serif">{userData?.fullName || "Valued Scholar"}</span>
+                        Welcome Back, <span className="text-brand-gold font-light">{userData?.fullName || "Valued Scholar"}</span>
                         {(userData?.role === 'admin' || userData?.isAdmin === true) && (
                           <span className="bg-brand-red/10 text-brand-red border border-brand-red/20 text-[9px] px-2 py-0.5 rounded font-black tracking-widest flex items-center gap-1">
                             <ShieldCheck size={10} /> ADMIN
@@ -612,11 +660,11 @@ export default function MemberDashboardPage() {
 
                     <div className="flex flex-wrap gap-2.5 shrink-0">
                       <button
-                        onClick={() => setActiveTab('id_card')}
+                        onClick={() => setActiveTab('live_class')}
                         type="button"
                         className="bg-brand-gold text-brand-black hover:bg-white text-[9px] font-black uppercase tracking-widest px-4 py-2.5 transition-colors font-bold"
                       >
-                        Present Digital ID
+                        Attend Live Class
                       </button>
                     </div>
                   </div>
@@ -982,18 +1030,8 @@ export default function MemberDashboardPage() {
 
             {/* TAB: ID CARD */}
             {activeTab === 'id_card' && (
-              <div className="max-w-xl mx-auto space-y-8 py-4">
+              <div className="max-w-5xl mx-auto space-y-8 py-4">
                 <MemberIDCard />
-                
-                {/* Physical Pass Guidelines */}
-                <div className="p-6 border border-white/10 bg-white/[0.01] rounded text-left">
-                  <h5 className="text-xs font-black uppercase tracking-wide text-brand-gold mb-2 font-sans font-black">
-                    Lounge Presentation Instructions
-                  </h5>
-                  <p className="text-xs text-white/65 leading-relaxed font-light font-sans">
-                    Present this secure interactive viewport to our lounge receptionists or lounge hosts at any local pop-up gathering or private integration ritual. The unique QR code coordinates and membership identification numbers assure seamless passcode authorizations!
-                  </p>
-                </div>
               </div>
             )}
 
@@ -1020,6 +1058,132 @@ export default function MemberDashboardPage() {
             {/* TAB: BREATHING SPACE */}
             {activeTab === 'breathing' && (
               <SomaticBreathingPage isDashboardTab={true} />
+            )}
+
+            {/* TAB: ANALYTICS (NEW) */}
+            {activeTab === 'analytics' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-br from-zinc-950 to-black p-8 rounded-2xl border border-white/5 shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-brand-gold/5 rounded-full blur-[100px] pointer-events-none" />
+                  <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-4 py-8">
+                    <div className="w-16 h-16 bg-brand-gold/10 rounded-full flex items-center justify-center border border-brand-gold/20 mb-2">
+                        <BarChart className="text-brand-gold" size={28} />
+                    </div>
+                    <h3 className="text-xl font-black uppercase text-white tracking-widest">Somatic Analytics Engine</h3>
+                    <p className="text-sm text-white/50 max-w-md mx-auto font-light leading-relaxed">
+                      Your personalized cycle trends, wellness logs, and physiological data intelligence will synchronize here.
+                    </p>
+                    <div className="pt-4 flex gap-4">
+                      <span className="px-4 py-2 bg-white/[0.02] border border-white/10 rounded-xl text-[10px] text-white/40 uppercase tracking-widest font-black">
+                        Data Calibrating...
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: CONSULTATION (NEW) */}
+            {activeTab === 'consultation' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-br from-zinc-950 to-black p-8 rounded-2xl border border-white/5 shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-brand-red/5 rounded-full blur-[100px] pointer-events-none" />
+                  <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-4 py-8">
+                    <div className="w-16 h-16 bg-brand-red/10 rounded-full flex items-center justify-center border border-brand-red/20 mb-2">
+                        <CalendarCheck className="text-brand-red" size={28} />
+                    </div>
+                    <h3 className="text-xl font-black uppercase text-white tracking-widest">Private 1-on-1 Consultation</h3>
+                    <p className="text-sm text-white/50 max-w-md mx-auto font-light leading-relaxed">
+                      Book a private virtual session with Dr Fid to discuss your somatic progress, botanical protocol, and restorative journey.
+                    </p>
+                    <div className="pt-4">
+                      <button className="px-6 py-3 bg-brand-gold text-brand-black hover:bg-white rounded-xl text-[10px] uppercase font-black tracking-widest transition-colors shadow-xl">
+                        Schedule Available Slot
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: LIVE CLASS (NEW) */}
+            {activeTab === 'live_class' && (
+              <div className="space-y-6">
+                <div className="bg-[#050505] p-6 sm:p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-1/4 w-96 h-96 bg-brand-gold/5 rounded-full blur-[120px] pointer-events-none" />
+                  
+                  {config?.liveClassEmbedUrl && config?.isLiveClassActive ? (
+                    <div className="relative z-10 flex flex-col space-y-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.05] pb-6">
+                        <div className="space-y-1">
+                          <span className="text-[10px] uppercase font-mono text-brand-gold flex items-center gap-2 font-black tracking-widest">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> LIVE NOW
+                          </span>
+                          <h3 className="text-xl sm:text-2xl font-black uppercase text-white tracking-tight">{config?.liveClassTitle || 'Live Wellness Class'}</h3>
+                          <p className="text-sm text-white/50 font-light max-w-2xl">
+                            {config?.liveClassDescription || 'Join our private broadcast. Please ensure your audio is muted during instruction.'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="relative w-full rounded-2xl overflow-hidden bg-black border border-white/10 aspect-video shadow-2xl flex items-center justify-center">
+                         <iframe 
+                           src={config.liveClassEmbedUrl}
+                           className="absolute inset-0 w-full h-full border-0"
+                           allow="camera; microphone; fullscreen; display-capture"
+                           title="Live Class Broadcast"
+                         />
+                      </div>
+                      
+                      <div className="p-4 bg-white/[0.02] border border-white/5 rounded-xl flex flex-col sm:flex-row items-center gap-4 justify-between">
+                         <div className="flex items-center gap-3">
+                           <div className="w-10 h-10 rounded-full bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20 text-brand-gold">
+                             <ExternalLink size={16} />
+                           </div>
+                           <div>
+                             <p className="text-xs font-black uppercase tracking-widest text-white">External Window</p>
+                             <p className="text-[10px] text-white/40">Having trouble loading the embed?</p>
+                           </div>
+                         </div>
+                         <a href={config.liveClassEmbedUrl} target="_blank" rel="noreferrer" className="w-full sm:w-auto text-center px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl text-[10px] uppercase font-black tracking-widest transition-colors font-sans">
+                           Open Directly
+                         </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-4 py-16">
+                      <div className="w-16 h-16 bg-white/[0.02] rounded-full flex items-center justify-center border border-white/5 mb-2">
+                          <VideoOff className="text-white/30" size={28} />
+                      </div>
+                      <h3 className="text-xl font-black uppercase text-white/50 tracking-widest">No Active Broadcast</h3>
+                      <p className="text-sm text-white/30 max-w-md mx-auto font-light leading-relaxed">
+                        There is currently no live class scheduled or active. Members will be notified via our private community channels when the next gateway opens.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB: BOOKMARKS (NEW) */}
+            {activeTab === 'bookmarks' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-br from-zinc-950 to-black p-8 rounded-2xl border border-white/5 shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
+                  <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-4 py-8">
+                    <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/20 mb-2">
+                        <BookOpen className="text-blue-400" size={28} />
+                    </div>
+                    <h3 className="text-xl font-black uppercase text-white tracking-widest">Saved Collections</h3>
+                    <p className="text-sm text-white/50 max-w-md mx-auto font-light leading-relaxed">
+                      Your personally curated library of saved articles, meditations, and protocols.
+                    </p>
+                    <div className="pt-4 w-full max-w-2xl text-left border border-white/5 bg-white/[0.02] p-6 rounded-2xl mx-auto flex items-center justify-center h-32">
+                        <span className="text-xs text-white/30 uppercase tracking-widest font-black">No items bookmarked yet</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
           </motion.div>

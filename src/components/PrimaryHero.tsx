@@ -52,9 +52,9 @@ export default function PrimaryHero() {
       return <EditableText field="heroWelcome" />;
     }
     return (
-      <span className="inline-flex flex-wrap justify-center gap-x-3.5 overflow-hidden">
+      <span className="inline-flex flex-wrap justify-center gap-x-3.5">
         {welcomeWords.map((word, idx) => (
-          <span key={idx} className="inline-block overflow-hidden py-1">
+          <span key={idx} className="inline-block py-1 px-1">
             <motion.span
               variants={wordAnimation}
               className="inline-block"
@@ -72,9 +72,9 @@ export default function PrimaryHero() {
       return <EditableText field="heroHeading" />;
     }
     return (
-      <span className="inline-flex flex-wrap justify-center gap-x-4 overflow-hidden">
+      <span className="inline-flex flex-wrap justify-center gap-x-4">
         {headingWords.map((word, idx) => (
-          <span key={idx} className="inline-block overflow-hidden py-1">
+          <span key={idx} className="inline-block py-2 px-2 -my-1 -mx-1">
             <motion.span
               variants={{
                 hidden: { 

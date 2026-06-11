@@ -35,6 +35,7 @@ export default function AdminOrdersPanel({ orders, onRefresh }: AdminOrdersPanel
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState<any>(null);
+  const [confirmDeleteOrderId, setConfirmDeleteOrderId] = useState<string | null>(null);
 
   const filteredOrders = orders.filter(order => 
     order.orderNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -78,11 +79,17 @@ export default function AdminOrdersPanel({ orders, onRefresh }: AdminOrdersPanel
   };
 
   const handleDeleteOrder = async (id: string) => {
-    if (!window.confirm("Permanently delete this order record?")) return;
+    if (confirmDeleteOrderId !== id) {
+      setConfirmDeleteOrderId(id);
+      setTimeout(() => setConfirmDeleteOrderId(null), 3000);
+      return;
+    }
+
     try {
       await deleteDoc(doc(db, "orders", id));
       
       onRefresh();
+      setConfirmDeleteOrderId(null);
       if (selectedOrder?.id === id) setSelectedOrder(null);
     } catch (e) {
       console.error("Error deleting order", e);
@@ -312,8 +319,12 @@ export default function AdminOrdersPanel({ orders, onRefresh }: AdminOrdersPanel
                     </button>
                     <button 
                       onClick={() => handleDeleteOrder(order.id)}
-                      className="p-2 bg-white/5 border border-white/10 hover:bg-brand-red hover:text-white transition-all"
-                      title="Delete Order"
+                      className={`p-2 transition-all ${
+                        confirmDeleteOrderId === order.id 
+                        ? "bg-brand-red text-white border-brand-red animate-pulse" 
+                        : "bg-white/5 border-white/10 hover:bg-brand-red hover:text-white"
+                      } border`}
+                      title={confirmDeleteOrderId === order.id ? "Confirm Delete" : "Delete Order"}
                     >
                       <Trash2 size={14} />
                     </button>

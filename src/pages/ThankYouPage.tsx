@@ -24,7 +24,8 @@ export default function ThankYouPage() {
   const headingText = content.contactThankYouHeading || "THANK YOU FOR REACHING OUT";
   const bodyText = content.contactThankYouMessage || "Your message has been logged securely, and our team will get in touch shortly.";
   const ctaBtnText = content.contactThankYouCtaText || "Join Our Free Telegram Community";
-  const telegramLink = content.contactThankYouTelegramLink || "https://t.me/thevaginaroom";
+  const telegramLandingUrl = content.contactThankYouTelegramLandingUrl || "/telegram";
+  const isInternal = telegramLandingUrl.startsWith("/");
 
   return (
     <>
@@ -85,18 +86,32 @@ export default function ThankYouPage() {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <motion.a
-                  href={telegramLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full sm:w-auto bg-brand-gold text-brand-black px-10 py-5 rounded-none text-xs font-black tracking-[0.3em] uppercase hover:bg-brand-red hover:text-white transition-all duration-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-black"
-                >
-                  <MessageCircle size={16} className="mr-3" />
-                  {ctaBtnText}
-                  <ArrowRight size={14} className="ml-3" />
-                </motion.a>
+                {isInternal ? (
+                  <Link to={telegramLandingUrl} className="w-full sm:w-auto">
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full sm:w-auto bg-brand-gold text-brand-black px-10 py-5 rounded-none text-xs font-black tracking-[0.3em] uppercase hover:bg-brand-red hover:text-white transition-all duration-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-black"
+                    >
+                      <MessageCircle size={16} className="mr-3" />
+                      {ctaBtnText}
+                      <ArrowRight size={14} className="ml-3" />
+                    </motion.div>
+                  </Link>
+                ) : (
+                  <motion.a
+                    href={telegramLandingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full sm:w-auto bg-brand-gold text-brand-black px-10 py-5 rounded-none text-xs font-black tracking-[0.3em] uppercase hover:bg-brand-red hover:text-white transition-all duration-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-black"
+                  >
+                    <MessageCircle size={16} className="mr-3" />
+                    {ctaBtnText}
+                    <ArrowRight size={14} className="ml-3" />
+                  </motion.a>
+                )}
 
                 <motion.div
                   whileHover={{ scale: 1.02 }}

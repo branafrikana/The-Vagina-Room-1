@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useContent } from '../../context/ContentContext';
 import { 
   CreditCard, 
   Download, 
@@ -27,9 +28,15 @@ import {
   Zap,
   Activity,
   ArrowBigRightDash,
-  Hourglass
+  Hourglass,
+  CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import ImageCropModal from './ImageCropModal';
+import { db } from '../../lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 // Offline, lightweight deterministic SVG QR Code maker for professional presentation
 interface QRCodeProps {
@@ -119,7 +126,8 @@ const SimpleQRCode: React.FC<QRCodeProps> = ({ text, className = "w-24 h-24", pi
 };
 
 export default function MemberIDCard() {
-  const { userData } = useAuth();
+  const { userData, user } = useAuth();
+  const { content } = useContent();
   
   // Localized state configurations
   const [isFlipped, setIsFlipped] = useState(false);
@@ -129,8 +137,20 @@ export default function MemberIDCard() {
   const [activeBenefitIndex, setActiveBenefitIndex] = useState<number | null>(0);
   const [showRenewalModal, setShowRenewalModal] = useState(false);
   const [customPhotoBase64, setCustomPhotoBase64] = useState<string>(() => {
-    return localStorage.getItem('tvr_custom_id_photo') || '';
+    return localStorage.getItem('tvr_custom_id_photo') || userData?.photoURL || userData?.profilePhoto || '';
   });
+  const [cropSrc, setCropSrc] = useState<string>('');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const cardFrontRef = useRef<HTMLDivElement>(null);
+  const cardBackRef = useRef<HTMLDivElement>(null);
+
+  // Sync with user data if there's no custom local override, or if user profile has a fresher image
+  useEffect(() => {
+    if ((userData?.photoURL || userData?.profilePhoto) && !localStorage.getItem('tvr_custom_id_photo')) {
+      setCustomPhotoBase64(userData.photoURL || userData.profilePhoto);
+    }
+  }, [userData?.photoURL, userData?.profilePhoto]);
+
   
   // QR scanner scan animation trigger
   const [qrScanned, setQrScanned] = useState(false);
@@ -189,6 +209,10 @@ export default function MemberIDCard() {
     .substring(0, 2)
     .toUpperCase();
 
+  const brandingSettings = content?.brandingSettingsJson ? JSON.parse(content.brandingSettingsJson) : {};
+  const siteLogo = brandingSettings.headerLogoUrl || '';
+  const siteName = siteLogo ? '' : 'The Vagina Room';
+
   // Handle Copy toast triggers
   const triggerToast = (msg: string) => {
     setShowToast(msg);
@@ -202,19 +226,41 @@ export default function MemberIDCard() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        setCustomPhotoBase64(base64String);
-        localStorage.setItem('tvr_custom_id_photo', base64String);
-        triggerToast('📸 Private portrait securely embedded onto your membership ID card.');
+        setCropSrc(base64String);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handleCropComplete = async (croppedBase64: string) => {
+    setCustomPhotoBase64(croppedBase64);
+    localStorage.setItem('tvr_custom_id_photo', croppedBase64);
+    setCropSrc('');
+    triggerToast('📸 Private portrait securely embedded onto your membership ID card.');
+    
+    // Sync with Firebase
+    if (user) {
+      try {
+        await updateDoc(doc(db, "users", user.uid), { photoURL: croppedBase64 });
+      } catch (err) {
+        console.error("Failed to sync profile picture to database:", err);
+      }
+    }
+  };
+
   // Clean local photo discard
-  const handleRemovePhoto = () => {
+  const handleRemovePhoto = async () => {
     setCustomPhotoBase64('');
     localStorage.removeItem('tvr_custom_id_photo');
     triggerToast('🗑️ Custom photo token removed. Displaying cosmic avatar.');
+    
+    if (user) {
+      try {
+        await updateDoc(doc(db, "users", user.uid), { photoURL: '' });
+      } catch (err) {
+        console.error("Failed to remove profile photo:", err);
+      }
+    }
   };
 
   // Simulated sharing URL generator
@@ -226,192 +272,58 @@ export default function MemberIDCard() {
     triggerToast('🔗 Verification matrix address copied to clipboard!');
   };
 
-  // Simulated print trigger of ONLY the card element
-  const handlePrintCard = () => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      alert('Pop-up blocked. Please unlock permission to print your credentials.');
-      return;
+  // PDF Generation function utilizing html2canvas and jspdf
+  const handlePrintCard = async () => {
+    if (!cardFrontRef.current || !cardBackRef.current) return;
+    setIsGeneratingPdf(true);
+    triggerToast('Please wait while your PDF is being generated...');
+
+    try {
+      // Small delay to ensure any layout shifts are settled
+      await new Promise(res => setTimeout(res, 300));
+      // Capture Front Card
+      const canvasFront = await html2canvas(cardFrontRef.current, { backgroundColor: null, scale: 2 });
+      const imgDataFront = canvasFront.toDataURL('image/png');
+
+      // Temporarily remove flip transform correctly for crisp text
+      const origClass = cardBackRef.current.className;
+      cardBackRef.current.className = origClass.replace('[transform:rotateY(180deg)]', '[transform:rotateY(0deg)]');
+      await new Promise(res => setTimeout(res, 50));
+      
+      // Capture Back Card
+      const canvasBack = await html2canvas(cardBackRef.current, { backgroundColor: null, scale: 2 });
+      const imgDataBack = canvasBack.toDataURL('image/png');
+      
+      cardBackRef.current.className = origClass;
+
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'credit-card' // Standard ID card size: 85.6 x 53.98 mm
+      });
+
+      const width = pdf.internal.pageSize.getWidth();
+      const height = pdf.internal.pageSize.getHeight();
+
+      // Add Front
+      pdf.addImage(imgDataFront, 'PNG', 0, 0, width, height);
+      
+      // Add Back
+      pdf.addPage('credit-card', 'landscape');
+      pdf.addImage(imgDataBack, 'PNG', 0, 0, width, height);
+
+      pdf.save(`Membership_ID_${membershipId}.pdf`);
+      triggerToast('✅ PDF generated and saved successfully.');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      triggerToast('❌ Error generating PDF. Please try again.');
+    } finally {
+      setIsGeneratingPdf(false);
     }
-    
-    // Render standard CSS structures inside popup with premium styling for layout output
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>The Vagina Room Membership ID Card - ${membershipId}</title>
-          <style>
-            body {
-              background: #000;
-              color: #fff;
-              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              height: 100vh;
-              margin: 0;
-            }
-            .card-wrapper {
-              width: 480px;
-              height: 300px;
-              border: 2px solid #D4AF37;
-              border-radius: 12px;
-              background: linear-gradient(135deg, #1A1717 0%, #110F0F 100%);
-              padding: 24px;
-              box-sizing: border-box;
-              display: flex;
-              flex-direction: column;
-              justify-content: space-between;
-              position: relative;
-            }
-            .header {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-              padding-bottom: 12px;
-            }
-            .title {
-              color: #D4AF37;
-              font-size: 16px;
-              letter-spacing: 2px;
-              text-transform: uppercase;
-              font-weight: bold;
-              margin: 0;
-            }
-            .subtitle {
-              color: rgba(255, 255, 255, 0.4);
-              font-size: 9px;
-              letter-spacing: 1px;
-              text-transform: uppercase;
-              margin-top: 2px;
-            }
-            .badge {
-              font-size: 8px;
-              border: 1px solid #D4AF37;
-              color: #D4AF37;
-              padding: 3px 8px;
-              text-transform: uppercase;
-              font-weight: bold;
-            }
-            .body {
-              display: flex;
-              gap: 20px;
-              align-items: center;
-              margin-top: 15px;
-            }
-            .photo-box {
-              width: 80px;
-              height: 80px;
-              border: 1px solid rgba(212, 175, 55, 0.4);
-              background: #252222;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              overflow: hidden;
-            }
-            .photo-box img {
-              width: 100%;
-              height: 100%;
-              object-fit: cover;
-            }
-            .initials {
-              color: #D4AF37;
-              font-size: 24px;
-              font-weight: bold;
-            }
-            .details {
-              display: flex;
-              flex-direction: column;
-              gap: 4px;
-            }
-            .member-name {
-              font-size: 18px;
-              color: #fff;
-              text-transform: uppercase;
-              font-weight: bold;
-              margin: 0;
-            }
-            .label {
-              font-size: 8px;
-              color: rgba(255, 255, 255, 0.4);
-              text-transform: uppercase;
-              letter-spacing: 1px;
-            }
-            .value {
-              font-size: 11px;
-              color: #fff;
-              font-family: monospace;
-            }
-            .footer-line {
-              display: flex;
-              justify-content: space-between;
-              font-size: 9px;
-              color: rgba(255, 255, 255, 0.4);
-              border-top: 1px solid rgba(255, 255, 255, 0.05);
-              padding-top: 12px;
-            }
-            .footer-line span {
-              font-family: monospace;
-            }
-            .print-btn {
-              margin-top: 24px;
-              background: #D4AF37;
-              color: #000;
-              border: none;
-              padding: 10px 20px;
-              cursor: pointer;
-              font-weight: bold;
-              text-transform: uppercase;
-              font-size: 11px;
-              letter-spacing: 1px;
-            }
-            @media print {
-              .print-btn {
-                display: none;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="card-wrapper">
-            <div class="header">
-              <div>
-                <h1 class="title">The Vagina Room</h1>
-                <div class="subtitle">Somatic Sanctum Network</div>
-              </div>
-              <div class="badge">Verified Active</div>
-            </div>
-            <div class="body">
-              <div class="photo-box">
-                ${customPhotoBase64 
-                  ? `<img src="${customPhotoBase64}" />` 
-                  : `<span class="initials">${userInitials}</span>`}
-              </div>
-              <div class="details">
-                <h2 class="member-name">${memberName}</h2>
-                <div>
-                  <span class="label">Token Block</span><br/>
-                  <span class="value">${membershipId}</span>
-                </div>
-                <div>
-                  <span class="label">Somatic Rank</span><br/>
-                  <span class="value">${membershipTier}</span>
-                </div>
-              </div>
-            </div>
-            <div class="footer-line">
-              <div>JOINED: <span>${joinDate}</span></div>
-              <div>VALID THROUGH: <span>${expiryDate}</span></div>
-            </div>
-          </div>
-          <button class="print-btn" onclick="window.print()">Trigger Output Print</button>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
   };
+
+  
 
   // Membership Benefits matrix data
   const membershipBenefits = [
@@ -487,401 +399,225 @@ export default function MemberIDCard() {
         )}
       </AnimatePresence>
 
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
+      <div className="flex flex-col lg:flex-row gap-8 items-start justify-center">
         
-        {/* Left Hand: Digital Card Showcase (Double-side design with rotatable click transition) */}
-        <div className="w-full lg:w-1/2 space-y-6">
+        {/* Centralized Digital Card Showcase */}
+        <div className="w-full max-w-3xl mx-auto space-y-8 pb-10">
           
-          <div className="flex justify-between items-center bg-black/30 p-2.5 border border-white/5">
-            <span className="text-[9px] font-mono text-white/55 uppercase tracking-widest flex items-center gap-1">
-              <CreditCard size={10} className="text-brand-gold" /> Tap Card to Flip
-            </span>
+          <div className="flex justify-between items-center border-b border-white/10 pb-4">
+            <div>
+              <h2 className="text-xl font-serif font-black text-white uppercase tracking-wider">Digital Identity</h2>
+              <p className="text-xs text-white/50 font-mono mt-1">Your secure membership credential</p>
+            </div>
             <button
               onClick={() => setIsFlipped(!isFlipped)}
-              className="text-[8px] font-mono bg-white/5 hover:bg-brand-gold hover:text-brand-black border border-white/10 hover:border-brand-gold transition-colors px-2 py-0.5 uppercase tracking-widest text-brand-gold font-black"
+              className="text-[9px] font-mono bg-brand-gold/10 hover:bg-brand-gold border border-brand-gold/20 hover:text-brand-black transition-colors px-4 py-2 uppercase tracking-widest text-brand-gold font-bold rounded shadow-sm"
             >
               Flip ID View 🔄
             </button>
           </div>
 
-          <div className="perspective-[1000px] w-full max-w-md mx-auto aspect-[1.586/1]">
+          <div className="[perspective:1000px] w-full aspect-[1.586/1] max-h-[80vh]">
             <motion.div
               animate={{ rotateY: isFlipped ? 180 : 0 }}
               transition={{ duration: 0.6, ease: "easeInOut" }}
-              className="w-full h-full relative preserve-3d"
+              className="w-full h-full relative [transform-style:preserve-3d]"
             >
               
               {/* CARD FRONT SIDE */}
               <div 
+                ref={cardFrontRef}
                 onClick={() => setIsFlipped(true)}
-                className="absolute inset-0 w-full h-full backface-hidden bg-gradient-to-br from-zinc-950 via-neutral-900 to-zinc-950 border border-brand-gold/40 p-6 md:p-8 flex flex-col justify-between overflow-hidden shadow-2xl rounded-none cursor-pointer"
+                className="absolute inset-0 w-full h-full [backface-visibility:hidden] bg-white rounded-2xl p-4 shadow-2xl cursor-pointer"
               >
-                {/* Visual Ambient Flourishes for Cosmic theme */}
-                <div className="absolute top-0 right-0 w-36 h-36 bg-brand-gold/5 blur-[40px] pointer-events-none rounded-full" />
-                <div className="absolute bottom-0 left-0 w-36 h-36 bg-brand-red/5 blur-[40px] pointer-events-none rounded-full" />
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(214,175,55,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(214,175,55,0.01)_1px,transparent_1px)] bg-[size:10px_10px]" />
-                
-                {/* Header info */}
-                <div className="relative z-10 flex justify-between items-start border-b border-white/5 pb-3">
-                  <div>
-                    <h4 className="text-xs font-serif font-black text-brand-gold tracking-widest uppercase flex items-center gap-1.5 leading-none">
-                      <Crown size={12} className="inline" /> The Vagina Room
-                    </h4>
-                    <span className="text-[7.5px] font-mono text-white/40 block mt-1 tracking-wider uppercase">Somatic Community Network</span>
-                  </div>
-                  <div className="text-[7.5px] font-mono tracking-widest text-emerald-400 px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/30 uppercase font-black">
-                    Live Verified 🌸
-                  </div>
-                </div>
-
-                {/* Profile Avatar & Primary Details Structure */}
-                <div className="relative z-10 flex gap-4 md:gap-5 items-center my-2 text-left">
+                {/* Inner layered card */}
+                <div className="relative w-full h-full bg-[#f8f9fa] rounded-xl overflow-hidden flex flex-col justify-between p-6 md:p-8 shadow-inner border border-gray-200">
                   
-                  {/* Photo Section with quick upload handle */}
-                  <div className="relative group shrink-0">
-                    <div className="w-16 h-16 md:w-20 md:h-20 border border-brand-gold/30 bg-zinc-950/80 rounded-full flex items-center justify-center overflow-hidden relative shadow-inner">
-                      {customPhotoBase64 ? (
-                        <img 
-                          src={customPhotoBase64} 
-                          alt="Ambassador portrait" 
-                          className="w-full h-full object-cover" 
+                  {/* Subtle watermarks */}
+                  <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-brand-gold/5 blur-[80px] pointer-events-none rounded-full" />
+                  <div className="absolute -bottom-10 -left-10 w-[300px] h-[300px] bg-emerald-100/30 blur-[60px] pointer-events-none rounded-full" />
+                  
+                  {/* Header info */}
+                  <div className="relative z-10 flex justify-between items-center pb-4">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        {siteName && (
+                          <h4 className="text-sm md:text-base font-black text-gray-900 tracking-widest uppercase flex items-center gap-1.5 leading-none">
+                            {siteName}
+                          </h4>
+                        )}
+                        <span className="text-[9px] font-medium text-gray-500 block mt-1 tracking-[0.2em] uppercase">Membership Access Card</span>
+                      </div>
+                    </div>
+                    <div className="text-[9px] tracking-widest text-emerald-800 px-3 py-1.5 bg-emerald-100 border border-emerald-200 uppercase font-black rounded shadow-sm flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> Active
+                    </div>
+                  </div>
+
+                  {/* Profile Avatar & Primary Details Structure */}
+                  <div className="relative z-10 flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start my-auto w-full">
+                    
+                    {/* Photo Section with quick upload handle */}
+                    <div className="relative group shrink-0">
+                      <div className="w-24 h-24 md:w-32 md:h-32 border-[3px] border-white shadow-lg bg-gray-100 rounded-full flex items-center justify-center overflow-hidden relative">
+                        {customPhotoBase64 ? (
+                          <img 
+                            src={customPhotoBase64} 
+                            alt="Ambassador portrait" 
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : (
+                          <div className="text-center font-black text-gray-300 text-3xl md:text-4xl">
+                            {userInitials}
+                          </div>
+                        )}
+                      </div>
+                      {/* Inline micro upload click handler overlays */}
+                      <label className="absolute -bottom-2 -right-2 bg-brand-black text-white p-2.5 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 hover:scale-110 transition-all shadow-xl hover:bg-brand-gold border border-white/20">
+                        <Upload size={14} strokeWidth={2.5} />
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={handlePhotoUpload} 
                         />
+                      </label>
+                    </div>
+
+                    <div className="min-w-0 space-y-5 flex-1 w-full mt-2 md:mt-0">
+                      <div>
+                        <h4 className="text-base md:text-xl font-black text-gray-900 leading-tight uppercase tracking-tight pb-1 break-words max-w-full">
+                          {memberName}
+                        </h4>
+                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 mt-4">
+                          <div>
+                            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold block mb-1">ID Number</span>
+                            <span className="text-sm md:text-base font-mono text-gray-800 font-bold tracking-wider">{membershipId}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold block mb-1">Subscription Plan</span>
+                            <span className="text-sm md:text-base font-mono text-brand-gold font-bold tracking-wider uppercase">{membershipTier}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Footer status timeline */}
+                  <div className="relative z-10 pt-4 border-t border-gray-200 flex justify-between items-center mt-6">
+                    <div className="flex gap-8">
+                      <div className="text-[9px] md:text-[10px] font-mono uppercase text-gray-500 font-semibold tracking-wider">
+                        <span className="text-gray-400 block text-[8px] mb-0.5">Joined</span>
+                        <span className="text-gray-900">{joinDate}</span>
+                      </div>
+                      <div className="text-[9px] md:text-[10px] font-mono uppercase text-gray-500 font-semibold tracking-wider">
+                        <span className="text-gray-400 block text-[8px] mb-0.5">Valid Thru</span>
+                        <span className="text-gray-900">{expiryDate}</span>
+                      </div>
+                    </div>
+                    {/* Bottom Right Logo */}
+                    <div>
+                      {siteLogo ? (
+                        <img src={siteLogo} alt="Logo" className="h-10 md:h-14 w-auto object-contain opacity-90 drop-shadow-sm" />
                       ) : (
-                        <div className="text-center font-mono text-brand-gold text-lg font-black tracking-normal">
-                          {userInitials}
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-brand-black rounded-full flex items-center justify-center shadow-sm opacity-90">
+                          <Crown size={16} className="text-brand-gold" />
                         </div>
                       )}
                     </div>
-                    {/* Inline micro upload click handler overlays */}
-                    <label className="absolute -bottom-1 -right-1 bg-brand-gold text-brand-black p-1 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 hover:scale-115 transition-all shadow-md">
-                      <Upload size={10} strokeWidth={3} />
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        onChange={handlePhotoUpload} 
-                      />
-                    </label>
-                  </div>
-
-                  <div className="min-w-0 space-y-2">
-                    <div>
-                      <h4 className="text-md sm:text-lg font-serif font-black text-white leading-tight uppercase tracking-tight truncate">
-                        {memberName}
-                      </h4>
-                      <p className="text-[8.5px] font-mono text-brand-gold font-bold tracking-widest uppercase">
-                        {membershipTier}
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-x-2 text-[8px] font-mono">
-                      <div>
-                        <span className="text-white/30 uppercase block leading-none">Member Token</span>
-                        <span className="text-white/80 font-bold truncate block tracking-wider uppercase mt-0.5">{membershipId}</span>
-                      </div>
-                      <div>
-                        <span className="text-white/30 uppercase block leading-none">Access Node</span>
-                        <span className="text-white/80 font-bold block mt-0.5">Lounge Active</span>
-                      </div>
-                    </div>
                   </div>
 
                 </div>
-
-                {/* Footer status timeline */}
-                <div className="relative z-10 pt-2 border-t border-white/5 flex justify-between items-center text-[7.5px] font-mono uppercase text-white/40">
-                  <div>
-                    VALID FROM: <span className="text-white/70 font-semibold">{joinDate}</span>
-                  </div>
-                  <div>
-                    TO: <span className="text-brand-gold font-bold">{expiryDate}</span>
-                  </div>
-                </div>
-
               </div>
 
               {/* CARD BACK SIDE */}
               <div 
+                ref={cardBackRef}
                 onClick={() => setIsFlipped(false)}
-                className="absolute inset-0 w-full h-full backface-hidden bg-gradient-to-br from-[#121010] via-neutral-950 to-[#121010] border border-brand-gold/40 p-5 md:p-6 flex flex-col justify-between overflow-hidden shadow-2xl rounded-none cursor-pointer rotate-Y-180"
+                id="tvr-print-back"
+                className="absolute inset-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white rounded-2xl p-4 shadow-2xl cursor-pointer"
               >
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(214,175,55,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(214,175,55,0.01)_1px,transparent_1px)] bg-[size:10px_10px]" />
-                
-                {/* Guidelines Back details */}
-                <div className="text-left space-y-1.5 relative z-10">
-                  <span className="text-[7.5px] font-mono text-brand-gold uppercase tracking-[0.2em] font-black block">COMMUNITY CODE OF HONOR</span>
-                  <p className="text-[7.5px] text-white/55 leading-relaxed font-sans font-light">
-                    This digital coordinate certifies that the dynamic certificate holder is registered within our community loop. Designed to support women's privacy networks, clinical sisterhood education, and exclusive chemical formulations. Non-transferable token protected under security standards.
-                  </p>
-                </div>
-
-                {/* Interactive SVG QR layout & digital lock seal */}
-                <div className="flex justify-between items-center relative z-10 pt-2 border-t border-white/5">
-                  <div className="text-left text-[7px] font-mono uppercase space-y-1 text-white/45">
-                    <div className="flex items-center gap-1 select-all text-white/60">
-                      <ShieldCheck size={9} className="text-brand-gold" />
-                      SECURE CREDENTIAL BLOCK
-                    </div>
-                    <div>Digital Signature: <span className="text-white/70">{membershipId.split('-').pop()}</span></div>
-                    <div>Ledger State: Approved</div>
-                    <div>Verification URL: verified.tvr</div>
-                  </div>
-
-                  {/* QR box container */}
-                  <div 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setQrScanned(true);
-                      triggerToast('🔳 Member pass QR read simulated successfully!');
-                    }}
-                    className="relative p-1.5 bg-white border border-brand-gold/50 rounded-sm hover:scale-105 transition-transform shrink-0"
-                    title="Simulate Check-in scan"
-                  >
-                    <SimpleQRCode text={shareUrl} className="w-14 h-14 md:w-16 md:h-16" pixelColor="#1A1717" />
+                <div className="relative w-full h-full bg-[#f8f9fa] rounded-xl overflow-hidden flex flex-col p-6 md:p-8 shadow-inner border border-gray-200">
+                  <div className="absolute inset-0 opacity-30 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]" />
+                  
+                  {/* QR and Policy layout */}
+                  <div className="flex-1 flex flex-col md:flex-row gap-6 md:gap-10 relative z-10 items-center justify-center">
                     
-                    {/* Interactive pulse visualizer */}
-                    <div className="absolute inset-0 border border-brand-gold/40 animate-ping rounded pointer-events-none" />
-                    
-                    {qrScanned && (
-                      <div className="absolute inset-0 bg-brand-gold/90 backdrop-blur-xs flex items-center justify-center flex-col text-[7px] font-mono uppercase text-brand-black font-black p-0.5 text-center leading-tight">
-                        <CheckCircle size={14} className="mb-0.5 shrink-0" />
-                        Checked In
+                    <div className="flex-1 space-y-4">
+                      <div>
+                        <span className="text-xs md:text-sm font-black text-gray-900 uppercase tracking-widest block mb-2">Terms of Access</span>
+                        <p className="text-[10px] md:text-xs text-gray-600 leading-relaxed font-medium">
+                          This digital credential certifies that the holder is a registered member of our network. It grants access to designated private physical lounges, specialized partner health dispensaries, and verified online community platforms. This card remains the property of the issuer and is universally non-transferable.
+                        </p>
                       </div>
-                    )}
+                      
+                      <div className="space-y-1.5 pt-4 border-t border-gray-200">
+                        <p className="text-[10px] text-gray-500 flex items-center gap-2 font-mono uppercase tracking-wider">
+                          <CheckCircle2 size={12} className="text-emerald-500" /> Identity verification passed
+                        </p>
+                        <p className="text-[10px] text-gray-500 flex items-center gap-2 font-mono uppercase tracking-wider break-all">
+                          <ShieldCheck size={12} className="text-brand-gold" /> SIG: {membershipId}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* QR box container */}
+                    <div flex-shrink-0>
+                      <div 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setQrScanned(true);
+                          triggerToast('🔳 Check-in QR scan successfully simulated!');
+                        }}
+                        className="relative p-3 bg-white border-2 border-gray-100 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all w-32 h-32 md:w-40 md:h-40 flex items-center justify-center mx-auto"
+                        title="Simulate check-in scan"
+                      >
+                        <SimpleQRCode text={shareUrl} className="w-full h-full opacity-90" pixelColor="#111827" />
+                        
+                        {qrScanned && (
+                          <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-xl flex items-center justify-center flex-col text-[10px] uppercase text-gray-900 font-black p-2 text-center tracking-widest shadow-inner border border-gray-100">
+                            <CheckCircle size={24} className="mb-2 text-emerald-500" />
+                            Access Granted
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-center font-mono text-[8px] text-gray-400 mt-2 uppercase tracking-widest">Tap QR to simulate scan</p>
+                    </div>
+
                   </div>
-                </div>
 
-                <div className="text-center font-mono text-[6.5px] text-white/30 uppercase tracking-widest mt-1">
-                  Presented under cryptography norms • The Vagina Room 2026
-                </div>
+                  <div className="text-center font-mono text-[9px] text-gray-400 uppercase tracking-widest mt-6 border-t border-gray-200 pt-4">
+                    {siteName || 'The Vagina Room'} • {new Date().getFullYear()} Active Core System
+                  </div>
 
+                </div>
               </div>
 
             </motion.div>
           </div>
 
-          {/* Photo management panel under the ID card (if custom photo uploaded) */}
+          {/* User actions row below the ID card */}
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
+            <button
+              onClick={handlePrintCard}
+              className="px-8 py-4 bg-white hover:bg-neutral-100 text-neutral-900 transition-all font-mono text-[11px] uppercase tracking-widest font-bold flex items-center gap-2 shadow-md rounded-full border border-gray-200"
+            >
+              <Printer size={16} className="text-brand-gold" />
+              Save as PDF
+            </button>
+          </div>
+
           {customPhotoBase64 && (
             <button
               onClick={handleRemovePhoto}
-              className="text-[9px] font-mono text-white/40 hover:text-red-400 block mx-auto py-1 px-3 border border-dashed border-white/10 hover:border-red-500/30 transition-colors"
+              className="text-[10px] mt-4 font-mono text-white/40 hover:text-white block mx-auto py-2 px-4 transition-colors"
             >
-              Discard custom image token & revert avatar
+              Remove Profile Photo
             </button>
           )}
 
-          {/* QR Scan instruction */}
-          <div className="p-3.5 bg-zinc-950 border border-white/5 text-[9px] text-white/50 leading-relaxed font-sans text-left space-y-1">
-            <p className="font-bold uppercase text-brand-gold tracking-wider flex items-center gap-1 font-mono">
-              <QrCode size={11} /> Scan and Present
-            </p>
-            <p className="font-light">
-              Present your unique QR code at physical lounges or events for quick registration check-ins. Click on the code above to simulate a checkout verification!
-            </p>
-          </div>
-
         </div>
-
-        {/* Right Hand: Interactive Membership Verification, Snapshots, and Quick Actions */}
-        <div className="flex-1 w-full space-y-6 text-left">
-          
-          {/* ✅ MEMBERSHIP VERIFICATION PANEL */}
-          <div className="p-5 bg-white/[0.01] border border-white/10 rounded-sm space-y-4">
-            <div className="flex justify-between items-center pb-2.5 border-b border-white/5">
-              <div>
-                <h3 className="text-xs uppercase tracking-widest font-mono text-brand-gold font-bold flex items-center gap-1.5">
-                  <ShieldCheck size={13} className="text-brand-gold" /> ✅ Membership Verification
-                </h3>
-                <p className="text-[9px] text-white/40 font-mono mt-0.5">Verify your active membership status instantly.</p>
-              </div>
-              <span className="text-[10px] uppercase font-serif text-brand-gold font-semibold italic">
-                Active Member 🌸
-              </span>
-            </div>
-
-            {/* Checklists values */}
-            <div className="space-y-2.5">
-              {[
-                { name: 'Active Membership Status', val: 'Verified Live ✅', desc: 'Secure cloud instance validates approved payments.' },
-                { name: 'Membership Tier Validation', val: `${membershipTier}`, desc: 'Direct access to level rewards and commission codes is active.' },
-                { name: 'Renewal Status', val: `Paid (Until ${expiryDate})`, desc: 'Next payment ledger verification schedule is active.' },
-                { name: 'Verification Badge', val: 'Somatic Seal Authenticated', desc: 'Certificate holds official community signature code.' },
-                { name: 'Community Access Eligibility', val: 'Lounge and Circles unlocked', desc: 'Symmetric access token generated for interactive councils.' }
-              ].map((item, idx) => (
-                <div key={idx} className="flex justify-between items-start text-[10px] border-b border-white/[0.02] pb-2 last:border-0 last:pb-0 gap-3">
-                  <div className="space-y-0.5 font-sans leading-tight">
-                    <p className="font-bold text-white uppercase">{item.name}</p>
-                    <p className="text-[8.5px] text-white/40 font-light">{item.desc}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="px-1.5 py-0.5 bg-brand-gold/10 border border-brand-gold/20 font-mono text-[8px] text-brand-gold uppercase font-bold text-right inline-block">
-                      {item.val}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Action Verify button */}
-            <div className="pt-2 flex justify-between items-center text-[9px] font-mono text-white/40">
-              <span>Cloud Ledger Key: {membershipId}</span>
-              <button
-                onClick={handleVerifyStatus}
-                disabled={isVerifying}
-                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 uppercase tracking-widest font-black decoration-none border border-white/10 hover:border-brand-gold transition-colors text-brand-gold text-[8.5px] flex items-center gap-1 cursor-pointer"
-              >
-                {isVerifying ? (
-                  <>
-                    <RefreshCw size={10} className="animate-spin text-brand-gold" /> Re-authenticating...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw size={10} /> Test Verification Link
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* 🎖️ MEMBERSHIP BENEFITS SNAPSHOT */}
-          <div className="p-5 bg-white/[0.01] border border-white/10 rounded-sm space-y-4">
-            <div>
-              <h3 className="text-xs uppercase tracking-widest font-mono text-brand-gold font-bold flex items-center gap-1.5">
-                <Award size={13} className="text-brand-gold" /> 🎖️ Membership Benefits Snapshot
-              </h3>
-              <p className="text-[9px] text-white/40 font-mono mt-0.5">View your current membership privileges.</p>
-            </div>
-
-            {/* Benefits accordion style list */}
-            <div className="grid grid-cols-1 gap-2">
-              {membershipBenefits.map((benefit, idx) => {
-                const isActive = activeBenefitIndex === idx;
-                return (
-                  <div 
-                    key={idx}
-                    className={`border transition-all ${
-                      isActive 
-                        ? 'bg-zinc-950/70 border-brand-gold/40' 
-                        : 'bg-transparent border-white/5 hover:border-white/15'
-                    }`}
-                  >
-                    <button
-                      onClick={() => setActiveBenefitIndex(isActive ? null : idx)}
-                      className="w-full p-3 flex justify-between items-center text-[10.5px] uppercase font-bold text-white text-left font-sans group"
-                      type="button"
-                    >
-                      <span className="group-hover:text-brand-gold transition-colors">{benefit.title}</span>
-                      <span className="text-[8px] font-mono text-brand-gold shrink-0 border border-brand-gold/20 bg-brand-gold/5 px-2 py-0.5 tracking-wider font-light">
-                        {benefit.badge}
-                      </span>
-                    </button>
-                    
-                    <AnimatePresence>
-                      {isActive && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="px-3 pb-3 pt-1 border-t border-white/5 text-[9.5px] text-white/55 leading-relaxed font-sans font-light">
-                            {benefit.desc}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 📥 QUICK ACTIONS PANEL */}
-          <div className="p-5 bg-zinc-950 border border-white/5 rounded-sm space-y-4">
-            <div>
-              <h3 className="text-xs uppercase tracking-widest font-mono text-brand-gold font-bold flex items-center gap-1.5">
-                <Sparkles size={11} className="text-brand-gold" /> 📥 Quick Actions
-              </h3>
-              <p className="text-[8.5px] text-white/30 font-mono mt-0.5">Quick administrative features for membership accounts.</p>
-            </div>
-
-            {/* Quick action buttons list */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[9px] font-mono tracking-widest font-black uppercase">
-              
-              {/* Action 1: Print Card */}
-              <button
-                onClick={handlePrintCard}
-                className="p-3 bg-white/5 hover:bg-white/10 text-white border border-white/5 hover:border-brand-gold/40 transition-all flex items-center gap-2"
-              >
-                <Printer size={12} className="text-brand-gold shrink-0" />
-                Download Membership Card
-              </button>
-
-              {/* Action 2: Save to Device JSON Credential */}
-              <button
-                onClick={() => {
-                  const credentialData = {
-                    organization: 'The Vagina Room',
-                    memberName: memberName,
-                    membershipId: membershipId,
-                    membershipTier: membershipTier,
-                    status: 'Live Active Verified',
-                    establishedDate: joinDate,
-                    validationDate: expiryDate,
-                    encryptionProtocol: 'AES-256 Cloud Ledger Verified'
-                  };
-                  const blob = new Blob([JSON.stringify(credentialData, null, 2)], { type: 'application/json' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `tvr_identity_${membershipId}.json`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  triggerToast('📥 Secure JSON identity token saved successfully to your downloads page!');
-                }}
-                className="p-3 bg-white/5 hover:bg-white/10 text-white border border-white/5 hover:border-brand-gold/40 transition-all flex items-center gap-2"
-              >
-                <Download size={12} className="text-brand-gold shrink-0" />
-                Save to Device (JSON)
-              </button>
-
-              {/* Action 3: Copy share URL */}
-              <button
-                onClick={handleShareVerification}
-                className="p-3 bg-white/5 hover:bg-white/10 text-white border border-white/5 hover:border-brand-gold/40 transition-all flex items-center gap-2"
-              >
-                <Share2 size={12} className="text-brand-gold shrink-0" />
-                Share Verification Link
-              </button>
-
-              {/* Action 4: Accordion toggle helper */}
-              <button
-                onClick={() => {
-                  setActiveBenefitIndex(3); // Highlights discounts
-                  triggerToast('🎖️ Membership Benefits view shifted to Product Discounts!');
-                }}
-                className="p-3 bg-white/5 hover:bg-white/10 text-white border border-white/5 hover:border-brand-gold/40 transition-all flex items-center gap-2"
-              >
-                <Award size={12} className="text-brand-gold shrink-0" />
-                View Membership Benefits Log
-              </button>
-
-              {/* Action 5: Renew membership plan */}
-              <button
-                onClick={() => setShowRenewalModal(true)}
-                className="p-3 bg-brand-gold/10 hover:bg-brand-gold hover:text-brand-black text-brand-gold border border-brand-gold/20 hover:border-brand-gold transition-all flex items-center gap-2 sm:col-span-2 cursor-pointer font-extrabold"
-              >
-                <RefreshCw size={12} className="shrink-0" />
-                Renew Membership Program
-              </button>
-
-            </div>
-          </div>
-
-        </div>
-
       </div>
 
       {/* MODAL: MEMBERSHIP RENEWAL (Simulated ledger updater) */}
@@ -986,6 +722,16 @@ export default function MemberIDCard() {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {cropSrc && (
+          <ImageCropModal 
+            key="crop-modal"
+            imageSrc={cropSrc} 
+            onCropComplete={handleCropComplete} 
+            onClose={() => setCropSrc('')} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -123,7 +123,11 @@ export default function WellnessReflection() {
       }));
       setGoals(data);
     }, (err) => {
-      console.error("Failed to fetch goals", err);
+      console.error("WellnessReflection: Failed to fetch goals for user", user.uid, err);
+      // Check for common permission or index errors
+      if (err.message.includes("permissions") || err.code === 'permission-denied') {
+        console.warn("WellnessReflection: Permission denied. Ensure your firestore.rules allow list/read on wellnessGoals for this userId.");
+      }
     });
 
     return () => {
