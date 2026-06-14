@@ -549,7 +549,7 @@ export default function ResourceLibrary() {
                           {item.type === 'video' && <Play size={15} fill="currentColor" className="ml-0.5 text-[#D4AF37] group-hover:text-black" />}
                           {item.type === 'audio' && (isP ? <Pause size={15} className="animate-spin text-emerald-400" style={{ animationDuration: '4s' }} /> : <Volume2 size={15} />)}
                           {['pdf', 'ebook', 'worksheet', 'checklist', 'guide'].includes(item.type) && <Download size={15} />}
-                          {item.type === 'wellness' && <Activity size={15} />}
+                          {(item.type as string) === 'wellness' && <Activity size={15} />}
                         </span>
                       </div>
 
@@ -646,7 +646,7 @@ export default function ResourceLibrary() {
                         </button>
                       )}
 
-                      {item.type === 'wellness' && (
+                      {(item.type as string) === 'wellness' && (
                         <button
                           type="button"
                           onClick={() => {

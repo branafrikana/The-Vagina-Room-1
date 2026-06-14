@@ -74,7 +74,12 @@ export default function CheckoutPage() {
     deliveryPreferences: '',
 
     // Agreements
-    agreedToPolicies: false
+    agreedToPolicies: false,
+
+    // Discounts
+    discountCode: '',
+    discountType: '',
+    discountValue: ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -621,7 +626,7 @@ Thank you for shopping with *The Vagina Room* 💜`;
                     {formData.discountType && (
                       <div className="flex justify-between text-[10px] uppercase font-black text-brand-gold">
                         <span>Discount ({formData.discountType === 'percentage' ? `${formData.discountValue}%` : currencySymbol + formData.discountValue})</span>
-                        <span>-{currencySymbol}{(formData.discountType === 'percentage' ? (totalPrice * (formData.discountValue / 100)) : formData.discountValue).toFixed(2)}</span>
+                        <span>-{currencySymbol}{(formData.discountType === 'percentage' ? (totalPrice * (Number(formData.discountValue) / 100)) : Number(formData.discountValue)).toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-[10px] uppercase font-black">

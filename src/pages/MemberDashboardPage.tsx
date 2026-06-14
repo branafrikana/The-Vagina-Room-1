@@ -658,7 +658,7 @@ export default function MemberDashboardPage() {
                                   <button
                                     key={item.id}
                                     onClick={() => {
-                                      setActiveTab(item.id);
+                                      setActiveTab(item.id as TabType);
                                       if (window.innerWidth < 1024) {
                                         setSidebarOpen(false);
                                       }
@@ -711,7 +711,7 @@ export default function MemberDashboardPage() {
         <DashboardGlobalHeader 
            sidebarOpen={sidebarOpen} 
            setSidebarOpen={setSidebarOpen} 
-           setActiveTab={setActiveTab} 
+           setActiveTab={(tab: any) => setActiveTab(tab)} 
            userData={userData} 
            user={user} 
         />
@@ -987,14 +987,14 @@ export default function MemberDashboardPage() {
               </div>
             )}
 
-            <DashboardGlobalFooter setActiveTab={setActiveTab} />
+            <DashboardGlobalFooter setActiveTab={(tab: any) => setActiveTab(tab)} />
             <div className="h-20 lg:hidden" /> {/* Padding for mobile sticky footer */}
 
           </motion.div>
         </AnimatePresence>
       </main>
 
-      <DashboardMobileStickyFooter activeTab={activeTab} setActiveTab={setActiveTab} />
+      <DashboardMobileStickyFooter activeTab={activeTab} setActiveTab={(tab: any) => setActiveTab(tab)} />
 
       {/* Global Chat Window Overlay */}
       <AnimatePresence>

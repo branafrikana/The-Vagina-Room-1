@@ -7,7 +7,7 @@ import { useContent } from '../context/ContentContext';
 export default function PrimaryHero() {
   const { content, isAdmin, isEditMode } = useContent();
 
-  const containerVariants = {
+  const containerVariants: any = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -18,7 +18,7 @@ export default function PrimaryHero() {
     }
   };
 
-  const wordAnimation = {
+  const wordAnimation: any = {
     hidden: { 
       opacity: 0, 
       y: 75,

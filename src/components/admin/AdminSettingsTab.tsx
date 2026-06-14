@@ -1239,7 +1239,7 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
                      <input 
                        type="range" min="16" max="150" step="1"
                        value={content.telegramHeaderLogoHeight || 44}
-                       onChange={(e) => updateContentField("telegramHeaderLogoHeight", parseInt(e.target.value))}
+                       onChange={(e) => updateContentField("telegramHeaderLogoHeight", e.target.value)}
                        className="w-full accent-brand-gold h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
                      />
                    </div>

@@ -69,6 +69,7 @@ interface ReplayItem {
   description: string;
   views: number;
   youtubeId?: string; // or simulated player source
+  videoUrl?: string;
   materials: { title: string; type: string }[];
 }
 

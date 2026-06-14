@@ -80,6 +80,18 @@ export const FALLBACK_DEFAULTS = {
   telegramHeroLogoType: "text",
   telegramHeroLogoHeight: "150",
 
+  // Missing Fields to prevent Compilation conflicts
+  socialSectionTitle: "Follow Our Sisterhood",
+  socialSubTitle: "Hear our voices and see our latest visual stories",
+  socialLinkX: "https://x.com/thevaginaroom",
+  instagramHandle: "@thevaginaroom",
+  socialFeedJson: "[]",
+  faqSub: "Have questions? Find instant support and answers here.",
+  adminEmail: "admin@thevaginaroom.com",
+  lastUpdated: "",
+  productsHomeSub: "Our Apothecary",
+  productsHomeHeading: "Phyto-Medicinal Selections",
+
   // Why We Exist Section
   whyWeExistCatalyst: "THE CATALYST",
   whyWeExistTitle: "Why The Vagina Room Exists.",
@@ -563,7 +575,7 @@ interface ContentContextType {
   setEditMode: (enabled: boolean) => void;
   updateContentField: (key: keyof ContentData, value: string) => void;
   saveContentChanges: (updates?: Partial<ContentData>) => Promise<{ success: boolean; message: string }>;
-  uploadImage: (base64Data: string, fileName: string) => Promise<{ success: boolean; url?: string; error?: string }>;
+  uploadImage: (fileOrBase64: File | string, fileName: string) => Promise<{ success: boolean; url?: string; error?: string }>;
   submitFormSubmission: (formType: string, formData: any) => Promise<{ success: boolean; id?: string }>;
   adminPasswordToken: string;
   exportDatabaseToJson: () => Promise<any>;

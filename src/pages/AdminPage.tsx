@@ -120,7 +120,7 @@ export default function AdminPage() {
   const adminEmails = ['branafrikana@gmail.com', 'admin@thevaginaroom.com'];
   const isAdminEmail = (userEmail && adminEmails.includes(userEmail)) || (userDataEmail && adminEmails.includes(userDataEmail)) || userData?.isAdmin === true;
 
-  const hasPermission = (tab: typeof activeTab) => {
+  const hasPermission = (tab: string) => {
     if (isAdmin || isAdminEmail) return true;
     if (!userData) return false;
     if (userDataEmail && adminEmails.includes(userDataEmail)) return true;
@@ -129,13 +129,13 @@ export default function AdminPage() {
     const perms = userData.adminPermissions || [];
     if (perms.includes('all_access')) return true;
 
-    const mapping: Record<string, (typeof activeTab)[]> = {
+    const mapping: Record<string, string[]> = {
       dashboard: ['dashboard'],
       orders: ['orders', 'sales_trends', 'payouts'],
       products: ['products', 'discount_codes'],
       members: ['members', 'approvals', 'partners', 'community'],
-      content: ['content', 'page_manager', 'page_visibility', 'blog_manager', 'media_manager', 'events', 'resources', 'reorder_sections'],
-      settings: ['general', 'branding', 'seo', 'security', 'social', 'navigation', 'live_class', 'checkout_settings', 'payment_gateways', 'media_sync', 'telegram_config', 'integrations', 'permissions'],
+      content: ['content', 'page_manager', 'page_visibility', 'blog_manager', 'media_manager', 'events', 'resources', 'reorder_sections', 'link_tree'],
+      settings: ['general', 'branding', 'seo', 'security', 'social', 'navigation', 'live_class', 'checkout_settings', 'payment_gateways', 'media_sync', 'telegram_config', 'integrations', 'permissions', 'automation', 'member_hub', 'business_details', 'settings'],
       moderation: ['moderation', 'submissions']
     };
 
@@ -153,7 +153,7 @@ export default function AdminPage() {
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState({ success: false, text: "" });
-  const [activeTab, setActiveTab] = useState<"dashboard" | "submissions" | "content" | "members" | "payouts" | "partners" | "moderation" | "navigation" | "general" | "branding" | "seo" | "security" | "social" | "reorder_sections" | "products" | "orders" | "business_details" | "checkout_settings" | "payment_gateways" | "media_sync" | "telegram_config" | "approvals" | "events" | "resources" | "community" | "page_manager" | "page_visibility" | "blog_manager" | "media_manager" | "sales_trends" | "discount_codes" | "integrations" | "permissions" | "live_class" | "member_hub" | "link_tree">("dashboard");
+  const [activeTab, setActiveTab] = useState<string>("dashboard");
 
   useEffect(() => {
     if (userData && !hasPermission(activeTab)) {

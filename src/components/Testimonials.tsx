@@ -119,7 +119,7 @@ export default function Testimonials() {
   const current = filteredTestimonials[activeIndex];
 
   // Slide sliding animation variants
-  const slideVariants = {
+  const slideVariants: any = {
     enter: (dir: number) => ({
       x: dir > 0 ? 100 : -100,
       opacity: 0

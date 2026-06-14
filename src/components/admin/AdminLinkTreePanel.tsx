@@ -507,7 +507,7 @@ export default function AdminLinkTreePanel() {
                         </span>
                         <div className="flex items-center gap-1.5">
                           <button
-                            type="button; button"
+                            type="button"
                             onClick={() => handleMoveTopBanner(idx, "up")}
                             disabled={idx === 0}
                             className="p-1 px-1.5 bg-white/5 hover:bg-white/10 disabled:opacity-30 rounded text-white/60 transition-colors"

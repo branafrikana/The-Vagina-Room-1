@@ -107,7 +107,7 @@ export default function EditableText({
   };
 
   const handleSave = () => {
-    updateContentField(field, value);
+    updateContentField(field as keyof ContentData, value);
     setIsEditing(false);
   };
 

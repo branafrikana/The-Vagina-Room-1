@@ -22,7 +22,7 @@ export default function Hero() {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: any = {
     hidden: { 
       opacity: 0, 
       y: 40,
@@ -37,7 +37,7 @@ export default function Hero() {
     }
   };
 
-  const playButtonVariants = {
+  const playButtonVariants: any = {
     hidden: { opacity: 0, scale: 0.8 },
     visible: { 
       opacity: 1, 
