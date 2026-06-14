@@ -158,7 +158,8 @@ export default function PwaPopup() {
                     </button>
                     <button
                       onClick={handleNativeInstall}
-                      className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-brand-black px-6 py-3.5 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl whitespace-nowrap"
+                      className="hover:bg-opacity-80 text-brand-black px-6 py-3.5 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl whitespace-nowrap"
+                      style={{ backgroundColor: brandingSettings.pwaCtaColor || '#D4AF37' }}
                     >
                       Install
                     </button>

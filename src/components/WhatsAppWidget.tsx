@@ -15,9 +15,11 @@ const WhatsAppIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
 );
 
 export default function WhatsAppWidget() {
-  const { content } = useContent();
+  const { content, loading } = useContent();
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
+
+  if (loading) return null;
 
   // Sane default handling
   let config: any = {};

@@ -24,30 +24,20 @@ import {
   Plus,
   HelpCircle,
   BookmarkCheck,
-  Award
+  Award,
+  ListTodo,
+  Book,
+  ClipboardList
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-
-// Structuring our Resource item fields safely
-interface ResourceItem {
-  id: string;
-  title: string;
-  description: string;
-  type: 'video' | 'audio' | 'pdf' | 'wellness';
-  url: string;
-  duration?: string;
-  fileSize?: string;
-  author: string;
-  category: string;
-  thumbnail: string;
-  highlights: string[];
-}
+import { ResourceItem, defaultResources } from '../../lib/resources';
 
 export default function ResourceLibrary() {
   // State for active category filters
-  const [activeCategory, setActiveCategory] = useState<'all' | 'video' | 'audio' | 'pdf' | 'wellness'>('all');
+  const [activeCategory, setActiveCategory] = useState<'all' | ResourceItem['category']>('all');
+  const [activeType, setActiveType] = useState<'all' | ResourceItem['type']>('all');
   const [searchQuery, setSearchQuery] = useState('');
   
   // Interactive favorites & bookmarks locally persisted
@@ -102,9 +92,10 @@ export default function ResourceLibrary() {
           id: doc.id,
           ...doc.data()
         })) as ResourceItem[];
-        setLibraryItems(fetchedItems);
+        setLibraryItems(fetchedItems.length > 0 ? fetchedItems : defaultResources);
       } catch (err) {
         console.error("Failed to load resources", err);
+        setLibraryItems(defaultResources);
       } finally {
         setLoadingItems(false);
       }
@@ -189,6 +180,7 @@ export default function ResourceLibrary() {
   // Clear search query & active categories (Browse all hot-key)
   const resetAllFilters = () => {
     setActiveCategory('all');
+    setActiveType('all');
     setSearchQuery('');
     setShowOnlyFavorites(false);
   };
@@ -202,7 +194,8 @@ export default function ResourceLibrary() {
 
   // Filter the items list dynamically
   const filteredItems = libraryItems.filter(item => {
-    const matchesCategory = activeCategory === 'all' || item.type === activeCategory;
+    const matchesCategory = activeCategory === 'all' || item.category === activeCategory;
+    const matchesType = activeType === 'all' || item.type === activeType;
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           item.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -210,16 +203,16 @@ export default function ResourceLibrary() {
     
     // Favorites filtering
     if (showOnlyFavorites) {
-      return matchesCategory && matchesSearch && favorites.includes(item.id);
+      return matchesCategory && matchesType && matchesSearch && favorites.includes(item.id);
     }
-    return matchesCategory && matchesSearch;
+    return matchesCategory && matchesType && matchesSearch;
   });
 
   // Calculate matching items count
   const matchingVideosCount = libraryItems.filter(i => i.type === 'video').length;
   const matchingAudiosCount = libraryItems.filter(i => i.type === 'audio').length;
   const matchingPDFsCount = libraryItems.filter(i => i.type === 'pdf').length;
-  const matchingWellnessCount = libraryItems.filter(i => i.type === 'wellness').length;
+  const matchingDownloadsCount = libraryItems.filter(i => ['pdf', 'ebook', 'worksheet', 'checklist'].includes(i.type)).length;
 
   // Retrieve item object representing recently viewed
   const recentlyViewedItem = libraryItems.find(i => i.id === recentlyViewedId);
@@ -237,10 +230,10 @@ export default function ResourceLibrary() {
               🌸 SECURE MEMBER APOTHECARY VAULT
             </span>
             <h2 className="text-xl sm:text-2xl font-serif font-black uppercase text-white mt-1 tracking-tight leading-tight">
-              📚 Educational Resource Library
+              📚 Resource Library
             </h2>
             <p className="text-xs text-white/50 max-w-2xl font-light font-sans mt-2 leading-relaxed">
-              A curated space where knowledge becomes clarity, and clarity becomes transformation. Review clinical ovarian sequences, listen to grounding sonic soundscapes, and download high-resolution manuals.
+              Your Curated Library of Trusted Women's Wellness Knowledge. A centralized, high-value knowledge vault designed to give members instant access to structured, reliable, and easy-to-understand wellness materials that support learning, healing, and daily decision-making.
             </p>
           </div>
 
@@ -255,11 +248,11 @@ export default function ResourceLibrary() {
               <span className="text-[7.5px] mt-0.5 block">Relaxation & Insights</span>
             </div>
             <div className="bg-black/40 border border-white/5 p-3 rounded-none">
-              <span className="block text-brand-gold font-extrabold text-[12px]">{matchingPDFsCount} Guides</span>
-              <span className="text-[7.5px] mt-0.5 block">Downloadable Workbooks</span>
+              <span className="block text-brand-gold font-extrabold text-[12px]">{matchingDownloadsCount} Downloads</span>
+              <span className="text-[7.5px] mt-0.5 block">Guides, Ebooks, Worksheets</span>
             </div>
             <div className="bg-black/40 border border-white/5 p-3 rounded-none">
-              <span className="block text-brand-gold font-extrabold text-[12px]">{matchingWellnessCount} Wellness tools</span>
+              <span className="block text-brand-gold font-extrabold text-[12px]">Daily Tools</span>
               <span className="text-[7.5px] mt-0.5 block">Frameworks & Recipes</span>
             </div>
           </div>
@@ -284,7 +277,8 @@ export default function ResourceLibrary() {
           {/* Action 2: Download Materials Category */}
           <button
             onClick={() => {
-              setActiveCategory('pdf');
+              setActiveType('pdf');
+              setActiveCategory('all');
               setShowOnlyFavorites(false);
             }}
             className="px-3.5 py-2 hover:bg-[#D4AF37] bg-white/5 border border-[#D4AF37]/30 text-[#D4AF37] hover:text-black font-mono text-[8px] uppercase tracking-widest font-black transition-all flex items-center gap-1.5"
@@ -315,7 +309,7 @@ export default function ResourceLibrary() {
                 if (recentlyViewedItem.type === 'video') {
                   setPlayingVideoId(recentlyViewedItem.id);
                 } else if (recentlyViewedItem.type === 'audio') {
-                  setPlayingAudioId(recentlyViewedId);
+                  setPlayingAudioId(recentlyViewedItem.id);
                 } else if (recentlyViewedItem.type === 'pdf') {
                   triggerSimulatedDownload(recentlyViewedItem);
                 }
@@ -323,7 +317,7 @@ export default function ResourceLibrary() {
               className="px-3.5 py-2 bg-gradient-to-r from-[#D4AF37]/10 to-transparent hover:to-[#D4AF37]/10 border border-[#D4AF37]/35 text-[#D4AF37] hover:text-white font-mono text-[8px] uppercase tracking-widest font-black transition-all flex items-center gap-1.5"
             >
               <Clock size={10} className="animate-spin text-brand-gold" style={{ animationDuration: '6s' }} />
-              <span>Resume: &quot;{recentlyViewedItem.title.substring(0, 20)}...&quot;</span>
+              <span>Resume: "{recentlyViewedItem.title.substring(0, 20)}..."</span>
             </button>
           )}
 
@@ -388,18 +382,22 @@ export default function ResourceLibrary() {
       </AnimatePresence>
 
       {/* 4. SEARCH AND CLASSIFICATION FILTERS BAR */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/[0.01] p-4 border border-white/5">
+      <div className="flex flex-col gap-4 bg-white/[0.01] p-4 border border-white/5">
         
-        {/* Real-time category selector */}
-        <div className="flex flex-wrap gap-1.5">
+        {/* Real-time category selector (Topics) */}
+        <div className="flex flex-wrap gap-1.5 items-center">
+          <span className="text-[8px] font-mono text-white/35 uppercase tracking-widest font-bold mr-2">
+            TOPICS:
+          </span>
           {[
-            { id: 'all', label: 'All Resources', icon: BookOpen },
-            { id: 'video', label: `Videos (${matchingVideosCount})`, icon: Video },
-            { id: 'audio', label: `Audio (${matchingAudiosCount})`, icon: Headphones },
-            { id: 'pdf', label: `PDF Guides (${matchingPDFsCount})`, icon: FileText },
-            { id: 'wellness', label: `Wellness (${matchingWellnessCount})`, icon: Activity }
+            { id: 'all', label: 'All Topics' },
+            { id: 'Fertility', label: 'Fertility' },
+            { id: 'Hormones', label: 'Hormones' },
+            { id: 'Intimacy', label: 'Intimacy' },
+            { id: 'Pregnancy', label: 'Pregnancy' },
+            { id: 'Menopause', label: 'Menopause' },
+            { id: 'Mental Wellness', label: 'Mental Wellness' }
           ].map(btn => {
-            const Icon = btn.icon;
             const isSel = activeCategory === btn.id;
             return (
               <button
@@ -414,22 +412,57 @@ export default function ResourceLibrary() {
                     : 'bg-black/40 border-white/5 text-white/50 hover:text-white hover:border-white/20'
                 }`}
               >
-                <Icon size={9} />
                 <span>{btn.label}</span>
               </button>
             );
           })}
         </div>
 
+        {/* Real-time type selector (Formats) */}
+        <div className="flex flex-wrap gap-1.5 items-center">
+          <span className="text-[8px] font-mono text-white/35 uppercase tracking-widest font-bold mr-2">
+            FORMATS:
+          </span>
+          {[
+            { id: 'all', label: 'All Formats', icon: BookOpen },
+            { id: 'video', label: 'Videos', icon: Video },
+            { id: 'audio', label: 'Audios', icon: Headphones },
+            { id: 'pdf', label: 'PDFs', icon: FileText },
+            { id: 'ebook', label: 'Ebooks', icon: Book },
+            { id: 'worksheet', label: 'Worksheets', icon: ClipboardList },
+            { id: 'checklist', label: 'Checklists', icon: ListTodo }
+          ].map(btn => {
+            const Icon = btn.icon;
+            const isSel = activeType === btn.id;
+            return (
+              <button
+                key={btn.id}
+                onClick={() => {
+                  setActiveType(btn.id as any);
+                  setShowOnlyFavorites(false);
+                }}
+                className={`px-3 py-1.5 font-mono text-[8px] uppercase tracking-widest transition-all border flex items-center gap-1 ${
+                  isSel
+                    ? 'bg-[#D4AF37]/10 border-[#D4AF37]/50 text-[#D4AF37]'
+                    : 'bg-transparent border-transparent text-white/40 hover:text-white'
+                }`}
+              >
+                <Icon size={9} />
+                <span>{btn.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        
         {/* Focused Keyword Input */}
-        <div className="relative w-full md:w-64 max-w-sm shrink-0">
+        <div className="relative w-full shrink-0 mt-2">
           <input
             ref={searchInputRef}
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search educational library..."
-            className="w-full bg-black/80 border border-white/10 hover:border-white/20 focus:border-[#D4AF37] p-2 pl-8.5 font-mono text-[10px] text-white uppercase tracking-wider outline-none rounded-none"
+            className="w-full bg-black/80 border border-white/10 hover:border-white/20 focus:border-[#D4AF37] p-2 pl-8 text-sm font-mono text-white placeholder:text-white/20 uppercase tracking-wider outline-none rounded-none"
           />
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40" size={12} />
           {searchQuery && (
@@ -437,7 +470,7 @@ export default function ResourceLibrary() {
               onClick={() => setSearchQuery('')}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
             >
-              <X size={10} />
+              <X size={14} />
             </button>
           )}
         </div>
@@ -508,14 +541,14 @@ export default function ResourceLibrary() {
                               setPlayingVideoId(item.id);
                             } else if (item.type === 'audio') {
                               setPlayingAudioId(playingAudioId === item.id ? null : item.id);
-                            } else if (item.type === 'pdf') {
+                            } else if (['pdf', 'ebook', 'worksheet', 'checklist', 'guide'].includes(item.type)) {
                               triggerSimulatedDownload(item);
                             }
                           }}
                         >
                           {item.type === 'video' && <Play size={15} fill="currentColor" className="ml-0.5 text-[#D4AF37] group-hover:text-black" />}
                           {item.type === 'audio' && (isP ? <Pause size={15} className="animate-spin text-emerald-400" style={{ animationDuration: '4s' }} /> : <Volume2 size={15} />)}
-                          {item.type === 'pdf' && <FileText size={15} />}
+                          {['pdf', 'ebook', 'worksheet', 'checklist', 'guide'].includes(item.type) && <Download size={15} />}
                           {item.type === 'wellness' && <Activity size={15} />}
                         </span>
                       </div>
@@ -602,14 +635,14 @@ export default function ResourceLibrary() {
                         </button>
                       )}
 
-                      {item.type === 'pdf' && (
+                      {['pdf', 'ebook', 'worksheet', 'checklist', 'guide'].includes(item.type) && (
                         <button
                           type="button"
                           onClick={() => triggerSimulatedDownload(item)}
                           className="px-2.5 py-1.5 bg-white/5 border border-white/10 hover:border-[#D4AF37] text-[#D4AF37] hover:text-[#D4AF37] hover:bg-[#D4AF37]/5 text-[8px] font-black uppercase tracking-widest transition-all flex items-center gap-1"
                         >
                           <Download size={9} />
-                          <span>DOWNLOAD ({item.fileSize})</span>
+                          <span>DOWNLOAD {item.type.toUpperCase()} ({item.fileSize || '1.2 MB'})</span>
                         </button>
                       )}
 

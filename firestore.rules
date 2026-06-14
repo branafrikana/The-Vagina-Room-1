@@ -18,14 +18,15 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email_verified == true && (
-          request.auth.token.email == "branafrikana@gmail.com" ||
-          request.auth.token.email == "admin@thevaginaroom.com" ||
-          exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
-          ))
+        (request.auth.token.get('email', '') == "branafrikana@gmail.com") ||
+        (request.auth.token.get('email', '') == "admin@thevaginaroom.com") ||
+        (exists(/databases/$(database)/documents/admins/$(request.auth.uid))) ||
+        (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          (
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true ||
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin'
+          )
         )
       );
     }
@@ -34,8 +35,8 @@ service cloud.firestore {
       return isSignedIn() && (
         isAdmin() ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isMember == true ||
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isFreeMemberForLife == true
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isMember', false) == true ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isFreeMemberForLife', false) == true
         ))
       );
     }
@@ -99,12 +100,17 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
-      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow create: if isOwner(userId) 
+        && isValidUser(incoming()) 
+        && incoming().get('role', '') == 'member'
+        && !incoming().keys().hasAny(['isAdmin'])
+        && !incoming().keys().hasAny(['isFreeMemberForLife']);
       allow update: if isAdmin() || (
         isOwner(userId) 
         && isValidUser(incoming()) 
-        && !incoming().diff(existing()).affectedKeys().hasAny(['role', 'isAdmin', 'isMember', 'isFreeMemberForLife', 'membershipType'])
+        && !incoming().diff(existing()).affectedKeys().hasAny(['role', 'isAdmin', 'isMember', 'isFreeMemberForLife', 'membershipType', 'customCommissionPercentage', 'adminPermissions'])
       );
+      allow delete: if isAdmin() || request.auth.token.get('email', '') == 'branafrikana@gmail.com' || exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     // 2. Admins Authorization List
@@ -159,15 +165,15 @@ service cloud.firestore {
 
     // 10. Wellness Journal Reflections
     match /wellnessReflections/{id} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isOwner(incoming().userId) && isValidReflection(incoming());
       allow update: if isOwner(resource.data.userId) && isValidReflection(incoming());
-      allow delete: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
     // 11. Wellness Goals
     match /wellnessGoals/{id} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isOwner(incoming().userId) && isValidGoal(incoming());
       allow update: if isOwner(resource.data.userId) && isValidGoal(incoming());
       allow delete: if isOwner(resource.data.userId) || isAdmin();
@@ -232,6 +238,13 @@ service cloud.firestore {
     match /errorLogs/{id} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
+    }
+
+    // 21. Live Class QA
+    match /live_class_qa/{id} {
+      allow read: if isMember() || isAdmin();
+      allow create: if isMember() || isAdmin();
+      allow update, delete: if isAdmin();
     }
   }
 }

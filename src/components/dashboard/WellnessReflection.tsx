@@ -78,6 +78,7 @@ export default function WellnessReflection() {
 
   // Reflection Form State
   const [mood, setMood] = useState(3);
+  const [energyLevel, setEnergyLevel] = useState(3);
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
 
@@ -149,12 +150,14 @@ export default function WellnessReflection() {
       await addDoc(collection(db, 'wellnessReflections'), {
         userId: user.uid,
         mood,
+        energyLevel,
         symptoms,
         notes,
         createdAt: serverTimestamp()
       });
       setShowForm(false);
       setMood(3);
+      setEnergyLevel(3);
       setSymptoms([]);
       setNotes('');
     } catch (err) {
@@ -226,7 +229,7 @@ export default function WellnessReflection() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/5">
         <div>
           <h3 className="text-xl font-black uppercase tracking-widest text-brand-gold flex items-center gap-3">
-            <Activity className="text-brand-gold" size={24} /> Wellness Sanctuary
+            <Activity className="text-brand-gold" size={24} /> Wellness Center
           </h3>
           <p className="text-[10px] text-white/40 font-mono mt-1 italic uppercase tracking-wider">Your personal space for reflection, restoration, and growth.</p>
         </div>
@@ -273,7 +276,7 @@ export default function WellnessReflection() {
                   const isActive = mood === m.value;
                   return (
                     <button
-                      key={m.value}
+                      key={`mood-${m.value}`}
                       onClick={() => setMood(m.value)}
                       className={`flex flex-col items-center gap-3 transition-all group ${isActive ? 'scale-110' : 'opacity-40 grayscale hover:opacity-100 hover:grayscale-0'}`}
                     >
@@ -283,6 +286,29 @@ export default function WellnessReflection() {
                       <span className={`text-[9px] font-bold uppercase tracking-widest ${isActive ? 'text-brand-gold' : 'text-white/40'}`}>
                         {m.label}
                       </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Energy Level Picker */}
+            <div className="space-y-6 pt-6 border-t border-white/5">
+              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/60 text-center">Energy Levels</h4>
+              <div className="flex justify-between max-w-xl mx-auto gap-2">
+                {[1, 2, 3, 4, 5].map((level) => {
+                  const isActive = energyLevel === level;
+                  return (
+                    <button
+                      key={`energy-${level}`}
+                      onClick={() => setEnergyLevel(level)}
+                      className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest border transition-all ${
+                        isActive 
+                        ? 'bg-brand-gold border-brand-gold text-brand-black shadow-[0_0_15px_rgba(212,175,55,0.4)]' 
+                        : 'bg-white/5 border-white/10 text-white/40 hover:border-white/30 hover:bg-white/10'
+                      }`}
+                    >
+                      Level {level}
                     </button>
                   );
                 })}
@@ -571,7 +597,12 @@ export default function WellnessReflection() {
                           "{r.notes}"
                         </p>
                       )}
-                      <div className="mt-3 flex flex-wrap gap-1.5">
+                      <div className="mt-3 flex flex-wrap gap-1.5 items-center">
+                        {r.energyLevel && (
+                           <span className="px-2 py-0.5 bg-white/5 text-[7px] text-white/70 uppercase tracking-tighter border border-white/10">
+                             ⚡ Energy: {r.energyLevel}/5
+                           </span>
+                        )}
                         {r.symptoms?.map((s: string) => (
                           <span key={s} className="px-2 py-0.5 bg-brand-gold/5 text-[7px] text-brand-gold/60 uppercase tracking-tighter border border-brand-gold/10">
                             {s}

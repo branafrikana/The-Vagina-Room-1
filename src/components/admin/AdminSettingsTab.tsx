@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
 import { useContent } from '../../context/ContentContext';
 import { ImageUploader } from './ImageUploader';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Database, Download } from 'lucide-react';
+import { InputGroup } from '../ui/InputGroup';
 
 interface AdminSettingsTabProps {
   activeTab: "general" | "branding" | "seo" | "security" | "social" | "integrations";
 }
 
 export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
-  const { content, updateContentField } = useContent();
+  const { content, updateContentField, saveContentChanges, exportDatabaseToJson } = useContent();
   const [showPassword, setShowPassword] = useState(false);
+  const [exporting, setExporting] = useState(false);
   
   const parseJSON = (jsonString: string, fallback: any) => {
     try {
-      return JSON.parse(jsonString || '{}');
-    } catch {
+      if (!jsonString) return fallback;
+      return JSON.parse(jsonString);
+    } catch (e) {
+      console.error("Failed to parse JSON:", jsonString, e);
       return fallback;
     }
   };
@@ -73,6 +77,29 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
     }
   });
   const [statusLoading, setStatusLoading] = useState(false);
+
+  const handleExportDatabase = async () => {
+    setExporting(true);
+    try {
+      const data = await exportDatabaseToJson();
+      const backupFilename = `tvr_firestore_backup_${new Date().toISOString().split("T")[0]}.json`;
+      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+        JSON.stringify(data, null, 2)
+      )}`;
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", jsonString);
+      downloadAnchor.setAttribute("download", backupFilename);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      console.log("Database backup exported successfully!");
+    } catch (e: any) {
+      console.error("Export database failed:", e);
+      alert("Failed to export database: " + e.message);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const refreshStatus = React.useCallback(async () => {
     setStatusLoading(true);
@@ -137,10 +164,13 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
     }
   }, [activeTab, content.mediaSettingsJson, content.paymentSettingsJson, content.smtpSettingsJson, refreshStatus]);
 
-  const updateJSONField = (configKey: string, field: string, value: any) => {
+  const updateJSONField = async (configKey: string, field: string, value: any) => {
+    console.log("Updating field:", configKey, field, value);
     const current = parseJSON((content as any)[configKey], {});
     const updated = { ...current, [field]: value };
-    updateContentField(configKey as any, JSON.stringify(updated, null, 2));
+    const jsonString = JSON.stringify(updated, null, 2);
+    console.log("New JSON string:", jsonString);
+    await saveContentChanges({ [configKey]: jsonString });
   };
 
   if (activeTab === "general") {
@@ -199,6 +229,19 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
                 className={`w-10 h-5 relative rounded-full transition-colors ${config.signupsEnabled !== false ? 'bg-brand-gold' : 'bg-white/10'}`}
               >
                 <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${config.signupsEnabled !== false ? 'right-1' : 'left-1'}`} />
+              </button>
+            </div>
+            <div className="flex justify-between items-center bg-black/40 p-3 border border-white/5 mt-2">
+              <div>
+                <p className="text-[10px] font-black uppercase text-brand-red">Global Maintenance Mode</p>
+                <p className="text-[8px] text-white/30 uppercase tracking-tighter">Redirect visitors to the offline sanctuary placeholder page</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => updateJSONField("generalSettingsJson", "maintenanceMode", !config.maintenanceMode)}
+                className={`w-10 h-5 relative rounded-full transition-colors ${config.maintenanceMode ? 'bg-brand-red' : 'bg-white/10'}`}
+              >
+                <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${config.maintenanceMode ? 'right-1' : 'left-1'}`} />
               </button>
             </div>
         </div>
@@ -673,73 +716,101 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
           </div>
         </div>
 
-        {/* Member Dashboard Features Toggle Control Center */}
-        <div className="pt-6 border-t border-white/10">
-          <div>
-            <h4 className="text-xs font-black text-brand-gold uppercase tracking-[0.2em]">Member Dashboard Features Control Center</h4>
-            <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5 mb-4">Enable or disable specific tabs globally on all community members' dashboards</p>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 bg-white/[0.01] border border-white/5 p-5">
+
+        {/* Page Pre-Loader & Transition Customization */}
+        <div className="pt-6 border-t border-white/10 mt-6">
+          <div className="border border-white/5 bg-white/[0.01] p-5 space-y-6">
+            <div>
+              <h4 className="text-xs font-black text-brand-gold uppercase tracking-[0.2em]">Page Pre-Loader & Transition Customization</h4>
+              <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5">Customize the visual greeting and tagline shown when pages are booting or validating memberships</p>
+            </div>
+
             {(() => {
-              let enabledFeatures: Record<string, boolean> = {
-                profile: true,
-                resources: true,
-                programs: true,
-                events: true,
-                community: true,
-                shop: true,
-                id_card: true,
-                referral: true,
-                support: true
-              };
-              try {
-                if (content.memberDashboardFeaturesJson) {
-                  enabledFeatures = { ...enabledFeatures, ...JSON.parse(content.memberDashboardFeaturesJson) };
-                }
-              } catch (e) {}
-
-              const toggleFeature = (key: string) => {
-                const nextState = { ...enabledFeatures, [key]: !enabledFeatures[key] };
-                updateContentField("memberDashboardFeaturesJson", JSON.stringify(nextState));
-              };
-
-              const featureMetaData = [
-                { id: 'profile', name: 'My Profile', emoji: '👤', desc: 'Personal details & preferences' },
-                { id: 'resources', name: 'Resource Library', emoji: '📚', desc: 'Expert guides, videos & audio' },
-                { id: 'programs', name: 'Programs & Courses', emoji: '🎓', desc: 'Enrolled courses & progress' },
-                { id: 'events', name: 'Events Calendar', emoji: '📅', desc: 'Circle RSVPs & live sessions' },
-                { id: 'community', name: 'Community Feed', emoji: '💬', desc: 'Lounge feed & private audio' },
-                { id: 'shop', name: 'Member Shop', emoji: '🛍️', desc: 'Curated botanicals & tools' },
-                { id: 'id_card', name: 'Membership Card', emoji: '💳', desc: 'Digital pass & QR credentials' },
-                { id: 'referral', name: 'Refer & Earn', emoji: '🤝', desc: 'Ambassador ledger & payouts' },
-                { id: 'support', name: 'Support System', emoji: '🛠️', desc: 'Helpdesk tickets & WhatsApp sync' },
-              ];
-
-              return featureMetaData.map((feat) => {
-                const isEnabled = enabledFeatures[feat.id] !== false;
-                return (
-                  <div key={feat.id} className="flex items-center justify-between p-3 border border-white/5 bg-black/40 hover:bg-black/60 transition-colors">
-                    <div className="text-left max-w-[70%]">
-                      <p className="text-[10px] font-black uppercase text-white flex items-center gap-1.5 leading-none">
-                        <span>{feat.emoji}</span> {feat.name}
-                      </p>
-                      <p className="text-[9px] text-white/35 font-light font-sans mt-1">{feat.desc}</p>
+              const bConf = parseJSON(content.brandingSettingsJson, {});
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">Loader Top Soft Label</label>
+                      <input 
+                        type="text" 
+                        value={bConf.loaderLabel || "THE VAGINA ROOM SISTERS"}
+                        onChange={(e) => updateJSONField("brandingSettingsJson", "loaderLabel", e.target.value)}
+                        placeholder="e.g. LOADING SECURE CLIENT SANCTUARY"
+                        className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                      />
+                      <p className="text-[8px] text-white/30 uppercase tracking-wider">The tiny label that appears above the spinning visual on load.</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => toggleFeature(feat.id)}
-                      className={`px-2.5 py-1 text-[8px] font-bold tracking-widest uppercase border transition-all cursor-pointer ${
-                        isEnabled 
-                          ? "bg-brand-gold/10 border-brand-gold/30 text-brand-gold font-extrabold shadow-sm" 
-                          : "bg-transparent border-white/10 text-white/30"
-                      }`}
-                    >
-                      {isEnabled ? "ACTIVE" : "OFFLINE"}
-                    </button>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block tracking-widest">Loader Main Slogan / Custom Soft Text</label>
+                      <input 
+                        type="text" 
+                        value={bConf.loaderSubtext || "Restoring Wellness & Dignity"}
+                        onChange={(e) => updateJSONField("brandingSettingsJson", "loaderSubtext", e.target.value)}
+                        placeholder="e.g. Empowering Somatic Intimacy"
+                        className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" 
+                      />
+                      <p className="text-[8px] text-white/30 uppercase tracking-wider">Main loading tagline, shown underneath the spinning visual.</p>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-black/40 p-3 border border-white/5 mt-2">
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-white">Show Loading Soft Text</p>
+                        <p className="text-[8px] text-white/30 uppercase tracking-tighter">Toggle displaying any text/taglines on the loading screen</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => updateJSONField("brandingSettingsJson", "loaderShowText", bConf.loaderShowText !== false ? false : true)}
+                        className={`w-10 h-5 relative rounded-full transition-colors ${bConf.loaderShowText !== false ? 'bg-brand-gold' : 'bg-white/10'}`}
+                      >
+                        <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${bConf.loaderShowText !== false ? 'right-1' : 'left-1'}`} />
+                      </button>
+                    </div>
                   </div>
-                );
-              });
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Loader Icon Spin Speed</label>
+                      <select
+                        value={bConf.loaderSpinSpeed || "normal"}
+                        onChange={(e) => updateJSONField("brandingSettingsJson", "loaderSpinSpeed", e.target.value)}
+                        className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs"
+                      >
+                        <option value="slow">Elegant & Slow Speed</option>
+                        <option value="normal">Standard Speed</option>
+                        <option value="fast">High Velocity Speed</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Loader Spinning Graphic Layout</label>
+                      <select
+                        value={bConf.loaderLogoType || "DEFAULT"}
+                        onChange={(e) => updateJSONField("brandingSettingsJson", "loaderLogoType", e.target.value)}
+                        className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs"
+                      >
+                        <option value="DEFAULT">Main Circular Site Navigation Logo</option>
+                        <option value="TEXT_LOGO">Golden Serif Text Logo ("THE vagina ROOM")</option>
+                        <option value="CUSTOM_LOGO">Custom Uploaded Preloader Asset</option>
+                      </select>
+                    </div>
+
+                    {bConf.loaderLogoType === "CUSTOM_LOGO" && (
+                      <div className="space-y-2 col-span-1 md:col-span-2 border border-dashed border-white/10 p-3 bg-black/50">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Upload Custom Spinner Asset</label>
+                        <ImageUploader 
+                          fieldKey="brandingSettingsJson"
+                          label="Upload Graphic (e.g. SVG / Transparent PNG)"
+                          onUploadSuccess={(url) => updateJSONField("brandingSettingsJson", "loaderLogoUrl", url)}
+                          currentValue={bConf.loaderLogoUrl || ""}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
             })()}
           </div>
         </div>
@@ -900,6 +971,28 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
               <option value="full">Circle (Pill)</option>
             </select>
           </div>
+        </div>
+
+        <div className="bg-white/5 p-4 border border-white/5 space-y-4">
+          <div className="flex justify-between items-center border-b border-white/5 pb-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-brand-gold">PWA Installation Settings</p>
+          </div>
+          <InputGroup label="PWA Install CTA Button Color">
+            <div className="flex gap-2">
+              <input 
+                type="color"
+                value={config.pwaCtaColor || "#D4AF37"}
+                onChange={(e) => updateJSONField("brandingSettingsJson", "pwaCtaColor", e.target.value)}
+                className="w-10 h-10 bg-transparent border-none cursor-pointer"
+              />
+              <input
+                type="text"
+                value={config.pwaCtaColor || "#D4AF37"}
+                onChange={(e) => updateJSONField("brandingSettingsJson", "pwaCtaColor", e.target.value)}
+                className="flex-grow bg-brand-black border border-white/10 p-2 text-white text-xs font-mono"
+              />
+            </div>
+          </InputGroup>
         </div>
 
         <div className="bg-white/5 p-4 border border-white/5 space-y-4">
@@ -1596,6 +1689,32 @@ export default function AdminSettingsTab({ activeTab }: AdminSettingsTabProps) {
               <label className="text-[10px] font-black uppercase tracking-wider text-white/30 block">SMTP From Address</label>
               <input type="email" value={smtpConfig.from || ""} onChange={(e) => updateJSONField("smtpSettingsJson", "from", e.target.value)} className="w-full bg-brand-black border border-white/10 p-3 text-white focus:border-brand-gold focus:outline-none text-xs" />
             </div>
+          </div>
+        </div>
+
+        {/* Database Backup Export Section */}
+        <div className="bg-brand-black border border-white/10 p-6 space-y-4">
+          <div className="flex justify-between items-center border-b border-white/5 pb-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-brand-gold flex items-center gap-1.5">
+                <Database className="w-3.5 h-3.5 text-brand-gold" /> Firestore Database Backup
+              </p>
+              <p className="text-[10px] text-white/40 mt-1">Export current Firestore database content to a JSON file for manual backup purposes.</p>
+            </div>
+            <button 
+              type="button"
+              onClick={handleExportDatabase}
+              disabled={exporting}
+              className="px-4 py-2 bg-brand-gold hover:bg-white text-brand-black text-[10px] uppercase font-black transition-colors disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              {exporting ? "Exporting..." : "Download Backup JSON"}
+            </button>
+          </div>
+          <div className="pt-2">
+            <p className="text-[10px] text-white/50 leading-relaxed italic">
+              Downloads a consolidated JSON backup including configurations, submissions, blog articles, pages, and other persistent database collections securely to your local machine.
+            </p>
           </div>
         </div>
 

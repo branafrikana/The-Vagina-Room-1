@@ -86,7 +86,7 @@ const BREATHING_RHYTHMS: BreathingRhythm[] = [
       { name: 'Inhale', duration: 4, cue: 'Abdomen & Pelvic floor expanding gently...', visualScale: 1.5 },
       { name: 'Hold', duration: 4, cue: 'Resting in the space of complete fullness...', visualScale: 1.5 },
       { name: 'Exhale', duration: 6, cue: 'Deep release through a soft, slow sigh...', visualScale: 0.85 },
-      { name: 'HoldEmpty', duration: 2, cue: 'Sanctuary of peace. Relaxing into comfort...', visualScale: 0.85 }
+      { name: 'HoldEmpty', duration: 2, cue: 'Space of peace. Relaxing into comfort...', visualScale: 0.85 }
     ]
   }
 ];
@@ -200,7 +200,7 @@ export default function SomaticBreathingPage({ isDashboardTab = false }: { isDas
       <div className="bg-brand-black text-white min-h-screen font-sans flex flex-col justify-center items-center">
         <div className="flex flex-col items-center gap-4 z-10">
           <div className="w-12 h-12 border-4 border-brand-gold border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-brand-gold font-black uppercase tracking-[0.3em] font-mono text-[10px]">Verifying Sanctuary Credentials</p>
+          <p className="text-brand-gold font-black uppercase tracking-[0.3em] font-mono text-[10px]">Verifying Member Credentials</p>
         </div>
       </div>
     );
@@ -210,7 +210,7 @@ export default function SomaticBreathingPage({ isDashboardTab = false }: { isDas
     return (
       <>
         <SEO 
-          title="Inner Sanctuary Locked - The Vagina Room" 
+          title="Inner Space Locked - The Vagina Room" 
           description="Somatic breathing and womb-healing frequency resources are reserved for active members of The Vagina Room Inner Circle."
         />
         
@@ -237,11 +237,11 @@ export default function SomaticBreathingPage({ isDashboardTab = false }: { isDas
 
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-gold/5 border border-brand-gold/15 rounded-full mb-4">
                   <Sparkles className="text-brand-gold w-3 h-3" />
-                  <span className="text-[8px] font-mono tracking-[0.25em] uppercase text-brand-gold font-bold">Members Only Sanctuary</span>
+                  <span className="text-[8px] font-mono tracking-[0.25em] uppercase text-brand-gold font-bold">Members Only Space</span>
                 </div>
 
                 <h1 className="text-3xl sm:text-4xl font-serif text-brand-cream italic tracking-tight mb-4">
-                  The Inner Sanctuary
+                  The Inner Space
                 </h1>
                 
                 <p className="text-white/50 text-xs leading-relaxed max-w-sm mx-auto mb-8 font-light italic">
@@ -1258,7 +1258,7 @@ export default function SomaticBreathingPage({ isDashboardTab = false }: { isDas
                   <Sparkles className="w-8 h-8" />
                 </div>
 
-                <span className="text-brand-gold font-mono uppercase tracking-[0.25em] text-[10px] font-bold block mb-2">Sanctuary Space Complete</span>
+                <span className="text-brand-gold font-mono uppercase tracking-[0.25em] text-[10px] font-bold block mb-2">Member Space Complete</span>
                 <h3 className="text-3xl font-serif text-white mb-4 italic">Session Completed!</h3>
                 <p className="text-xs text-white/50 leading-relaxed italic max-w-sm mx-auto mb-8">
                   "Each breath is a return to complete restorative knowledge. You have successfully aligned your physical temple, nourished your cell networks, and calmed your biological signals."
@@ -1292,7 +1292,7 @@ export default function SomaticBreathingPage({ isDashboardTab = false }: { isDas
                   onClick={() => setShowSummary(false)}
                   className="w-full py-4 bg-brand-cream hover:bg-white text-brand-black rounded-lg text-xs uppercase font-extrabold tracking-widest font-sans hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shadow-lg"
                 >
-                  Return to Sanctuary Space
+                  Return to Member Space
                 </button>
               </motion.div>
             </motion.div>

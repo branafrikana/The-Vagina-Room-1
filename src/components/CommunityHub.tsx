@@ -37,7 +37,7 @@ import { useContent, FALLBACK_DEFAULTS } from '../context/ContentContext';
 // Types
 interface FeedPost {
   id: string;
-  category: 'Wellness Tip' | 'Member Experience' | 'Dr. FID Update' | 'Highlight' | 'Reflections';
+  category: 'Wellness Tip' | 'Member Experience' | 'Dr. FID Update' | 'Highlight' | 'Reflections' | 'Question' | 'Win' | 'Testimonial';
   author: string;
   authorRank?: string;
   title: string;
@@ -78,7 +78,7 @@ export default function CommunityHub() {
   }, [content.badgesConfigJson]);
   
   // States
-  const [activeTab, setActiveTab] = useState<'feed' | 'groups' | 'achievements' | 'announcements' | 'values' | 'directory'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'groups' | 'questions' | 'wins' | 'testimonials' | 'achievements' | 'announcements' | 'values' | 'directory'>('feed');
   const [successToast, setSuccessToast] = useState('');
   const [postSearch, setPostSearch] = useState('');
   
@@ -103,6 +103,7 @@ export default function CommunityHub() {
   const [newPostCategory, setNewPostCategory] = useState<FeedPost['category']>('Member Experience');
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
   
   // Flags Modal Support
   const [targetFlagItem, setTargetFlagItem] = useState('');
@@ -319,9 +320,9 @@ export default function CommunityHub() {
   const [discussionGroups, setDiscussionGroups] = useState<DiscussionGroup[]>([
     {
       id: 'g-1',
-      name: 'Fertility & TTC Support Circle',
+      name: 'Fertility Support Group',
       slug: 'fertility',
-      description: 'A delicate holding space for tracking cycles, estimating sovereign ovulation periods, and botanical seed sharing.',
+      description: 'For women and couples navigating fertility awareness, conception, and reproductive planning.',
       membersCount: 148,
       highlightText: 'Discussing: Basal metabolic index patterns with Dr. FID manual',
       conversations: [
@@ -331,49 +332,49 @@ export default function CommunityHub() {
     },
     {
       id: 'g-2',
-      name: 'Menstrual Health Discussions',
-      slug: 'menstrual',
-      description: 'Navigating congestion, easing cramps naturally, cyclic sync templates, and discussing steam preparation formulations.',
+      name: 'Trying to Conceive (TTC) Circle',
+      slug: 'ttc',
+      description: 'Focused on active conception support, cycle tracking, and emotional encouragement.',
       membersCount: 230,
-      highlightText: 'Discussing: Chamomile and marigold infusion ratios',
+      highlightText: 'Discussing: Ovulation indicators and timing',
       conversations: [
-        { author: 'Chidi-Chiege', role: 'Ambassador', content: 'Three tablespoons of botanical infusion into hot mist works incredibly.', time: '1 hour ago' }
+        { author: 'Chidi-Chiege', role: 'Ambassador', content: 'Tracking BBT alongside cervical mucus has been a game changer.', time: '1 hour ago' }
       ]
     },
     {
       id: 'g-3',
-      name: 'Hormonal Balance & Wellness',
-      slug: 'hormonal',
-      description: 'Navigating estrogen-progesterone balancing scales, coping with stress-induced cycles, and glandular support.',
+      name: 'Pregnancy Circle',
+      slug: 'pregnancy',
+      description: 'For expectant mothers receiving guidance, education, and emotional support.',
       membersCount: 182,
-      highlightText: 'Discussing: Evening rose oils for cortisol dampening',
+      highlightText: 'Discussing: First trimester fatigue management',
       conversations: []
     },
     {
       id: 'g-4',
-      name: 'Pregnancy & Postpartum Care',
-      slug: 'pregnancy',
-      description: 'Sacred pre-natal exercise matrices, postpartum recovery, sister-doula checklists, and womb tone recovery.',
+      name: 'New Mothers Circle',
+      slug: 'postpartum',
+      description: 'Postpartum recovery, emotional wellness, and newborn care support.',
       membersCount: 94,
-      highlightText: 'Discussing: Pelvic floor pelvic-resting parameters',
+      highlightText: 'Discussing: Sleep strategies and pelvic floor recovery',
       conversations: []
     },
     {
       id: 'g-5',
-      name: 'Emotional Healing & Wellness',
-      slug: 'emotional',
-      description: 'An safe space dedicated to processing cyclic grief, ancestral somatic therapy, clearing blockages, and meditation rules.',
+      name: 'Menopause Lounge',
+      slug: 'menopause',
+      description: 'Support for hormonal transition, emotional balance, and aging wellness.',
       membersCount: 111,
-      highlightText: 'Discussing: Breath retention times for pelvic vagus node resonance',
+      highlightText: 'Discussing: Botanical cooling infusions for night rests',
       conversations: []
     },
     {
       id: 'g-6',
-      name: 'General Women’s Health Talks',
-      slug: 'general_health',
-      description: 'Everyday holistic wellness, questions on anatomical diagrams, check-up standards, and Dr. FID bulletin comments.',
+      name: 'Emotional Healing Circle',
+      slug: 'emotional_healing',
+      description: 'A safe space for trauma recovery, emotional release, and mental wellbeing support.',
       membersCount: 312,
-      highlightText: 'Discussing: General annual somatic scans expectation timeline',
+      highlightText: 'Discussing: Grounding somatic practices for anxiety',
       conversations: []
     }
   ]);
@@ -449,8 +450,8 @@ export default function CommunityHub() {
     try {
       const newPostObj = {
         category: newPostCategory,
-        author: user?.displayName || user?.email?.split('@')[0] || 'Sister Support',
-        authorRank: 'Verified Member',
+        author: isAnonymous ? 'Anonymous Sister' : (user?.displayName || user?.email?.split('@')[0] || 'Sister Support'),
+        authorRank: isAnonymous ? 'Anonymous' : 'Verified Member',
         title: newPostTitle,
         content: newPostContent,
         date: new Date().toLocaleDateString(),
@@ -675,9 +676,10 @@ export default function CommunityHub() {
         {[
           { id: 'feed', name: '📰 Feed & Activity' },
           { id: 'groups', name: '👥 Discussion Circles' },
+          { id: 'questions', name: '❓ Questions Hub' },
+          { id: 'wins', name: '🌟 Wins & Milestones' },
+          { id: 'testimonials', name: '💖 Testimonials' },
           { id: 'achievements', name: '🏆 Sisterhood Badges' },
-          { id: 'announcements', name: '📢 Bulletin Boards' },
-          { id: 'values', name: '🌸 Sacred Values' },
           { id: 'directory', name: '🗺️ sister registry' }
         ].map((tab) => (
           <button
@@ -1145,6 +1147,102 @@ export default function CommunityHub() {
             </div>
           )}
 
+          {/* TAB: ❓ QUESTIONS HUB */}
+          {activeTab === 'questions' && (
+            <div className="space-y-6 text-left">
+              <div>
+                <h3 className="text-md uppercase tracking-wider font-serif text-brand-gold flex items-center gap-2">
+                  <MessageSquare size={16} /> ❓ Questions Hub
+                </h3>
+                <p className="text-[10px] text-white/40 font-mono mt-0.5">A dedicated space to safely ask questions and seek guidance from the community and Dr. FID.</p>
+              </div>
+              
+              {posts.filter(p => p.category === 'Question').length === 0 ? (
+                <div className="p-12 border border-white/5 bg-zinc-950 text-center text-xs italic text-white/30">
+                  No questions currently posted. Use the 'Post in Community Feed' action to ask your first question.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {posts.filter(p => p.category === 'Question').map(post => (
+                    <div key={post.id} className="bg-zinc-950 border border-white/5 p-5 space-y-3">
+                      <div className="flex justify-between items-center text-[9px] font-mono">
+                        <span className="text-[#D4AF37]">{post.author}</span>
+                        <span className="text-white/30">{post.date}</span>
+                      </div>
+                      <h4 className="text-sm font-bold text-white">{post.title}</h4>
+                      <p className="text-xs text-white/70 line-clamp-3">{post.content}</p>
+                      <button onClick={() => setActiveTab('feed')} className="text-[9px] font-mono text-[#D4AF37] uppercase tracking-widest pt-2 hover:text-white">View thread in Feed→</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: 🌟 WINS & MILESTONES */}
+          {activeTab === 'wins' && (
+            <div className="space-y-6 text-left">
+              <div>
+                <h3 className="text-md uppercase tracking-wider font-serif text-brand-gold flex items-center gap-2">
+                  <Heart size={16} /> 🌟 Wins & Milestones
+                </h3>
+                <p className="text-[10px] text-white/40 font-mono mt-0.5">Celebrate healing, progress, and breakthroughs within the sisterhood.</p>
+              </div>
+              
+              {posts.filter(p => p.category === 'Win').length === 0 ? (
+                <div className="p-12 border border-white/5 bg-zinc-950 text-center text-xs italic text-white/30">
+                  No wins posted yet. Share your latest holistic victory using the Composer!
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {posts.filter(p => p.category === 'Win').map(post => (
+                    <div key={post.id} className="bg-gradient-to-br from-[#121010] to-[#1a1717] border border-white/5 hover:border-brand-gold/30 p-5 space-y-3">
+                      <div className="flex justify-between items-center text-[9px] font-mono">
+                        <span className="text-emerald-400 font-bold">{post.author}</span>
+                        <span className="text-white/30">{post.date}</span>
+                      </div>
+                      <h4 className="text-sm font-bold text-white">{post.title}</h4>
+                      <p className="text-xs text-white/70 line-clamp-3">{post.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: 💖 TESTIMONIALS */}
+          {activeTab === 'testimonials' && (
+            <div className="space-y-6 text-left">
+              <div>
+                <h3 className="text-md uppercase tracking-wider font-serif text-brand-gold flex items-center gap-2">
+                  <Award size={16} /> 💖 Testimonials
+                </h3>
+                <p className="text-[10px] text-white/40 font-mono mt-0.5">Powerful, verified transformations and outcomes from our programs.</p>
+              </div>
+              
+              {posts.filter(p => p.category === 'Testimonial').length === 0 ? (
+                <div className="p-12 border border-white/5 bg-zinc-950 text-center text-xs italic text-white/30">
+                  No testimonials currently available.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {posts.filter(p => p.category === 'Testimonial').map(post => (
+                    <div key={post.id} className="bg-zinc-950 border border-brand-gold/20 p-6 space-y-4">
+                      <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-mono text-[#D4AF37]">
+                        <Check size={12} /> Verified Healing Journey
+                      </div>
+                      <h4 className="text-lg font-serif italic text-white">"{post.title}"</h4>
+                      <p className="text-sm font-light text-white/80 leading-relaxed">{post.content}</p>
+                      <div className="text-[9px] font-mono text-white/40 pt-2 border-t border-white/5">
+                        Shared by {post.author} • {post.date}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* TAB: 🏆 SYSTEM achievements & BADGES */}
           {activeTab === 'achievements' && (
             <div className="space-y-6 text-left">
@@ -1528,8 +1626,8 @@ export default function CommunityHub() {
                 {/* Category selectors */}
                 <div className="space-y-1">
                   <label className="text-[8px] text-white/50 uppercase tracking-widest block font-bold">Post Stream Category</label>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {(['Wellness Tip', 'Member Experience', 'Reflections'] as const).map((cat) => (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                    {(['Wellness Tip', 'Member Experience', 'Reflections', 'Question', 'Win', 'Testimonial'] as const).map((cat) => (
                       <button
                         key={cat}
                         type="button"
@@ -1567,9 +1665,20 @@ export default function CommunityHub() {
                     className="w-full bg-[#121010] border border-white/10 p-2.5 text-xs text-white rounded-none focus:border-brand-gold outline-none h-28 resize-none"
                     required
                   />
-                  <span className="text-[7.5px] text-white/30 italic block">
-                    * Make sure your text aligns with the community values of support and confidentiality.
-                  </span>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-[7.5px] text-white/30 italic block">
+                      * Make sure your text aligns with the community values of support and confidentiality.
+                    </span>
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input 
+                        type="checkbox"
+                        checked={isAnonymous}
+                        onChange={(e) => setIsAnonymous(e.target.checked)}
+                        className="accent-brand-gold"
+                      />
+                      <span className="text-[9px] text-[#D4AF37] uppercase tracking-widest">Post Anonymously</span>
+                    </label>
+                  </div>
                 </div>
 
                 <div className="pt-2 flex gap-3 text-[10px] font-sans">

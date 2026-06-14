@@ -1,5 +1,8 @@
-import { lazy, Suspense, ReactNode } from 'react';
+import ScreenLoader from './components/ScreenLoader';
+import { lazy, Suspense, ReactNode, useMemo } from 'react';
+import { usePreloadImages } from './hooks/usePreloadImages';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { useGoogleAnalytics } from './hooks/useGoogleAnalytics';
 import { HelmetProvider } from 'react-helmet-async';
 import ScrollToTop from './components/ScrollToTop';
 import PwaPopup from './components/PwaPopup';
@@ -89,7 +92,7 @@ function OfflinePagePlaceholder() {
       {/* Footer */}
       <footer className="text-center relative z-10">
         <p className="text-[9px] font-mono uppercase text-white/30 tracking-[0.2em]">
-          The Vagina Room Sanctuary • Restoring Wellness & Dignity
+          The Vagina Room Community • Restoring Wellness & Dignity
         </p>
       </footer>
     </div>
@@ -97,8 +100,12 @@ function OfflinePagePlaceholder() {
 }
 
 function PageGuard({ children }: { children: ReactNode }) {
-  const { content, isAdmin } = useContent();
+  const { content, isAdmin, loading } = useContent();
   const location = useLocation();
+
+  if (loading) {
+    return <ScreenLoader />;
+  }
 
   // Parse disabledPages
   let disabledPages: Record<string, boolean> = {};
@@ -108,7 +115,34 @@ function PageGuard({ children }: { children: ReactNode }) {
     } catch (e) {}
   }
 
+  // Parse global maintenance mode flag
+  let isMaintenanceMode = false;
+  if (content?.generalSettingsJson) {
+    try {
+      const generalSettings = JSON.parse(content.generalSettingsJson);
+      isMaintenanceMode = !!generalSettings.maintenanceMode;
+    } catch (e) {}
+  }
+
   const currentPath = location.pathname;
+
+  // Admin and dashboards cannot be disabled for security/access
+  const isSystemPath = currentPath.startsWith("/admin") || currentPath.startsWith("/member-dashboard") || currentPath.startsWith("/partner-dashboard") || currentPath.startsWith("/login") || currentPath.startsWith("/register");
+
+  // Handle Global Maintenance Mode
+  if (isMaintenanceMode && !isSystemPath) {
+    if (isAdmin) {
+      return (
+        <div className="relative">
+          <div className="bg-brand-red text-white text-[10px] text-center py-2 px-4 sticky top-0 z-50 font-mono flex items-center justify-center gap-2 shadow-lg border-b border-brand-gold/20 uppercase tracking-widest">
+            <span>⚠️ Global Maintenance Mode Active: Visitors are redirected to the Offline sanctuary space. Admin bypass is active.</span>
+          </div>
+          {children}
+        </div>
+      );
+    }
+    return <OfflinePagePlaceholder />;
+  }
 
   // Find if current path or any parent path matches a disabled route
   const isDisabled = Object.keys(disabledPages).some(path => {
@@ -118,9 +152,6 @@ function PageGuard({ children }: { children: ReactNode }) {
     }
     return currentPath === path || currentPath.startsWith(path + "/");
   });
-
-  // Admin and dashboards cannot be disabled for security
-  const isSystemPath = currentPath.startsWith("/admin") || currentPath.startsWith("/member-dashboard") || currentPath.startsWith("/partner-dashboard") || currentPath.startsWith("/login") || currentPath.startsWith("/register");
 
   if (isDisabled && !isSystemPath) {
     if (isAdmin) {
@@ -141,38 +172,39 @@ function PageGuard({ children }: { children: ReactNode }) {
 }
 
 // Eagerly/Statically load main pages for instant access
-const AdminPage = lazy(() => import('./pages/AdminPage'));
-import HomePage from './pages/HomePage';
-import AboutPage from './pages/AboutPage';
-import FocusAreasPage from './pages/FocusAreasPage';
-import DrFidPage from './pages/DrFidPage';
-import DrFidBookingPage from './pages/DrFidBookingPage';
-import TeamPage from './pages/TeamPage';
-import ProjectsPage from './pages/ProjectsPage';
-import EventsPage from './pages/EventsPage';
-import GalleryPage from './pages/GalleryPage';
-import ProductsPage from './pages/ProductsPage';
-import CheckoutPage from './pages/CheckoutPage';
-import ContactPage from './pages/ContactPage';
-import SupportPage from './pages/SupportPage';
-import PartnerPage from './pages/PartnerPage';
-import PolicyPage from './pages/PolicyPage';
-import TermsPage from './pages/TermsPage';
-import JoinCommunityPage from './pages/JoinCommunityPage';
-import TelegramCommunityPage from './pages/TelegramCommunityPage';
-import TelegramCommunityThankYouPage from './pages/TelegramCommunityThankYouPage';
-import ThankYouPage from './pages/ThankYouPage';
-import RegisterPage from './pages/RegisterPage';
-import LoginPage from './pages/LoginPage';
-import WelcomePage from './pages/WelcomePage';
-import PaymentReviewPage from './pages/PaymentReviewPage';
-import SomaticBreathingPage from './pages/SomaticBreathingPage';
+const HomePage = lazy(() => import('./pages/HomePage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const FocusAreasPage = lazy(() => import('./pages/FocusAreasPage'));
+const DrFidPage = lazy(() => import('./pages/DrFidPage'));
+const DrFidBookingPage = lazy(() => import('./pages/DrFidBookingPage'));
+const TeamPage = lazy(() => import('./pages/TeamPage'));
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
+const EventsPage = lazy(() => import('./pages/EventsPage'));
+const GalleryPage = lazy(() => import('./pages/GalleryPage'));
+const ProductsPage = lazy(() => import('./pages/ProductsPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const SupportPage = lazy(() => import('./pages/SupportPage'));
+const PartnerPage = lazy(() => import('./pages/PartnerPage'));
+const PolicyPage = lazy(() => import('./pages/PolicyPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+const JoinCommunityPage = lazy(() => import('./pages/JoinCommunityPage'));
+const TelegramCommunityPage = lazy(() => import('./pages/TelegramCommunityPage'));
+const TelegramCommunityThankYouPage = lazy(() => import('./pages/TelegramCommunityThankYouPage'));
+const ThankYouPage = lazy(() => import('./pages/ThankYouPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const WelcomePage = lazy(() => import('./pages/WelcomePage'));
+const PaymentReviewPage = lazy(() => import('./pages/PaymentReviewPage'));
+const SomaticBreathingPage = lazy(() => import('./pages/SomaticBreathingPage'));
 const MemberDashboardPage = lazy(() => import('./pages/MemberDashboardPage'));
 const PartnerDashboardPage = lazy(() => import('./pages/PartnerDashboardPage'));
-import AffiliatePage from './pages/AffiliatePage';
-import BlogListPage from './pages/BlogListPage';
-import BlogPostPage from './pages/BlogPostPage';
-import DynamicPageRenderer from './pages/DynamicPageRenderer';
+const AffiliatePage = lazy(() => import('./pages/AffiliatePage'));
+const BlogListPage = lazy(() => import('./pages/BlogListPage'));
+const BlogPostPage = lazy(() => import('./pages/BlogPostPage'));
+const DynamicPageRenderer = lazy(() => import('./pages/DynamicPageRenderer'));
+const ConnectPage = lazy(() => import('./pages/ConnectPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 
 function AdminSuspense() {
   return (
@@ -186,35 +218,36 @@ function AdminSuspense() {
 }
 
 function AnimatedRoutes() {
+  useGoogleAnalytics();
   const location = useLocation();
   return (
     <div className="min-h-screen">
       <Routes location={location}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/focus-areas" element={<FocusAreasPage />} />
-        <Route path="/dr-fid" element={<DrFidPage />} />
-        <Route path="/dr-fid-booking" element={<DrFidBookingPage />} />
-        <Route path="/team" element={<TeamPage />} />
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/events" element={<EventsPage />} />
-        <Route path="/gallery" element={<GalleryPage />} />
-        <Route path="/products" element={<ProductsPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/support" element={<SupportPage />} />
-        <Route path="/partner" element={<PartnerPage />} />
-        <Route path="/privacy-policy" element={<PolicyPage />} />
-        <Route path="/terms-of-service" element={<TermsPage />} />
-        <Route path="/join-community" element={<JoinCommunityPage />} />
-        <Route path="/telegram" element={<TelegramCommunityPage />} />
-        <Route path="/telegram/thank-you" element={<TelegramCommunityThankYouPage />} />
-        <Route path="/thank-you" element={<ThankYouPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/welcome" element={<WelcomePage />} />
-        <Route path="/somatic-breathing" element={<SomaticBreathingPage />} />
-        <Route path="/payment-review" element={<PaymentReviewPage />} />
+        <Route path="/" element={<Suspense fallback={<AdminSuspense />}><HomePage /></Suspense>} />
+        <Route path="/about" element={<Suspense fallback={<AdminSuspense />}><AboutPage /></Suspense>} />
+        <Route path="/focus-areas" element={<Suspense fallback={<AdminSuspense />}><FocusAreasPage /></Suspense>} />
+        <Route path="/dr-fid" element={<Suspense fallback={<AdminSuspense />}><DrFidPage /></Suspense>} />
+        <Route path="/dr-fid-booking" element={<Suspense fallback={<AdminSuspense />}><DrFidBookingPage /></Suspense>} />
+        <Route path="/team" element={<Suspense fallback={<AdminSuspense />}><TeamPage /></Suspense>} />
+        <Route path="/projects" element={<Suspense fallback={<AdminSuspense />}><ProjectsPage /></Suspense>} />
+        <Route path="/events" element={<Suspense fallback={<AdminSuspense />}><EventsPage /></Suspense>} />
+        <Route path="/gallery" element={<Suspense fallback={<AdminSuspense />}><GalleryPage /></Suspense>} />
+        <Route path="/products" element={<Suspense fallback={<AdminSuspense />}><ProductsPage /></Suspense>} />
+        <Route path="/checkout" element={<Suspense fallback={<AdminSuspense />}><CheckoutPage /></Suspense>} />
+        <Route path="/contact" element={<Suspense fallback={<AdminSuspense />}><ContactPage /></Suspense>} />
+        <Route path="/support" element={<Suspense fallback={<AdminSuspense />}><SupportPage /></Suspense>} />
+        <Route path="/partner" element={<Suspense fallback={<AdminSuspense />}><PartnerPage /></Suspense>} />
+        <Route path="/privacy-policy" element={<Suspense fallback={<AdminSuspense />}><PolicyPage /></Suspense>} />
+        <Route path="/terms-of-service" element={<Suspense fallback={<AdminSuspense />}><TermsPage /></Suspense>} />
+        <Route path="/join-community" element={<Suspense fallback={<AdminSuspense />}><JoinCommunityPage /></Suspense>} />
+        <Route path="/telegram" element={<Suspense fallback={<AdminSuspense />}><TelegramCommunityPage /></Suspense>} />
+        <Route path="/telegram/thank-you" element={<Suspense fallback={<AdminSuspense />}><TelegramCommunityThankYouPage /></Suspense>} />
+        <Route path="/thank-you" element={<Suspense fallback={<AdminSuspense />}><ThankYouPage /></Suspense>} />
+        <Route path="/register" element={<Suspense fallback={<AdminSuspense />}><RegisterPage /></Suspense>} />
+        <Route path="/login" element={<Suspense fallback={<AdminSuspense />}><LoginPage /></Suspense>} />
+        <Route path="/welcome" element={<Suspense fallback={<AdminSuspense />}><WelcomePage /></Suspense>} />
+        <Route path="/somatic-breathing" element={<Suspense fallback={<AdminSuspense />}><SomaticBreathingPage /></Suspense>} />
+        <Route path="/payment-review" element={<Suspense fallback={<AdminSuspense />}><PaymentReviewPage /></Suspense>} />
         <Route path="/member-dashboard" element={
           <Suspense fallback={<AdminSuspense />}>
             <MemberDashboardPage />
@@ -225,15 +258,16 @@ function AnimatedRoutes() {
             <PartnerDashboardPage />
           </Suspense>
         } />
-        <Route path="/affiliate-program" element={<AffiliatePage />} />
-        <Route path="/blogs" element={<BlogListPage />} />
-        <Route path="/blog/:slug" element={<BlogPostPage />} />
+        <Route path="/affiliate-program" element={<Suspense fallback={<AdminSuspense />}><AffiliatePage /></Suspense>} />
+        <Route path="/connect" element={<Suspense fallback={<AdminSuspense />}><ConnectPage /></Suspense>} />
+        <Route path="/blogs" element={<Suspense fallback={<AdminSuspense />}><BlogListPage /></Suspense>} />
+        <Route path="/blog/:slug" element={<Suspense fallback={<AdminSuspense />}><BlogPostPage /></Suspense>} />
         <Route path="/admin" element={
           <Suspense fallback={<AdminSuspense />}>
             <AdminPage />
           </Suspense>
         } />
-        <Route path="*" element={<DynamicPageRenderer />} />
+        <Route path="*" element={<Suspense fallback={<AdminSuspense />}><DynamicPageRenderer /></Suspense>} />
       </Routes>
     </div>
   );
@@ -241,17 +275,21 @@ function AnimatedRoutes() {
 
 function GlobalWidgets() {
   const location = useLocation();
+  const { loading } = useContent();
+  
+  if (loading) return null;
   
   // Hide chat widget and PWA popup on specific landing pages to reduce distractions
-  const hideOnPaths = ['/telegram'];
-  const shouldHide = hideOnPaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
+  const hidePwaPaths = ['/telegram'];
+  const hideWhatsAppPaths = ['/telegram', '/admin', '/member-dashboard'];
   
-  if (shouldHide) return null;
+  const shouldHidePwa = hidePwaPaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
+  const shouldHideWhatsApp = hideWhatsAppPaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
 
   return (
     <>
-      <PwaPopup />
-      <WhatsAppWidget />
+      {!shouldHidePwa && <PwaPopup />}
+      {!shouldHideWhatsApp && <WhatsAppWidget />}
     </>
   );
 }
@@ -263,21 +301,41 @@ export default function App() {
         <AuthProvider>
           <CartProvider>
             <NotificationProvider>
-              <DynamicThemeManager />
-              <BrowserRouter>
-                <ScrollToTop />
-                <AdminBar />
-                <ImpersonationBanner />
-                <GlobalWidgets />
-                <PageGuard>
-                  <AnimatedRoutes />
-                </PageGuard>
-              </BrowserRouter>
+              <MainContent />
             </NotificationProvider>
           </CartProvider>
         </AuthProvider>
       </ContentProvider>
     </HelmetProvider>
+  );
+}
+
+function MainContent() {
+  const { content } = useContent();
+
+  const criticalImages = useMemo(() => {
+    const branding = JSON.parse(content?.brandingSettingsJson || "{}");
+    const urls = [];
+    if (branding.headerLogoUrl) urls.push(branding.headerLogoUrl);
+    if (branding.loaderLogoUrl) urls.push(branding.loaderLogoUrl);
+    return urls;
+  }, [content?.brandingSettingsJson]);
+
+  usePreloadImages(criticalImages);
+
+  return (
+    <>
+      <DynamicThemeManager />
+      <BrowserRouter>
+        <ScrollToTop />
+        <AdminBar />
+        <ImpersonationBanner />
+        <GlobalWidgets />
+        <PageGuard>
+          <AnimatedRoutes />
+        </PageGuard>
+      </BrowserRouter>
+    </>
   );
 }
 

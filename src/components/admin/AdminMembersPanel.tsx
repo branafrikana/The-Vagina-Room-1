@@ -260,7 +260,7 @@ export default function AdminMembersPanel() {
     setEditForm({
       customCommissionPercentage: user.customCommissionPercentage || 20,
       isFreeMemberForLife: user.isFreeMemberForLife || false,
-      role: user.role || 'member',
+      role: user.role === 'admin' || user.isAdmin === true ? 'admin' : (user.role || 'member'),
       adminPermissions: user.adminPermissions || []
     });
   };
@@ -278,8 +278,9 @@ export default function AdminMembersPanel() {
     try {
       await updateDoc(doc(db, "users", userId), {
         customCommissionPercentage: Number(editForm.customCommissionPercentage),
-        isFreeMemberForLife: editForm.isFreeMemberForLife,
+        isFreeMemberForLife: editForm.isFreeMemberForLife || editForm.role === 'admin',
         role: editForm.role,
+        isAdmin: editForm.role === 'admin',
         adminPermissions: editForm.adminPermissions
       });
       setEditingId(null);
@@ -830,8 +831,8 @@ export default function AdminMembersPanel() {
                       <span className={`px-2 py-0.5 rounded-[2px] text-[9px] font-black w-fit ${user.membershipType === 'yearly' ? 'bg-brand-gold text-brand-black' : 'bg-white/10 text-white/60'}`}>
                         {user.membershipType || 'None'}
                       </span>
-                      <span className={`px-2 py-0.5 rounded-[2px] text-[8px] font-black w-fit uppercase ${user.role === 'admin' ? 'bg-red-500 text-white' : 'bg-blue-500/20 text-blue-400'}`}>
-                        {user.role}
+                      <span className={`px-2 py-0.5 rounded-[2px] text-[8px] font-black w-fit uppercase ${user.role === 'admin' || user.isAdmin === true ? 'bg-red-500 text-white' : 'bg-blue-500/20 text-blue-400'}`}>
+                        {user.role === 'admin' || user.isAdmin === true ? 'admin' : (user.role || 'member')}
                       </span>
                     </div>
                   </td>
@@ -935,7 +936,7 @@ export default function AdminMembersPanel() {
                         <span className="text-brand-gold/80 block font-bold">
                           Commission: {user.customCommissionPercentage || 20}%
                         </span>
-                        {user.role === 'admin' && user.adminPermissions && user.adminPermissions.length > 0 && (
+                        {(user.role === 'admin' || user.isAdmin === true) && user.adminPermissions && user.adminPermissions.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
                              {user.adminPermissions.map((p: string) => (
                                <span key={p} className="text-[7px] bg-white/5 text-white/60 px-1 border border-white/10 rounded uppercase">{p.replace('_', ' ')}</span>

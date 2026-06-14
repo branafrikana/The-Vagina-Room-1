@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Shield, Sparkles, User, Search, CheckCircle2, XCircle } from 'lucide-react';
+import { Shield, Sparkles, User, Search, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function AdminPermissionsPanel() {
@@ -9,6 +9,8 @@ export default function AdminPermissionsPanel() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [updateLoading, setUpdateLoading] = useState<string | null>(null);
+
+  const [confirmDeleteUserId, setConfirmDeleteUserId] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -43,17 +45,48 @@ export default function AdminPermissionsPanel() {
     }
   };
 
-  const toggleRole = async (userId: string, currentRole: string) => {
-    setUpdateLoading(`${userId}-role`);
-    const newRole = currentRole === 'admin' ? 'member' : 'admin';
+  const toggleRole = async (user: any) => {
+    setUpdateLoading(`${user.id}-role`);
+    const isCurrentlyAdmin = user.role === 'admin' || user.isAdmin === true;
+    const newRole = isCurrentlyAdmin ? 'member' : 'admin';
     try {
-      const userRef = doc(db, "users", userId);
-      await updateDoc(userRef, { role: newRole });
+      const userRef = doc(db, "users", user.id);
+      const updates: any = { role: newRole, isAdmin: newRole === 'admin' };
+      if (newRole === 'admin') {
+        updates.isFreeMemberForLife = true;
+        // Optionally set a default admin commission if they didn't have one
+        updates.customCommissionPercentage = 25;
+      }
+      await updateDoc(userRef, updates);
       
       // Update local state
-      setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      setUsers(users.map(u => u.id === user.id ? { ...u, ...updates } : u));
     } catch (e) {
       console.error("Error updating role:", e);
+    } finally {
+      setUpdateLoading(null);
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    if (confirmDeleteUserId !== userId) {
+      setConfirmDeleteUserId(userId);
+      setTimeout(() => setConfirmDeleteUserId(null), 3000);
+      return;
+    }
+    setUpdateLoading(`${userId}-delete`);
+    try {
+      const userRef = doc(db, "users", userId);
+      await updateDoc(userRef, { 
+        role: 'member', 
+        isAdmin: false,
+        adminPermissions: [] 
+      });
+      // Optionally update local state
+      setUsers(users.map(u => u.id === userId ? { ...u, role: 'member', isAdmin: false, adminPermissions: [] } : u));
+      setConfirmDeleteUserId(null);
+    } catch (e) {
+      console.error("Error removing admin rights:", e);
     } finally {
       setUpdateLoading(null);
     }
@@ -96,18 +129,19 @@ export default function AdminPermissionsPanel() {
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Status</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40 text-center">Administrator</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40 text-center">Lifetime Access</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-xs text-white/20 font-mono italic">
+                  <td colSpan={5} className="px-6 py-12 text-center text-xs text-white/20 font-mono italic">
                     Decrypting authority matrix...
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-xs text-white/20 font-mono italic">
+                  <td colSpan={5} className="px-6 py-12 text-center text-xs text-white/20 font-mono italic">
                     No matching identities found.
                   </td>
                 </tr>
@@ -132,17 +166,17 @@ export default function AdminPermissionsPanel() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button
-                        onClick={() => toggleRole(user.id, user.role)}
+                        onClick={() => toggleRole(user)}
                         disabled={updateLoading === `${user.id}-role`}
                         className={`inline-flex items-center gap-2 px-3 py-1.5 rounded text-[9px] font-black uppercase tracking-widest transition-all ${
-                          user.role === 'admin' 
+                          (user.role === 'admin' || user.isAdmin === true)
                             ? 'bg-brand-red/10 text-brand-red border border-brand-red/20' 
                             : 'bg-white/5 text-white/30 border border-white/10 hover:border-white/20'
                         }`}
                       >
                         {updateLoading === `${user.id}-role` ? (
                           <div className="w-2 h-2 border border-current border-t-transparent rounded-full animate-spin" />
-                        ) : user.role === 'admin' ? (
+                        ) : (user.role === 'admin' || user.isAdmin === true) ? (
                           <CheckCircle2 size={10} />
                         ) : (
                           <XCircle size={10} />
@@ -168,6 +202,24 @@ export default function AdminPermissionsPanel() {
                           <XCircle size={10} />
                         )}
                         Lifetime
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => deleteUser(user.id)}
+                        disabled={updateLoading === `${user.id}-delete`}
+                        title={confirmDeleteUserId === user.id ? "Click again to confirm revoke" : "Revoke Admin Rights"}
+                        className={`p-1.5 rounded transition-colors ${
+                          confirmDeleteUserId === user.id 
+                            ? "bg-brand-red text-white animate-pulse" 
+                            : "text-white/20 hover:text-brand-red hover:bg-brand-red/10"
+                        }`}
+                      >
+                        {updateLoading === `${user.id}-delete` ? (
+                          <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Trash2 size={12} />
+                        )}
                       </button>
                     </td>
                   </tr>

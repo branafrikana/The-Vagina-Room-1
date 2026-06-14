@@ -1,15 +1,48 @@
-import { useState } from 'react';
+// ... (imports)
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import SEO from '../components/SEO';
-import { Calendar, MapPin, Clock, ArrowRight, Ticket, Star, Users, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, Clock, ArrowRight, Ticket, Star, Users, Sparkles, X, Send } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import CategoryFilter from '../components/CategoryFilter';
 import { useContent } from '../context/ContentContext';
 import EditableText from '../components/EditableText';
+import { db } from '../lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 export default function EventsPage() {
   const { content } = useContent();
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [rsvpForm, setRsvpForm] = useState({ name: '', email: '', phone: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rsvpSuccess, setRsvpSuccess] = useState(false);
+
+  const handleRsvpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEvent) return;
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(db, "submissions"), {
+        formType: "event_rsvp",
+        eventId: selectedEvent.id || selectedEvent.title,
+        eventTitle: selectedEvent.title,
+        ...rsvpForm,
+        createdAt: new Date().toISOString()
+      });
+      setRsvpSuccess(true);
+      setTimeout(() => {
+        setSelectedEvent(null);
+        setRsvpSuccess(false);
+        setRsvpForm({ name: '', email: '', phone: '' });
+      }, 3000);
+    } catch (err) {
+      console.error("RSVP Error:", err);
+      alert("Failed to register. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const defaultEvents = [
     {
@@ -175,7 +208,10 @@ export default function EventsPage() {
                         </div>
                         
                         <div className="mt-12 flex items-center justify-between">
-                          <button className="flex items-center text-xs font-black tracking-[0.4em] uppercase text-brand-gold hover:text-white transition-colors group/btn">
+                          <button 
+                            onClick={() => setSelectedEvent(event)}
+                            className="flex items-center text-xs font-black tracking-[0.4em] uppercase text-brand-gold hover:text-white transition-colors group/btn cursor-pointer"
+                          >
                             Register Now
                             <ArrowRight className="ml-4 group-hover/btn:translate-x-2 transition-transform" size={16} />
                           </button>
@@ -189,6 +225,84 @@ export default function EventsPage() {
             </div>
           </div>
         </section>
+
+        {/* RSVP Modal */}
+        <AnimatePresence>
+          {selectedEvent && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4"
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-brand-black border border-brand-gold/30 p-8 md:p-12 max-w-lg w-full relative"
+              >
+                <button 
+                  onClick={() => setSelectedEvent(null)}
+                  className="absolute top-6 right-6 text-white/50 hover:text-white"
+                >
+                  <X size={24} />
+                </button>
+
+                {rsvpSuccess ? (
+                  <div className="text-center py-12 space-y-6">
+                    <Sparkles className="mx-auto text-brand-gold" size={48} />
+                    <h3 className="text-2xl font-black uppercase tracking-tighter text-white">Registered</h3>
+                    <p className="text-white/60 font-light italic">Your registration for {selectedEvent.title} has been received.</p>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="text-2xl font-black uppercase tracking-tighter text-white mb-2">Register</h3>
+                    <p className="text-white/50 text-sm font-light italic mb-8 border-b border-white/10 pb-4">{selectedEvent.title}</p>
+                    
+                    <form onSubmit={handleRsvpSubmit} className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Full Name</label>
+                        <input 
+                          required
+                          value={rsvpForm.name}
+                          onChange={(e) => setRsvpForm({ ...rsvpForm, name: e.target.value })}
+                          className="w-full bg-white/5 border-b py-3 text-white focus:border-brand-gold outline-none transition-colors border-white/10 italic" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Email Address</label>
+                        <input 
+                          required
+                          type="email"
+                          value={rsvpForm.email}
+                          onChange={(e) => setRsvpForm({ ...rsvpForm, email: e.target.value })}
+                          className="w-full bg-white/5 border-b py-3 text-white focus:border-brand-gold outline-none transition-colors border-white/10 italic" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Phone Number (Optional)</label>
+                        <input 
+                          value={rsvpForm.phone}
+                          onChange={(e) => setRsvpForm({ ...rsvpForm, phone: e.target.value })}
+                          className="w-full bg-white/5 border-b py-3 text-white focus:border-brand-gold outline-none transition-colors border-white/10 italic" 
+                        />
+                      </div>
+                      
+                      <button 
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full bg-brand-gold text-brand-black py-5 text-[10px] font-black uppercase tracking-[0.4em] hover:bg-white transition-all disabled:opacity-50 mt-4 flex items-center justify-center gap-3 cursor-pointer"
+                      >
+                        {isSubmitting ? "Processing..." : "Confirm Registration"}
+                        <Send size={14} />
+                      </button>
+                    </form>
+                  </>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Global CTA Section */}
         <section className="py-40 px-6 bg-brand-gold text-brand-black relative overflow-hidden">

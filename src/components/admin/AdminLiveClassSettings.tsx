@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Video, Save, ExternalLink } from "lucide-react";
 import { useContent } from "../../context/ContentContext";
+import LiveClassQA from "../dashboard/LiveClassQA";
 
 export default function AdminLiveClassSettings() {
   const { content, updateContentField, saveContentChanges } = useContent();
@@ -17,8 +18,16 @@ export default function AdminLiveClassSettings() {
     }
   }, [content?.generalSettingsJson]);
 
-  const handleConfigChange = (key: string, value: any) => {
-    setConfig((prev: any) => ({ ...prev, [key]: value }));
+  const handleConfigChange = async (key: string, value: any) => {
+    const updated = { ...config, [key]: value };
+    setConfig(updated);
+    
+    // Auto-save boolean toggles to avoid confusion
+    if (typeof value === "boolean") {
+      const updatedJson = JSON.stringify(updated);
+      updateContentField("generalSettingsJson", updatedJson);
+      await saveContentChanges({ generalSettingsJson: updatedJson });
+    }
   };
 
   const handleSave = async () => {
@@ -27,7 +36,7 @@ export default function AdminLiveClassSettings() {
     try {
       const updatedJson = JSON.stringify(config);
       updateContentField("generalSettingsJson", updatedJson);
-      const res = await saveContentChanges();
+      const res = await saveContentChanges({ generalSettingsJson: updatedJson });
       if (res.success) {
         setSaveOutcome("Settings saved successfully.");
       } else {
@@ -76,7 +85,27 @@ export default function AdminLiveClassSettings() {
             </div>
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-white/[0.05]">
+          <div className="space-y-6 pt-4 border-t border-white/[0.05]">
+            <div>
+              <label className="block text-[10px] font-mono text-zinc-400 uppercase tracking-wider mb-2">
+                Live Q&A Feature Enable
+              </label>
+              <div className="flex items-center gap-3">
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={config?.isLiveClassQAActive || false}
+                    onChange={(e) => handleConfigChange("isLiveClassQAActive", e.target.checked)}
+                  />
+                  <div className="w-11 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0088cc]"></div>
+                </label>
+                <span className="text-[10px] font-mono text-white/60">
+                  {config?.isLiveClassQAActive ? "Q&A MODULE ENABLED" : "Q&A MODULE DISABLED"}
+                </span>
+              </div>
+            </div>
+            
             <div>
               <label className="block text-[10px] font-mono text-zinc-400 uppercase tracking-wider mb-2">Live Class Embed URL</label>
               <div className="flex gap-2">
@@ -137,6 +166,19 @@ export default function AdminLiveClassSettings() {
           )}
         </div>
       </div>
+      
+      {/* Q&A Management Block */}
+      {config?.isLiveClassQAActive && config?.isLiveClassActive && (
+        <div className="bg-white/[0.02] border border-white/5 p-6 animate-fade-in text-left">
+          <div className="mb-6">
+            <h2 className="text-lg font-black uppercase text-white tracking-widest font-sans">Live Q&A Management</h2>
+            <p className="text-[10px] text-white/50 uppercase tracking-widest font-mono mt-0.5">Answer members' questions in real-time during broadcast.</p>
+          </div>
+          <div className="max-w-3xl">
+             <LiveClassQA isAdmin={true} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

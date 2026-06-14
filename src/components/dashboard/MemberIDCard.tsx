@@ -279,20 +279,73 @@ export default function MemberIDCard() {
     triggerToast('Please wait while your PDF is being generated...');
 
     try {
-      // Small delay to ensure any layout shifts are settled
-      await new Promise(res => setTimeout(res, 300));
-      // Capture Front Card
-      const imgDataFront = await domtoimage.toPng(cardFrontRef.current, { quality: 1, scale: 2 });
+      const { default: html2canvas } = await import('html2canvas');
+      
+      const parentNode = cardFrontRef.current.parentElement as HTMLElement;
+      const parentOrigTransform = parentNode.style.transform;
+      
+      // Temporarily store original styles and classes
+      const origStyleFront = cardFrontRef.current.style.cssText;
+      const origStyleBack = cardBackRef.current.style.cssText;
+      const origClassFront = cardFrontRef.current.className;
+      const origClassBack = cardBackRef.current.className;
 
-      // Temporarily remove flip transform correctly for crisp text
-      const origClass = cardBackRef.current.className;
-      cardBackRef.current.className = origClass.replace('[transform:rotateY(180deg)]', '[transform:rotateY(0deg)]');
-      await new Promise(res => setTimeout(res, 50));
+      // Bring parent to 0deg to avoid 3d skew
+      parentNode.style.transform = 'rotateY(0deg)';
+
+      const targetWidth = '856px';
+      const targetHeight = '540px';
+
+      // Setup front for ideal capture
+      cardFrontRef.current.className = origClassFront.replace(/\[backface-visibility:hidden\]/g, '');
+      cardFrontRef.current.style.width = targetWidth;
+      cardFrontRef.current.style.height = targetHeight;
+      cardFrontRef.current.style.position = 'fixed';
+      cardFrontRef.current.style.top = '0';
+      cardFrontRef.current.style.left = '0';
+      cardFrontRef.current.style.zIndex = '99999';
+
+      await new Promise(res => setTimeout(res, 150));
+
+      const canvasFront = await html2canvas(cardFrontRef.current, { 
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: null,
+        windowWidth: 1200
+      });
+      const imgDataFront = canvasFront.toDataURL('image/png', 1.0);
+
+      // Hide front card
+      cardFrontRef.current.style.display = 'none';
+
+      // Setup back card
+      cardBackRef.current.className = origClassBack
+        .replace(/\[transform:rotateY\(180deg\)\]/g, '')
+        .replace(/\[backface-visibility:hidden\]/g, '');
       
-      // Capture Back Card
-      const imgDataBack = await domtoimage.toPng(cardBackRef.current, { quality: 1, scale: 2 });
-      
-      cardBackRef.current.className = origClass;
+      cardBackRef.current.style.width = targetWidth;
+      cardBackRef.current.style.height = targetHeight;
+      cardBackRef.current.style.position = 'fixed';
+      cardBackRef.current.style.top = '0';
+      cardBackRef.current.style.left = '0';
+      cardBackRef.current.style.zIndex = '99999';
+
+      await new Promise(res => setTimeout(res, 150));
+
+      const canvasBack = await html2canvas(cardBackRef.current, { 
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: null,
+        windowWidth: 1200
+      });
+      const imgDataBack = canvasBack.toDataURL('image/png', 1.0);
+
+      // Restore everything precisely
+      cardFrontRef.current.className = origClassFront;
+      cardFrontRef.current.style.cssText = origStyleFront;
+      cardBackRef.current.className = origClassBack;
+      cardBackRef.current.style.cssText = origStyleBack;
+      parentNode.style.transform = parentOrigTransform;
 
       // Create PDF
       const pdf = new jsPDF({
@@ -723,7 +776,6 @@ export default function MemberIDCard() {
       <AnimatePresence>
         {cropSrc && (
           <ImageCropModal 
-            key="crop-modal"
             imageSrc={cropSrc} 
             onCropComplete={handleCropComplete} 
             onClose={() => setCropSrc('')} 

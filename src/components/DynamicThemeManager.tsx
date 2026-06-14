@@ -58,12 +58,18 @@ export default function DynamicThemeManager() {
   } catch {}
 
   useEffect(() => {
-    const faviconUrl = content.faviconUrl || pwa.iconUrl || '/favicon.ico';
+    let logoUrl = '';
+    try {
+      const branding = JSON.parse(content.brandingSettingsJson || '{}');
+      logoUrl = branding.headerLogoUrl || branding.logoUrlAlt || '';
+    } catch {}
+
+    const faviconUrl = content.faviconUrl || logoUrl || pwa.iconUrl || '/favicon.ico';
     const link = document.getElementById('favicon-link') || document.querySelector("link[rel~='icon']");
-    if (link) {
+    if (link && faviconUrl) {
       link.setAttribute('href', faviconUrl);
     }
-  }, [content.faviconUrl, pwa.iconUrl]);
+  }, [content.faviconUrl, content.brandingSettingsJson, pwa.iconUrl]);
 
   return (
     <Helmet>

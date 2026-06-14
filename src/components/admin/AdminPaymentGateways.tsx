@@ -155,7 +155,7 @@ export default function AdminPaymentGateways({ orders }: AdminPaymentGatewaysPro
           <button onClick={exportBookkeepingCSV} className="px-8 py-3 bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">
             Export Bookkeeping CSV
           </button>
-          <button onClick={saveContentChanges} className="px-8 py-3 bg-brand-gold text-brand-black text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all">
+          <button onClick={() => saveContentChanges()} className="px-8 py-3 bg-brand-gold text-brand-black text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all">
             <Save size={14} className="inline mr-2"/> Save Configuration
           </button>
         </div>

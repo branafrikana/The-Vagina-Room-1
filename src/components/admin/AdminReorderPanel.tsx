@@ -109,8 +109,10 @@ const ADMIN_SIDEBAR_SECTIONS = [
 ];
 
 export default function AdminReorderPanel() {
-  const { content, updateContentField } = useContent();
+  const { content, updateContentField, saveContentChanges } = useContent();
   const [selectedPage, setSelectedPage] = useState<"home" | "drfid" | "about" | "telegram" | "member_sidebar" | "admin_sidebar">("home");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
 
   const fieldKey = selectedPage === "home" ? "homePageSectionsOrder" 
                  : selectedPage === "drfid" ? "drFidPageSectionsOrder" 
@@ -132,14 +134,8 @@ export default function AdminReorderPanel() {
     if (typeof val === 'string') {
       try {
         const parsed = JSON.parse(val);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const blended = [...parsed];
-          defaultIds.forEach(id => {
-            if (!blended.includes(id)) {
-              blended.push(id);
-            }
-          });
-          return blended;
+        if (Array.isArray(parsed)) {
+          return parsed;
         }
       } catch(e) {}
     }
@@ -178,9 +174,28 @@ export default function AdminReorderPanel() {
     updateContentField(fieldKey as any, JSON.stringify(defaultIds));
   };
 
+  const handleSave = async () => {
+    setIsSaving(true);
+    setSaveMessage("");
+    try {
+      const res = await saveContentChanges();
+      if (res.success) {
+        setSaveMessage("Saved Layout");
+        setTimeout(() => setSaveMessage(""), 3000);
+      } else {
+        setSaveMessage("Error Saving");
+      }
+    } catch (e) {
+      setSaveMessage("Error Saving");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-2 border-b border-white/5 pb-4">
+      <div className="flex justify-between items-end border-b border-white/5 pb-4">
+        <div className="flex flex-wrap gap-2 max-w-[80%]">
         <button
           onClick={() => setSelectedPage("home")}
           className={`px-4 py-2 text-[10px] uppercase font-black tracking-wider transition-colors cursor-pointer ${
@@ -229,6 +244,21 @@ export default function AdminReorderPanel() {
         >
           👑 Admin Sidebar Menu ({ADMIN_SIDEBAR_SECTIONS.length} items)
         </button>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+            {saveMessage && (
+                <span className={`text-[10px] font-black uppercase tracking-widest ${saveMessage.includes("Error") ? "text-brand-red" : "text-emerald-400"}`}>
+                    {saveMessage}
+                </span>
+            )}
+            <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="bg-brand-gold text-brand-black hover:bg-white px-6 py-2 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer disabled:opacity-50"
+            >
+                {isSaving ? "Saving..." : "Save Layout Sequence"}
+            </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

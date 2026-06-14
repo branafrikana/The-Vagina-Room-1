@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { doc, getDoc, setDoc, collection, addDoc, getDocFromServer } from 'firebase/firestore';
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import { doc, getDoc, setDoc, collection, addDoc, getDocFromServer, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { uploadToCloudinaryClient } from '../lib/cloudinary';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
@@ -547,7 +547,8 @@ export const FALLBACK_DEFAULTS = {
   welcomeMessage: "Dearest Sister,\n\nI am incredibly honored to welcome you to the Inner Circle. By taking this step, you are committing to your healing, your education, and your empowerment.\n\nYour membership has been successfully activated! You now have full access to our exclusive content, private forums, wellness circles, and direct mentoring. Below you will find your secure digital credentials. Please save these details and complete your profile setup as your first step.\n\nWith love and light,\nDr. Fid",
   welcomeDrFidImgUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80",
   welcomeActionBtnText: "Explore Your Members Dashboard",
-  welcomeInstructions: "1. Update your wellness reflection so we can understand your health goals.\n2. Complete your personal profile in your Account Settings.\n3. Drop an introduction on the Community discussion timeline to meet your new sisters.\n4. Explore the resource library for guides, courses and materials."
+  welcomeInstructions: "1. Update your wellness reflection so we can understand your health goals.\n2. Complete your personal profile in your Account Settings.\n3. Drop an introduction on the Community discussion timeline to meet your new sisters.\n4. Explore the resource library for guides, courses and materials.",
+  linkTreeConfigJson: '{\n  "profilePicture": "https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&q=80&w=400",\n  "fullName": "Amb. Dr. Damilola Awoyemi (Dr. FID)",\n  "bio": "Holistic Wellness Expert • SPA Business Consultant • Women\'s Reproductive Health Advocate & Visionary Entrepreneur",\n  "socials": [\n    { "platform": "Instagram", "url": "https://instagram.com/thevaginaroom", "icon": "Instagram" },\n    { "platform": "Youtube", "url": "https://youtube.com", "icon": "Youtube" },\n    { "platform": "Telegram", "url": "https://t.me/thevaginaroom", "icon": "Send" },\n    { "platform": "LinkedIn", "url": "https://linkedin.com", "icon": "Linkedin" }\n  ],\n  "topBannerEnabled": true,\n  "topBannerUrl": "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&q=80&w=1200",\n  "topBannerClickUrl": "/join-community",\n  "links": [\n    { "id": "l1", "type": "cta", "label": "🌸 Join The Inner Circle (NGN 25,000 / $50)", "url": "/join-community", "description": "Weekly masterclasses with Dr. FID, medical board resources & global sisterhood circle.", "isHighlighted": true, "iconUrl": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=200" },\n    { "id": "l2", "type": "cta", "label": "📅 Book A Confidential Session with Dr. FID", "url": "/dr-fid-booking", "description": "Consult directly for intimate, spinal manipulation, spa wellness, and chiropractic support.", "isHighlighted": false, "iconUrl": "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&q=80&w=200" },\n    { "id": "l3", "type": "cta", "label": "🌿 Our Curated Phyto-Medicinal Selections", "url": "/products", "description": "Explore scientific botanical formulations engineered for female anatomy restore.", "isHighlighted": false, "iconUrl": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&q=80&w=200" },\n    { "id": "l4", "type": "cta", "label": "💬 Free Telegram General Discussion Safe-Space", "url": "/telegram", "description": "Dismantling silent stigmas with 1,000+ sisters who talk freely without taboos.", "isHighlighted": false, "iconUrl": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=200" }\n  ],\n  "images": [\n    { "id": "img1", "imageUrl": "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&q=80&w=800", "title": "About Our Shared Mission", "description": "Where biology meets compassion to end intimate shame, providing restorative care standardizations worldwide.", "clickUrl": "/about" },\n    { "id": "img2", "imageUrl": "https://images.unsplash.com/photo-1544027993-37dbfe43562a?auto=format&fit=crop&q=80&w=800", "title": "Our Clinical Spa Groundwork", "description": "Undergoing active certified chiropractic manipulation & holistic clinical retreats with Dr. FID.", "clickUrl": "/dr-fid" }\n  ],\n  "footerLine1": "The Vagina Room Global",\n  "footerLine2": "Refined Intimacy & Somatic Wholeness"\n}'
 };
 
 export type ContentData = typeof FALLBACK_DEFAULTS;
@@ -561,20 +562,27 @@ interface ContentContextType {
   logoutAdmin: () => void;
   setEditMode: (enabled: boolean) => void;
   updateContentField: (key: keyof ContentData, value: string) => void;
-  saveContentChanges: () => Promise<{ success: boolean; message: string }>;
+  saveContentChanges: (updates?: Partial<ContentData>) => Promise<{ success: boolean; message: string }>;
   uploadImage: (base64Data: string, fileName: string) => Promise<{ success: boolean; url?: string; error?: string }>;
   submitFormSubmission: (formType: string, formData: any) => Promise<{ success: boolean; id?: string }>;
   adminPasswordToken: string;
+  exportDatabaseToJson: () => Promise<any>;
+  updatePageSEO: (title: string, description: string) => void;
 }
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
 export function ContentProvider({ children }: { children: React.ReactNode }) {
   const [content, setContent] = useState<ContentData>(FALLBACK_DEFAULTS);
+  const contentRef = useRef<ContentData>(FALLBACK_DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditMode, setEditMode] = useState(false);
   const [adminPasswordToken, setAdminPasswordToken] = useState("");
+
+  useEffect(() => {
+    contentRef.current = content;
+  }, [content]);
 
   const loadContent = async () => {
     try {
@@ -650,6 +658,18 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       setAdminPasswordToken(token);
       setIsAdmin(true);
     }
+    
+    // Add real-time listener to keep UI in sync
+    const docRef = doc(db, "configs", "generalSettings");
+    const unsub = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data() as ContentData;
+            // Only update if data is different to prevent loops
+            setContent(prev => ({...prev, ...data}));
+        }
+    });
+
+    return () => unsub();
   }, []);
 
   // Dynamically synchronize Cloudinary settings stored in Firestore to local storage for direct client uploaders
@@ -711,11 +731,15 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
-  const saveContentChanges = async (): Promise<{ success: boolean; message: string }> => {
+  const saveContentChanges = async (updates?: Partial<ContentData>): Promise<{ success: boolean; message: string }> => {
     try {
-      const trimmedContent = Object.keys(content).reduce((acc, key) => {
-        const value = content[key as keyof ContentData];
-        acc[key as keyof ContentData] = typeof value === 'string' ? value.trim() : value;
+      const mergedContent = updates ? { ...content, ...updates } : content;
+      if (updates) {
+        setContent(mergedContent);
+      }
+      const trimmedContent = Object.keys(mergedContent).reduce((acc, key) => {
+        const value = mergedContent[key as keyof ContentData];
+        acc[key as keyof ContentData] = typeof value === 'string' ? value.trim() : (value as any);
         return acc;
       }, {} as ContentData);
 
@@ -736,8 +760,10 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       }
 
       const docRef = doc(db, "configs", "generalSettings");
+      console.log("Saving to Firestore:", trimmedContent);
       try {
         await setDoc(docRef, trimmedContent);
+        console.log("Saved successfully!");
       } catch (err: any) {
         handleFirestoreError(err, OperationType.WRITE, "configs/generalSettings");
       }
@@ -862,6 +888,61 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     return { success: false };
   };
 
+  const exportDatabaseToJson = async (): Promise<any> => {
+    const collectionsToBackup = [
+      "users", "admins", "configs", "submissions", "orders", "direct_messages", 
+      "exclusiveContent", "blogs", "pages", "media", "productReviews", 
+      "stockLedger", "inventoryNotifications", "discountCodes", "wellnessReflections", "wellnessGoals"
+    ];
+    
+    const backupData: Record<string, any[]> = {};
+    
+    for (const colName of collectionsToBackup) {
+      try {
+        const querySnap = await getDocs(collection(db, colName));
+        const docsList: any[] = [];
+        querySnap.forEach((docSnap) => {
+          docsList.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        backupData[colName] = docsList;
+      } catch (e) {
+        console.warn(`Export: Skipped/failed to read collection: ${colName}`, e);
+      }
+    }
+    
+    return backupData;
+  };
+
+  const updatePageSEO = (title: string, description: string) => {
+    if (typeof document === "undefined") return;
+    
+    document.title = title ? `${title} | The Vagina Room` : "The Vagina Room";
+    
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', description || "Where Women Heal, Learn & Thrive...");
+    
+    let ogTitle = document.querySelector('meta[property="og:title"]');
+    if (!ogTitle) {
+      ogTitle = document.createElement('meta');
+      ogTitle.setAttribute('property', 'og:title');
+      document.head.appendChild(ogTitle);
+    }
+    ogTitle.setAttribute('content', title || "The Vagina Room");
+    
+    let ogDesc = document.querySelector('meta[property="og:description"]');
+    if (!ogDesc) {
+      ogDesc = document.createElement('meta');
+      ogDesc.setAttribute('property', 'og:description');
+      document.head.appendChild(ogDesc);
+    }
+    ogDesc.setAttribute('content', description || "Where Women Heal, Learn & Thrive...");
+  };
+
   return (
     <ContentContext.Provider
       value={{
@@ -877,6 +958,8 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         uploadImage,
         submitFormSubmission,
         adminPasswordToken,
+        exportDatabaseToJson,
+        updatePageSEO,
       }}
     >
       {children}

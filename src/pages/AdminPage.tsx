@@ -58,6 +58,7 @@ import AdminEventsTab from "../components/admin/AdminEventsTab";
 import AdminResourcesTab from "../components/admin/AdminResourcesTab";
 import AdminCommunityTab from "../components/admin/AdminCommunityTab";
 import AdminOrdersPanel from "../components/admin/AdminOrdersPanel";
+import AdminMemberDashboardManager from "../components/admin/AdminMemberDashboardManager";
 import AdminBusinessProfile from "../components/admin/AdminBusinessProfile";
 import AdminCheckoutSettings from "../components/admin/AdminCheckoutSettings";
 import { sendWhatsAppMessage, WHATSAPP_TEMPLATES } from "../lib/whatsapp";
@@ -67,6 +68,7 @@ import AdminFooter from "../components/AdminFooter";
 import AdminReorderPanel from "../components/admin/AdminReorderPanel";
 import AdminMediaSyncPanel from "../components/admin/AdminMediaSyncPanel";
 import AdminMemberPayouts from "../components/admin/AdminMemberPayouts";
+import AdminLinkTreePanel from "../components/admin/AdminLinkTreePanel";
 import AdminInvestorsPanel from "../components/admin/AdminInvestorsPanel";
 import AdminCommunityModerationPanel from "../components/admin/AdminCommunityModerationPanel";
 import AdminApprovalsPanel from "../components/admin/AdminApprovalsPanel";
@@ -151,13 +153,13 @@ export default function AdminPage() {
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState({ success: false, text: "" });
-  const [activeTab, setActiveTab] = useState<"dashboard" | "submissions" | "content" | "members" | "payouts" | "partners" | "moderation" | "navigation" | "general" | "branding" | "seo" | "security" | "social" | "reorder_sections" | "products" | "orders" | "business_details" | "checkout_settings" | "payment_gateways" | "media_sync" | "telegram_config" | "approvals" | "events" | "resources" | "community" | "page_manager" | "page_visibility" | "blog_manager" | "media_manager" | "sales_trends" | "discount_codes" | "integrations" | "permissions" | "live_class">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "submissions" | "content" | "members" | "payouts" | "partners" | "moderation" | "navigation" | "general" | "branding" | "seo" | "security" | "social" | "reorder_sections" | "products" | "orders" | "business_details" | "checkout_settings" | "payment_gateways" | "media_sync" | "telegram_config" | "approvals" | "events" | "resources" | "community" | "page_manager" | "page_visibility" | "blog_manager" | "media_manager" | "sales_trends" | "discount_codes" | "integrations" | "permissions" | "live_class" | "member_hub" | "link_tree">("dashboard");
 
   useEffect(() => {
     if (userData && !hasPermission(activeTab)) {
       const tabs: (typeof activeTab)[] = [
         'dashboard', 'members', 'approvals', 'payouts', 'partners', 
-        'moderation', 'submissions', 'content', 'reorder_sections', 'sales_trends', 
+        'moderation', 'submissions', 'content', 'link_tree', 'reorder_sections', 'sales_trends', 
         'discount_codes', 'navigation', 'telegram_config', 'events', 'resources', 
         'community', 'live_class', 'products', 'orders', 'business_details', 'checkout_settings', 
         'payment_gateways', 'media_sync', 'page_manager', 'page_visibility', 'blog_manager', 'media_manager', 
@@ -1084,6 +1086,20 @@ export default function AdminPage() {
                       </span>
                     </button>
                   ),
+                  link_tree: () => hasPermission("content") && (
+                    <button
+                      onClick={() => setActiveTab("link_tree")}
+                      className={`w-full text-left px-5 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-between cursor-pointer ${
+                        activeTab === "link_tree"
+                          ? "bg-brand-gold text-brand-black"
+                          : "bg-white/[0.02] border border-white/5 text-white/70 hover:bg-white/[0.05]"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="text-xs">🔗</span> Connect Link Tree
+                      </span>
+                    </button>
+                  ),
                   reorder_sections: () => hasPermission("content") && (
                     <button
                       onClick={() => setActiveTab("reorder_sections")}
@@ -1123,6 +1139,20 @@ export default function AdminPage() {
                     >
                       <span className="flex items-center gap-2">
                         <DollarSign size={14} className={activeTab === "discount_codes" ? "text-brand-black" : "text-brand-gold"} /> Discount Codes
+                      </span>
+                    </button>
+                  ),
+                  member_hub: () => hasPermission("settings") && (
+                    <button
+                      onClick={() => setActiveTab("member_hub")}
+                      className={`w-full text-left px-5 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-between cursor-pointer ${
+                        activeTab === "member_hub"
+                          ? "bg-brand-gold text-brand-black"
+                          : "bg-white/[0.02] border border-white/5 text-white/70 hover:bg-white/[0.05]"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="text-xs">🎛️</span> Member Hub Control
                       </span>
                     </button>
                   ),
@@ -1210,20 +1240,7 @@ export default function AdminPage() {
                       </span>
                     </button>
                   ),
-                  live_class: () => hasPermission("settings") && (
-                    <button
-                      onClick={() => setActiveTab("live_class")}
-                      className={`w-full text-left px-5 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-between cursor-pointer ${
-                        activeTab === "live_class"
-                          ? "bg-brand-gold text-brand-black"
-                          : "bg-white/[0.02] border border-white/5 text-white/70 hover:bg-white/[0.05]"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span className="text-xs">🔴</span> Live Class Settings
-                      </span>
-                    </button>
-                  ),
+
                   products: () => hasPermission("products") && (
                     <button
                       onClick={() => setActiveTab("products")}
@@ -1471,6 +1488,7 @@ export default function AdminPage() {
                 const adminSidebarOrder: string[] = (() => {
                   const defaultSections = [
                     "dashboard",
+                    "member_hub",
                     "members",
                     "approvals",
                     "payouts",
@@ -1478,6 +1496,7 @@ export default function AdminPage() {
                     "moderation",
                     "submissions",
                     "content",
+                    "link_tree",
                     "reorder_sections",
                     "sales_trends",
                     "discount_codes",
@@ -1509,14 +1528,9 @@ export default function AdminPage() {
                   try {
                     if (content.adminSidebarOrderJson) {
                       const parsed = JSON.parse(content.adminSidebarOrderJson);
-                      if (Array.isArray(parsed) && parsed.length > 0) {
-                        const blended = [...parsed];
-                        defaultSections.forEach(id => {
-                          if (!blended.includes(id)) {
-                            blended.push(id);
-                          }
-                        });
-                        return blended;
+                      if (Array.isArray(parsed)) {
+                        const missing = defaultSections.filter(s => !parsed.includes(s));
+                        return [...parsed, ...missing];
                       }
                     }
                   } catch (e) {}
@@ -3393,6 +3407,19 @@ export default function AdminPage() {
                 </motion.div>
               )}
 
+              {/* Tab Link Tree Page Builder */}
+              {activeTab === "link_tree" && hasPermission("content") && (
+                <motion.div
+                  key="link-tree-tab"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="animate-fade-in"
+                >
+                  <AdminLinkTreePanel />
+                </motion.div>
+              )}
+
               {/* Tab 5: Reorder Sections Panel */}
               {activeTab === "reorder_sections" && hasPermission("content") && (
                 <motion.div
@@ -3455,14 +3482,22 @@ export default function AdminPage() {
                 </motion.div>
               )}
 
-              {activeTab === "live_class" && hasPermission("settings") && (
+
+
+              {activeTab === "member_hub" && hasPermission("settings") && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   className="space-y-8"
                 >
-                  <AdminLiveClassSettings />
+                  <AdminMemberDashboardManager content={content} saveContent={saveContentChanges} onStatus={(status, msg) => {
+                     setSaveStatus(status as any);
+                     if (msg) setSaveMsg(msg);
+                     if (status === 'success') {
+                        setTimeout(() => setSaveStatus('idle'), 3000);
+                     }
+                  }} />
                 </motion.div>
               )}
 

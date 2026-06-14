@@ -61,7 +61,7 @@ export default function AdminBusinessProfile() {
             <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Manage global identity and communication parameters.</p>
           </div>
           <button 
-            onClick={saveContentChanges}
+            onClick={() => saveContentChanges()}
             className="px-8 py-3 bg-brand-gold text-brand-black text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all flex items-center gap-2"
           >
             <Save size={14} /> Commit Changes
@@ -181,7 +181,7 @@ export default function AdminBusinessProfile() {
             </p>
           </div>
           <button 
-            onClick={saveContentChanges}
+            onClick={() => saveContentChanges()}
             className="px-12 py-4 bg-brand-gold text-brand-black text-xs font-black uppercase tracking-widest hover:bg-white transition-all shadow-2xl"
           >
             Authenticate & Perspective Changes

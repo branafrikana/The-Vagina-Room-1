@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useContent } from '../context/ContentContext';
 
@@ -21,7 +21,7 @@ export default function SEO({
   ogTitle,
   ogDescription
 }: SEOProps) {
-  const { content } = useContent();
+  const { content, updatePageSEO } = useContent();
 
   const seoData = useMemo(() => {
     try {
@@ -54,6 +54,10 @@ export default function SEO({
   const finalOgImage = ogImage || seoData.ogImage;
   const finalOgTitle = ogTitle ? `${ogTitle} | ${siteName}` : fullTitle;
   const finalOgDescription = ogDescription || finalDescription;
+
+  useEffect(() => {
+    updatePageSEO(fullTitle, finalDescription);
+  }, [fullTitle, finalDescription, updatePageSEO]);
 
   const gaTrackingId = seoData.gaTrackingId;
   const fbPixelId = seoData.fbPixelId;

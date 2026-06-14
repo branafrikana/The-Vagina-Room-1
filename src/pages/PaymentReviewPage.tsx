@@ -53,7 +53,7 @@ export default function PaymentReviewPage() {
     return (
       <div className="min-h-screen bg-brand-black flex flex-col items-center justify-center gap-4">
         <div className="w-12 h-12 border-4 border-brand-gold border-t-transparent rounded-full animate-spin" />
-        <p className="text-brand-gold text-[10px] font-mono uppercase tracking-[0.3em]">Synching Sanctuary Nodes...</p>
+        <p className="text-brand-gold text-[10px] font-mono uppercase tracking-[0.3em]">Synching Member Data...</p>
       </div>
     );
   }

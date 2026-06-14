@@ -70,7 +70,7 @@ export default function PageVisibilityPanel() {
     try {
       const jsonStr = JSON.stringify(nextDisabledMap);
       updateContentField("disabledPagesJson", jsonStr);
-      const res = await saveContentChanges();
+      const res = await saveContentChanges({ disabledPagesJson: jsonStr });
       
       if (res.success) {
         setSaveStatus("success");
@@ -93,17 +93,14 @@ export default function PageVisibilityPanel() {
       const jsonStr = JSON.stringify(disabledMap);
       updateContentField("disabledPagesJson", jsonStr);
       
-      // Since updateContentField updates react context, we wait a moment
-      setTimeout(async () => {
-        const res = await saveContentChanges();
-        if (res.success) {
-          setSaveStatus("success");
-          setTimeout(() => setSaveStatus("idle"), 3000);
-        } else {
-          setSaveStatus("error");
-        }
-        setSaving(false);
-      }, 100);
+      const res = await saveContentChanges({ disabledPagesJson: jsonStr });
+      if (res.success) {
+        setSaveStatus("success");
+        setTimeout(() => setSaveStatus("idle"), 3000);
+      } else {
+        setSaveStatus("error");
+      }
+      setSaving(false);
     } catch (err) {
       console.error(err);
       setSaveStatus("error");
@@ -175,7 +172,7 @@ export default function PageVisibilityPanel() {
             </div>
 
             <p className="text-[7px] font-mono uppercase text-white/30 tracking-[0.15em] mt-12">
-              The Vagina Room Sanctuary • RESTORING WELLNESS & DIGNITY
+              The Vagina Room Community • RESTORING WELLNESS & DIGNITY
             </p>
           </div>
         </div>

@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const mockUserObj = impersonatedUserData ? {
     uid: impersonatedUserData.id || impersonatedUserData.uid || `demo_${impersonatedUserData.email?.split('@')[0]}`,
     email: impersonatedUserData.email,
-    displayName: impersonatedUserData.fullName || impersonatedUserData.name || impersonatedUserData.displayName || 'Demo User',
+    displayName: impersonatedUserData.fullName || impersonatedUserData.name || impersonatedUserData.displayName || 'Member',
     isAnonymous: false,
     emailVerified: true
   } : null;

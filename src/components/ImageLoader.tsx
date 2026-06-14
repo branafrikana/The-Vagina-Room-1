@@ -85,7 +85,7 @@ export function ImageLoader({
     >
       {/* 1. Base loading pulse state */}
       {!highResLoaded && (
-        <div className="absolute inset-0 bg-white/[0.04] animate-pulse" />
+        <div className="absolute inset-0 bg-black/40 animate-pulse" />
       )}
 
       {/* 2. Low Resolution Blurry Placeholder (loaded instantly) */}

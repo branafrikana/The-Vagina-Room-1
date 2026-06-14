@@ -787,7 +787,7 @@ export default function TelegramCommunityPage() {
   if (content.telegramPageSectionsOrder) {
     try {
       const parsed = JSON.parse(content.telegramPageSectionsOrder);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         sectionIds = parsed;
       }
     } catch (e) {

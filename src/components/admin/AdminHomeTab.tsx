@@ -24,6 +24,7 @@ import {
   GripVertical
 } from 'lucide-react';
 import { ImageUploader } from './ImageUploader';
+import { InputGroup } from '../ui/InputGroup';
 import ArrayJSONEditor from './ArrayJSONEditor';
 import { FOCUS_AREAS, CORE_VALUES, DIFFERENTIATORS } from '../../constants';
 
@@ -68,13 +69,6 @@ export default function AdminHomeTab() {
     </div>
   );
 
-  const InputGroup = ({ label, children }: { label: string, children: React.ReactNode }) => (
-    <div className="space-y-1.5">
-      <label className="text-[9px] font-black uppercase tracking-wider text-white/40 block">{label}</label>
-      {children}
-    </div>
-  );
-
   return (
     <div className="space-y-8">
       {/* Sub-Navigation for Home Content */}
@@ -103,8 +97,9 @@ export default function AdminHomeTab() {
       <div className="flex justify-end sticky top-0 z-20 py-2 bg-black/50 backdrop-blur-md -mx-4 px-4">
          <button 
            onClick={() => {
-             updateContentField("lastUpdated", new Date().toISOString());
-             saveContentChanges();
+             const now = new Date().toISOString();
+             updateContentField("lastUpdated", now);
+             saveContentChanges({ lastUpdated: now });
            }}
            className="px-6 py-3 bg-brand-gold text-brand-black text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all flex items-center gap-2 shadow-2xl"
          >

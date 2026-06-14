@@ -39,14 +39,14 @@ export default function MemberPrograms() {
   // Tabs for sub-navigation within Courses pane
   // 'active' = Active Programs, 'materials' = Course Materials, 'progress' = Progress Tracking, 'certificates' = Certificates (Future Feature)
   const [activeSubTab, setActiveSubTab] = useState<'active' | 'materials' | 'progress' | 'certificates'>('active');
-  const [selectedProgramId, setSelectedProgramId] = useState<string>('prog-1');
+  const [selectedProgramId, setSelectedProgramId] = useState<string>('prog-fertility');
   
   // Real-time interactive checklists
   const [completedLessonsMap, setCompletedLessonsMap] = useState<Record<string, boolean>>({});
   
   // Interactive material queries
   const [materialsSearchQuery, setMaterialsSearchQuery] = useState('');
-  const [materialTypeFilter, setMaterialTypeFilter] = useState<'all' | 'video' | 'audio' | 'pdf'>('all');
+  const [materialTypeFilter, setMaterialTypeFilter] = useState<'all' | 'video' | 'audio' | 'pdf' | 'quiz' | 'assessment'>('all');
 
   // Simulated live downloader State
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -504,14 +504,16 @@ export default function MemberPrograms() {
                             trackLastLesson(les.title);
                             if (les.type === 'pdf' || les.type === 'case_study') {
                               handleSimulatedDownload(les.id, les.title);
+                            } else if (les.type === 'quiz' || les.type === 'assessment') {
+                              showToast(`Launching interactive ${les.type === 'quiz' ? 'knowledge check' : 'evaluation'}: "${les.title}".`);
                             } else {
                               showToast(`Initializing media stream: "${les.title}". Enjoy learning!`);
                             }
                           }}
                           className="px-3.5 py-2 hover:bg-white bg-white/5 text-white hover:text-black font-mono text-[8px] uppercase tracking-widest font-black transition-all flex items-center gap-1 border border-white/5"
                         >
-                          {les.type === 'video' ? <Play size={8} fill="currentColor" /> : les.type === 'audio' ? <Headphones size={8} /> : <FileText size={8} />}
-                          <span>{les.type === 'pdf' ? 'Download' : 'Open Lesson'}</span>
+                          {les.type === 'video' ? <Play size={8} fill="currentColor" /> : les.type === 'audio' ? <Headphones size={8} /> : (les.type === 'quiz' || les.type === 'assessment') ? <CheckCircle2 size={8} /> : <FileText size={8} />}
+                          <span>{les.type === 'pdf' ? 'Download' : (les.type === 'quiz' || les.type === 'assessment') ? `Start ${les.type === 'quiz' ? 'Quiz' : 'Assessment'}` : 'Open Lesson'}</span>
                         </button>
                       </div>
 
@@ -538,7 +540,9 @@ export default function MemberPrograms() {
                 { id: 'all', label: 'All Resources' },
                 { id: 'video', label: '🎥 Videos & Recordings' },
                 { id: 'audio', label: '🎧 Audio Teachings' },
-                { id: 'pdf', label: '📄 Workbooks & Guides' }
+                { id: 'pdf', label: '📄 Workbooks & Guides' },
+                { id: 'quiz', label: '🧠 Quizzes' },
+                { id: 'assessment', label: '📋 Assessments' }
               ].map(cat => (
                 <button
                   key={cat.id}
@@ -632,14 +636,16 @@ export default function MemberPrograms() {
                               trackLastLesson(lesson.title);
                               if (lesson.type === 'pdf') {
                                 handleSimulatedDownload(lesson.id, lesson.title);
+                              } else if (lesson.type === 'quiz' || lesson.type === 'assessment') {
+                                showToast(`Launching interactive ${lesson.type === 'quiz' ? 'knowledge check' : 'evaluation'}: "${lesson.title}".`);
                               } else {
                                 showToast(`Starting streaming node for "${lesson.title}"`);
                               }
                             }}
                             className="px-3.5 py-1.5 text-[8.5px] font-mono font-black uppercase tracking-widest bg-black border border-[#D4AF37]/30 hover:border-brand-gold text-[#D4AF37] hover:bg-brand-gold hover:text-black transition-all flex items-center gap-1"
                           >
-                            <Download size={10} />
-                            <span>{lesson.type === 'pdf' ? 'Download PDF' : 'Stream Media'}</span>
+                            {(lesson.type === 'quiz' || lesson.type === 'assessment') ? <CheckCircle2 size={10} /> : (lesson.type === 'pdf') ? <Download size={10} /> : <Play size={10} />}
+                            <span>{lesson.type === 'pdf' ? 'Download PDF' : (lesson.type === 'quiz' || lesson.type === 'assessment') ? `Start ${lesson.type === 'quiz' ? 'Quiz' : 'Assessment'}` : 'Stream Media'}</span>
                           </button>
                         </div>
                       )}
@@ -813,13 +819,28 @@ export default function MemberPrograms() {
               {/* Mock Claim button */}
               <button
                 type="button"
-                onClick={() => {
-                  showToast(`🧬 Feature locked: Verification infrastructure initiating in summer 2026.`);
+                onClick={async () => {
+                  showToast(`🧬 Generating verifiable credentials... Please wait.`);
+                  const { default: html2canvas } = await import('html2canvas');
+                  const { jsPDF } = await import('jspdf');
+                  const element = document.getElementById('certificate-canvas');
+                  if (element) {
+                     const canvas = await html2canvas(element, { scale: 2 });
+                     const imgData = canvas.toDataURL('image/png');
+                     const pdf = new jsPDF({
+                       orientation: 'landscape',
+                       unit: 'pt',
+                       format: [canvas.width, canvas.height]
+                     });
+                     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                     pdf.save('TVR_Certificate.pdf');
+                     showToast(`✅ Certificate downloaded successfully.`);
+                  }
                 }}
                 className="w-full py-2.5 bg-white/5 hover:bg-brand-gold border border-[#D4AF37]/35 hover:border-brand-gold text-[#D4AF37] hover:text-black font-mono text-[9px] uppercase tracking-widest font-black transition-all flex items-center justify-center gap-1.5"
               >
-                <RefreshCw size={11} className="animate-spin" style={{ animationDuration: '6s' }} />
-                <span>Initialize Ledger Test</span>
+                <RefreshCw size={11} className="animate-spin text-brand-gold group-hover:text-black" style={{ animationDuration: '6s' }} />
+                <span>Initialize Ledger Test & Download</span>
               </button>
             </div>
 
@@ -830,7 +851,7 @@ export default function MemberPrograms() {
               </h4>
 
               {/* Certificate Canvas layout */}
-              <div className="bg-gradient-to-br from-zinc-950 via-neutral-950 to-zinc-950 border-4 border-double border-[#D4AF37]/50 p-8 sm:p-12 relative overflow-hidden select-none shadow-2xl">
+              <div id="certificate-canvas" className="bg-gradient-to-br from-zinc-950 via-neutral-950 to-zinc-950 border-4 border-double border-[#D4AF37]/50 p-8 sm:p-12 relative overflow-hidden select-none shadow-2xl">
                 
                 {/* Vintage watermarks */}
                 <div className="absolute inset-0 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:16px_16px] opacity-10" />

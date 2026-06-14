@@ -273,8 +273,8 @@ export default function ProfileManager() {
     }
   };
 
-  // Security mock password updater with real feedback
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  // Security password updater with real feedback
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword) {
       alert("Please provide your current security password credentials.");
@@ -289,15 +289,26 @@ export default function ProfileManager() {
       return;
     }
     
-    // Simulate encryption rotate
+    if (!auth.currentUser) return;
+    
     setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
+    try {
+      const { updatePassword } = await import('firebase/auth');
+      await updatePassword(auth.currentUser, newPassword);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       triggerToast('🔒 Security credentials rotated! Encryption certificate successfully updated.');
-    }, 1500);
+    } catch (err: any) {
+      console.error(err);
+      if (err.code === 'auth/requires-recent-login') {
+         alert("Security policy requires you to log out and log back in before rotating credentials.");
+      } else {
+         alert(err.message || 'Failed to update credentials.');
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Device management handle

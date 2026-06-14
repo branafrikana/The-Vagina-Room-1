@@ -201,7 +201,7 @@ export default function AdminProductsPanel() {
       {/* Persistence helper for this panel */}
       <div className="flex justify-end">
          <button 
-           onClick={saveContentChanges}
+           onClick={() => saveContentChanges()}
            className="px-6 py-2 bg-brand-gold text-brand-black text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all flex items-center gap-2"
          >
            <Check size={14} /> Persist Module Changes

@@ -1,7 +1,7 @@
 export interface LessonItem {
   id: string;
   title: string;
-  type: 'video' | 'audio' | 'pdf' | 'notes' | 'case_study';
+  type: 'video' | 'audio' | 'pdf' | 'notes' | 'case_study' | 'quiz' | 'assessment';
   duration: string;
   isCompleted: boolean;
   materialUrl?: string;
@@ -22,144 +22,195 @@ export interface CourseProgram {
 
 export const defaultPrograms: CourseProgram[] = [
   {
-    id: 'prog-1',
-    title: 'Clinical Fertility & Cellular Conception Masterclass',
-    category: 'Fertility & Reproductive Wellness Program',
-    description: 'Learn the medical-traditional synthesis for follicular hydration, endocrine tracking, and basal heat calculations. Designed to help women understand and restore ancestral fertile environments.',
+    id: 'prog-fertility',
+    title: 'Fertility School: Reproductive Health & Conception',
+    category: 'Fertility School',
+    description: 'Members gain deep clarity on how fertility works and how to support healthy conception naturally and scientifically. Includes cycle understanding, ovulation knowledge, and preconception health.',
     instructor: 'Dr. Audrey Finch (Senior OBGYN)',
     bannerImage: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=600',
     modulesCount: 5,
     announcements: [
-      '🌿 NEW Live Q&A regarding cervical mucus alkaline diets has been scheduled for Wednesday, June 10, 2026, at 18:00 UTC.',
-      '📓 Download the 2026 Basal Temperature Indexing Logsheet added in Lesson 3 notes.'
+      '🌿 NEW Live Q&A regarding cervical mucus has been scheduled for Wednesday.',
+      '📓 Complete the end-of-module assessment to unlock your certificate.'
     ],
     lessons: [
       {
-        id: 'les-1-1',
-        title: 'Ancestral Origins & Ovarian Membrane Fluid Dynamics',
+        id: 'les-fert-1',
+        title: 'Fertility Awareness Education & Cycle Tracking',
         type: 'video',
         duration: '32m',
         isCompleted: true,
-        description: 'Explore follicular envelopes, cellular stress triggers, and local lymphatic fluid drainage tracks.'
+        description: 'Explore the biological foundations of cycle tracking, temperature indexing, and ovulation timing.'
       },
       {
-        id: 'les-1-2',
-        title: 'Cervical Secretion Categorization & pH Balancing Indices',
+        id: 'les-fert-2',
+        title: 'Cervical Secretion Categorization Guide',
         type: 'pdf',
         duration: '18 pages',
         isCompleted: true,
         materialUrl: 'cervical-ph-guide.pdf',
-        description: 'A structured printable reference map detailing cycle pH guidelines, estrogen elasticity, and biological hygiene.'
+        description: 'A structured printable reference map detailing cycle guidelines and biological indicators.'
       },
       {
-        id: 'les-1-3',
-        title: 'Progesterone Optimization Strategies & Diet Mappings',
-        type: 'notes',
-        duration: '15 mins',
+        id: 'les-fert-3',
+        title: 'Check Your Knowledge: Cycle Anatomy',
+        type: 'quiz',
+        duration: '10 mins',
         isCompleted: false,
-        description: 'Targeted nutrition guidelines, organic fat integrations, and liver detoxification procedures.'
+        description: 'Interactive knowledge check to reinforce your learning on the reproductive cycle.'
       },
       {
-        id: 'les-1-4',
-        title: 'Thermal Core Energy & Botanical Clay Steam Potencies',
+        id: 'les-fert-4',
+        title: 'Preconception Health & Couples Education',
         type: 'audio',
         duration: '22m',
         isCompleted: false,
-        description: 'Streamable audio lesson describing steam temperature controls, regional herbs, and essential biological guidelines.'
+        description: 'Streamable audio lesson describing lifestyle and nutritional preparation for conception.'
       },
       {
-        id: 'les-1-5',
-        title: 'Uterine Tension & Neuro-Pelvic Somatic Relaxation',
-        type: 'case_study',
+        id: 'les-fert-5',
+        title: 'Module Assessment: Conception Readiness',
+        type: 'assessment',
         duration: '35 mins',
         isCompleted: false,
-        description: 'In-depth case review tracing localized emotional storing, trauma release logs, and autonomic recovery parameters.'
+        description: 'Deeper evaluation covering all topics in the module. Pass to earn your digital certification.'
       }
     ]
   },
   {
-    id: 'prog-2',
-    title: 'Women\'s Health Sovereignty & Endocrine Autonomy',
-    category: 'Women\'s Health Education Track',
-    description: 'Empowering you with structured knowledge for better understanding, better health, and better decisions. Deepdive into xenoestrogen detox, pelvic realignment, and anatomical self-advocacy.',
-    instructor: 'Dr. FID (Chiropractic Founder)',
+    id: 'prog-wellness',
+    title: 'Women\'s Wellness School: Holistic Mastery',
+    category: 'Women\'s Wellness School',
+    description: 'Learn how to understand and improve your overall wellbeing through daily health awareness. Focuses on menstrual health, emotional wellbeing, sleep, stress, and energy.',
+    instructor: 'Dr. FID (Founder)',
     bannerImage: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&q=80&w=600',
     modulesCount: 4,
     announcements: [
-      '⚖️ Review the legal frameworks for private wellness advocacy added under Certificates panel.',
-      '🧪 Botanical formulation toxicity updates sent via digital community notifications.'
+      '⚖️ Review the new lifestyle optimization protocols added in Lesson 3.'
     ],
     lessons: [
       {
-        id: 'les-2-1',
-        title: 'Endocrine Disruption Protocols & Pure Household Detoxification',
+        id: 'les-well-1',
+        title: 'Menstrual Health & Cycle Consistency',
         type: 'video',
         duration: '45m',
         isCompleted: true,
-        description: 'Video-based session tracing toxic parabens, microplastic variables, and non-estrogenic household replacements.'
+        description: 'Understanding your cycle patterns and identifying early warning indicators of irregularity.'
       },
       {
-        id: 'les-2-2',
-        title: 'Anatomical Chiropractic Pelvic Realignment & Postural Stretches',
-        type: 'video',
+        id: 'les-well-2',
+        title: 'Sleep, Stress, and Energy Regulation',
+        type: 'audio',
         duration: '28m',
         isCompleted: false,
-        description: 'Video masterclass detailing self-administered coccygeal decompressions and sacral mobilization loops.'
+        description: 'How lifestyle adjustments can profoundly influence your daily vitality.'
       },
       {
-        id: 'les-2-3',
-        title: 'Menstrual Restoration & Luteal Cycle Thermal Support Manual',
-        type: 'pdf',
-        duration: '12 pages',
+        id: 'les-well-3',
+        title: 'Wellness Progress Check',
+        type: 'quiz',
+        duration: '15 mins',
         isCompleted: false,
-        materialUrl: 'luteal-thermal-manual.pdf',
-        description: 'Printable handbook mapping warm compress wraps, herbal formulations, and pelvic support bands.'
-      },
-      {
-        id: 'les-2-4',
-        title: 'Advanced Traditional Pelvic Lymph Drainage Methods',
-        type: 'audio',
-        duration: '30m',
-        isCompleted: false,
-        description: 'Guided audio teaching describing femoral lymph hubs, abdominal clockwise massage rates, and bloodflow enhancements.'
+        description: 'A short quiz reinforcing concepts on stress and sleep recovery.'
       }
     ]
   },
   {
-    id: 'prog-3',
-    title: 'Advocate Leadership, Peer Support & Intimacy Ethics',
-    category: 'Self-Paced Leadership Track',
-    description: 'Certifying members in sovereign reproductive support, multi-level sisterhood advising, legal protection frameworks, and private community administration.',
-    instructor: 'Amina Bello (Griot Scholar) & Zainab Kabir',
+    id: 'prog-hormones',
+    title: 'Hormonal Balance School',
+    category: 'Hormonal Balance School',
+    description: 'Learn how hormones influence every aspect of your physical and emotional health. Covers PCOS awareness, thyroid basics, and the lifestyle-hormone connection.',
+    instructor: 'Amina Bello (Griot Scholar) & Dr. FID',
     bannerImage: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=600',
     modulesCount: 3,
     announcements: [
-      '✨ All 3 core modules are authenticated! This course is marked as 100% complete.'
+      '✨ Hormonal wellness assessment is now live.'
     ],
     lessons: [
       {
-        id: 'les-3-1',
-        title: 'Apothecary Heritage & Global Reproductive Sovereignty Records',
+        id: 'les-horm-1',
+        title: 'Mastering Hormonal Cycles & Identifying Imbalances',
         type: 'video',
         duration: '40m',
         isCompleted: true,
-        description: 'In-depth history of traditional midwifery, colonial healthcare intersections, and community-based healing circles.'
+        description: 'Explore the signs of common hormonal imbalances and how to track fluctuations.'
       },
       {
-        id: 'les-3-2',
-        title: 'Ethical Guidelines for Peer-to-Peer Reproductive Consultation',
+        id: 'les-horm-2',
+        title: 'PCOS and Thyroid Awareness Basics',
         type: 'notes',
         duration: '25 mins',
         isCompleted: true,
-        description: 'Private directory outline detailing peer advice boundaries, consent covenants, and informational support frameworks.'
+        description: 'Foundational education on PCOS management strategies and thyroid health optimization.'
       },
       {
-        id: 'les-3-3',
-        title: 'Sovereign Encryption Protocols & Member Autonomy Safeguards',
-        type: 'notes',
-        duration: '20 mins',
+        id: 'les-horm-3',
+        title: 'End of Module Assessment',
+        type: 'assessment',
+        duration: '30 mins',
         isCompleted: true,
-        description: 'Cryptographic safety recommendations, local data privacy standards, and secure platform logging guides.'
+        description: 'Comprehensive exam testing your knowledge on reproductive and hormonal systems.'
+      }
+    ]
+  },
+  {
+    id: 'prog-intimacy',
+    title: 'Intimacy Education School',
+    category: 'Intimacy Education School',
+    description: 'Develop healthy, informed, and confident perspectives about intimacy, body awareness, and relationship communication.',
+    instructor: 'Zainab Kabir',
+    bannerImage: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=600',
+    modulesCount: 2,
+    announcements: [],
+    lessons: [
+      {
+        id: 'les-int-1',
+        title: 'Body Awareness & Sexual Wellness',
+        type: 'video',
+        duration: '35m',
+        isCompleted: false,
+        description: 'A delicate holding space for exploring pelvic wellness, autonomic relaxation, and somatic cues.'
+      }
+    ]
+  },
+  {
+    id: 'prog-pregnancy',
+    title: 'Pregnancy Preparation School',
+    category: 'Pregnancy Preparation School',
+    description: 'Guiding you toward a healthier, more prepared pregnancy journey. Focuses on preconception readiness and nutrition.',
+    instructor: 'Dr. Audrey Finch',
+    bannerImage: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&q=80&w=600',
+    modulesCount: 2,
+    announcements: [],
+    lessons: [
+      {
+        id: 'les-preg-1',
+        title: 'Pre-Pregnancy Readiness Checklist',
+        type: 'pdf',
+        duration: '5 pages',
+        isCompleted: false,
+        description: 'Complete list of lifestyle, nutritional, and emotional preparations before trying to conceive.',
+        materialUrl: 'pre-pregnancy.pdf'
+      }
+    ]
+  },
+  {
+    id: 'prog-marriage',
+    title: 'Marriage & Wellness School',
+    category: 'Marriage & Wellness School',
+    description: 'Learn how wellness, fertility, and relationships are interconnected. Covers emotional intimacy and conflict resolution.',
+    instructor: 'Amina Bello (Griot Scholar)',
+    bannerImage: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=600',
+    modulesCount: 2,
+    announcements: [],
+    lessons: [
+      {
+        id: 'les-marr-1',
+        title: 'Fertility in Marriage & Shared Wellness',
+        type: 'audio',
+        duration: '42m',
+        isCompleted: false,
+        description: 'Audio seminar on communication protocols and navigating the emotional journey of fertility as a couple.'
       }
     ]
   }

@@ -2,12 +2,12 @@ import { motion } from 'motion/react';
 import { 
   Instagram, 
   Linkedin, 
-  X, 
   Youtube, 
   MessageCircle, 
   Facebook,
   Send
 } from 'lucide-react';
+import XIcon from './XIcon';
 
 import { useContent } from '../context/ContentContext';
 import EditableText from './EditableText';
@@ -22,7 +22,7 @@ export default function SocialGrid() {
     { icon: TikTokIcon, color: 'bg-[#000000]', name: 'TikTok', link: content.socialLinkTiktok || '#' },
     { icon: Facebook, color: 'bg-[#1877F2]', name: 'Facebook', link: content.socialLinkFacebook || '#' },
     { icon: Youtube, color: 'bg-[#FF0000]', name: 'YouTube', link: content.socialLinkYoutube || '#' },
-    { icon: X, color: 'bg-[#000000]', name: 'X', link: content.socialLinkX || '#' }
+    { icon: XIcon, color: 'bg-[#000000]', name: 'X', link: content.socialLinkX || '#' }
   ];
 
   const renderLogo = () => {

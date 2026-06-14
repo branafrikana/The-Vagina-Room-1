@@ -30,7 +30,9 @@ import {
   Send,
   HelpCircle,
   Clock3,
-  Info
+  Info,
+  Award,
+  FileSignature
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
@@ -46,7 +48,7 @@ interface EventItem {
   isoDate: string; // "2026-06-18"
   time: string;
   type: 'virtual' | 'physical' | 'hybrid';
-  category: 'wellness' | 'fertility' | 'workshop' | 'gathering' | 'expert';
+  category: 'webinar' | 'masterclass' | 'therapy' | 'support' | 'physical' | string;
   location: string;
   hosts: string[];
   image: string;
@@ -74,7 +76,7 @@ export default function MemberEvents() {
   const { user, userData } = useAuth();
   
   // Navigation within Events module
-  const [activeTab, setActiveTab] = useState<'upcoming' | 'calendar' | 'rsvp-manager' | 'replays'>('upcoming');
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'calendar' | 'rsvp-manager' | 'replays' | 'notes' | 'certificates'>('upcoming');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   
@@ -434,12 +436,12 @@ export default function MemberEvents() {
       {/* Main Top Header Block */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/5 pb-5 gap-4">
         <div>
-          <span className="text-[9px] font-mono text-[#D4AF37] uppercase tracking-[0.3em] font-extrabold block">Community Live Exchanges</span>
+          <span className="text-[9px] font-mono text-[#D4AF37] uppercase tracking-[0.3em] font-extrabold block">LIVE EXPERIENCES & GATHERINGS</span>
           <h1 className="text-2xl font-serif font-black tracking-tight text-white uppercase mt-1">
-            📅 Members Community Portal
+            📅 Events Center
           </h1>
           <p className="text-xs text-white/40 mt-1 max-w-xl font-light font-sans">
-            Somatic alignment circles, fertility classes, women’s health workshops, and expert councils. Connect in live shalas or explore archived digital playbacks.
+            Real-time learning, healing, and connection experiences through structured events designed to educate, support, and transform.
           </p>
         </div>
 
@@ -477,6 +479,8 @@ export default function MemberEvents() {
           { id: 'calendar', label: '📆 Event Calendar', count: 'GRID' },
           { id: 'rsvp-manager', label: '✅ RSVP Hub', count: rsvpedEvents.length },
           { id: 'replays', label: '🎥 Recorded Replays', count: replays.length },
+          { id: 'notes', label: '📝 Event Notes', count: 0 },
+          { id: 'certificates', label: '🏆 Certificates', count: pastAttendanceHistory.filter(h => h.status === 'Attended').length },
         ].map(tab => (
           <button
             key={tab.id}
@@ -581,11 +585,11 @@ export default function MemberEvents() {
             <div className="flex flex-wrap gap-1.5">
               {[
                 { id: 'all', label: 'All Gatherings' },
-                { id: 'wellness', label: 'Live Wellness' },
-                { id: 'fertility', label: 'Fertility Education' },
-                { id: 'workshop', label: 'Health Workshops' },
-                { id: 'gathering', label: 'Sisterhood Circles' },
-                { id: 'expert', label: 'Expert Councils' },
+                { id: 'webinar', label: 'Webinars' },
+                { id: 'masterclass', label: 'Masterclasses' },
+                { id: 'therapy', label: 'Therapy Sessions' },
+                { id: 'support', label: 'Support Groups' },
+                { id: 'physical', label: 'Physical Events' },
               ].map(cat => (
                 <button
                   key={cat.id}
@@ -1303,90 +1307,29 @@ export default function MemberEvents() {
             </div>
 
             {/* Video Canvas Interface Mockup */}
-            <div className="relative bg-zinc-900 aspect-video flex flex-col justify-between overflow-hidden group">
-              
-              {/* Actual base photo frame */}
-              <img 
-                src={activeReplayVideo.image} 
-                alt="Video frame snapshot" 
-                className="absolute inset-0 w-full h-full object-cover opacity-60 filter blur-xs"
-              />
-
-              {/* Status Layer overlays playing animations */}
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
-                {isPlaying ? (
-                  <motion.div
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className="flex flex-col items-center space-y-2"
-                  >
-                    <div className="flex gap-1 justify-center items-end h-8">
-                      <div className="w-1 bg-[#D4AF37] h-5 animate-[bounce_0.8s_infinite_100ms]" />
-                      <div className="w-1 bg-[#D4AF37] h-8 animate-[bounce_0.8s_infinite_300ms]" />
-                      <div className="w-1 bg-[#D4AF37] h-4 animate-[bounce_0.8s_infinite_150ms]" />
-                      <div className="w-1 bg-[#D4AF37] h-6 animate-[bounce_0.8s_infinite_400ms]" />
-                    </div>
-                    <span className="text-[9px] font-mono tracking-widest text-[#D4AF37] uppercase bg-black px-2.5 py-1 border border-[#D4AF37]/35">
-                      TRANSMITTING LIVE ARCHIVE SECTOR
-                    </span>
-                  </motion.div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setIsPlaying(true);
-                      triggerToastNotice("Archive playback resumed");
-                    }}
-                    className="w-16 h-16 rounded-full bg-[#D4AF37] text-black flex items-center justify-center"
-                  >
-                    <Play size={24} fill="currentColor" className="ml-1" />
-                  </button>
-                )}
-              </div>
-
-              {/* Video control bar */}
-              <div className="relative z-20 w-full p-4 bg-gradient-to-t from-black via-black/80 to-transparent pt-12 mt-auto font-mono text-[9px] uppercase tracking-widest space-y-2">
-                
-                {/* Progress bar */}
-                <div 
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const percent = Math.floor(((e.clientX - rect.left) / rect.width) * 100);
-                    setVideoProgress(percent);
-                    triggerToastNotice(`Jumped streaming index to ${percent}%`);
-                  }}
-                  className="w-full h-1 bg-white/20 hover:h-1.5 transition-all cursor-pointer relative"
-                >
-                  <div className="h-full bg-[#D4AF37]" style={{ width: `${videoProgress}%` }} />
-                </div>
-
-                <div className="flex justify-between items-center text-white/70">
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => setIsPlaying(!isPlaying)}
-                      className="text-white hover:text-brand-gold"
-                    >
-                      {isPlaying ? "PAUSE FRAME" : "PLAY FRAME"}
-                    </button>
-
-                    <button
-                      onClick={() => setIsMuted(!isMuted)}
-                      className="text-white hover:text-brand-gold flex items-center gap-1.5"
-                    >
-                      {isMuted ? <VolumeX size={12} /> : <Volume2 size={12} />}
-                      {isMuted ? "MUTED" : "VOLUME 85%"}
-                    </button>
+            <div className="relative bg-black aspect-video flex flex-col justify-center items-center overflow-hidden">
+               {activeReplayVideo.videoUrl && (activeReplayVideo.videoUrl.includes('youtube.com') || activeReplayVideo.videoUrl.includes('youtu.be')) ? (
+                  <iframe 
+                    src={activeReplayVideo.videoUrl.replace('watch?v=', 'embed/').split('&')[0]}
+                    title={activeReplayVideo.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full border-0"
+                  />
+               ) : activeReplayVideo.videoUrl ? (
+                  <video 
+                     controls
+                     autoPlay={isPlaying}
+                     className="absolute inset-0 w-full h-full object-contain"
+                     src={activeReplayVideo.videoUrl}
+                  />
+               ) : (
+                  <div className="text-center font-mono text-white/50 space-y-3">
+                     <Video size={48} className="mx-auto text-[#D4AF37]" strokeWidth={1} />
+                     <p className="tracking-widest uppercase text-[#D4AF37] font-bold">MEDIA SOURCE NOT DETECTED</p>
+                     <p className="text-[10px] font-sans">The video stream URL is unavailable for this session.<br/>Please refer to the course materials.</p>
                   </div>
-
-                  <div className="flex items-center gap-4">
-                    <span>{Math.floor((videoProgress * 60) / 100)}m : {(videoProgress * 36) % 60}s / {activeReplayVideo.duration}</span>
-                    <button onClick={() => triggerToastNotice("Immersive full display requires secondary app launch.")}>
-                      <Maximize2 size={12} />
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-
+               )}
             </div>
 
             {/* Supplementary detail worksheets area */}
@@ -1471,6 +1414,60 @@ export default function MemberEvents() {
         </div>
       )}
 
+
+      {/* RENDER VIEW 5: EVENT NOTES */}
+      {activeTab === 'notes' && (
+        <div className="space-y-6">
+          <div className="bg-[#110f0f] border border-white/5 p-6 rounded-none text-left">
+            <span className="text-[9px] font-mono text-[#D4AF37] uppercase tracking-[0.3em] font-extrabold block mb-2">Active Learning Companion</span>
+            <h3 className="text-xl font-serif font-black uppercase text-white tracking-tight leading-snug">📝 Structured Event Notes</h3>
+            <p className="text-xs text-white/50 font-light max-w-2xl mt-2 mb-6">Capture insights from live masterclasses, guided healing sessions, and webinars. Download guided reflection templates.</p>
+            
+            <div className="p-12 text-center border border-dashed border-white/10">
+              <FileSignature className="mx-auto text-white/20 mb-3" size={24} />
+              <p className="font-mono text-[10px] uppercase text-white/50 tracking-wider">No structured notes recorded yet.</p>
+              <button
+                onClick={() => {
+                  triggerToastNotice("Initializing digital workbook template...");
+                }}
+                className="mt-3 text-[9px] font-mono uppercase text-brand-gold underline hover:text-white"
+              >
+                Create blank event journal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* RENDER VIEW 6: CERTIFICATES */}
+      {activeTab === 'certificates' && (
+        <div className="space-y-6">
+          <div className="bg-[#110f0f] border border-white/5 p-6 rounded-none text-left">
+            <span className="text-[9px] font-mono text-[#D4AF37] uppercase tracking-[0.3em] font-extrabold block mb-2">Participant Achievements</span>
+            <h3 className="text-xl font-serif font-black uppercase text-white tracking-tight leading-snug">🏆 Healing Certificates</h3>
+            <p className="text-xs text-white/50 font-light max-w-2xl mt-2 mb-6">Digital credentials securely recorded for attending our key learning milestones and masterclass completion.</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {pastAttendanceHistory
+                .filter(history => history.status === 'Attended')
+                .map(history => (
+                <div key={history.id} className="p-4 bg-zinc-950 border border-white/10 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:border-[#D4AF37]/50 transition-colors">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#D4AF37]/5 blur-2xl rounded-full" />
+                  <Award size={32} className="text-[#D4AF37] mb-3 group-hover:scale-110 transition-transform" strokeWidth={1.5} />
+                  <h4 className="text-[11px] font-serif font-black uppercase text-white mt-1 border-b border-[#D4AF37]/30 pb-2 w-full">{history.title}</h4>
+                  <p className="text-[8.5px] font-mono text-white/50 uppercase tracking-widest mt-3">ISSUED: <span className="text-white/80">{history.date}</span></p>
+                  <button onClick={() => triggerToastNotice(`Downloading credential package for ${history.title}`)} className="text-[8px] uppercase tracking-widest font-mono text-[#D4AF37] hover:text-white mt-4 border border-[#D4AF37]/30 hover:bg-[#D4AF37] hover:text-black transition-all px-3 py-1.5 w-full">Export PDF Credential</button>
+                </div>
+              ))}
+              {pastAttendanceHistory.filter(h => h.status === 'Attended').length === 0 && (
+                <div className="col-span-full p-12 text-center border border-dashed border-white/10">
+                  <p className="font-mono text-[10px] uppercase text-white/50 tracking-wider">Attend verified signature masterclasses to earn certificates.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CONFIGURE NOTIFICATIONS & REMINDER MODAL PANEL */}
       {activeReminderEvent && (
